@@ -1,0 +1,308 @@
+@model IEnumerable<PesticideShop.Models.Category>
+
+@{
+    ViewData["Title"] = "التصنيفات";
+}
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>🏷️ إدارة التصنيفات</h1>
+                <p>إدارة تصنيفات المنتجات وتنظيمها</p>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Create" class="action-button success">
+                    ➕ إضافة تصنيف جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Categories Grid -->
+    @if (Model.Any())
+    {
+        <div class="categories-grid">
+            @foreach (var category in Model)
+            {
+                <div class="category-card @(category.IsActive ? "active" : "inactive")">
+                    <div class="category-header">
+                        <h3>@category.Name</h3>
+                        <span class="status-badge @(category.IsActive ? "active" : "inactive")">
+                            @(category.IsActive ? "نشط" : "غير نشط")
+                        </span>
+                    </div>
+                    <div class="category-content">
+                        @if (!string.IsNullOrEmpty(category.Description))
+                        {
+                            <p class="category-description">@category.Description</p>
+                        }
+                        <div class="category-stats">
+                            <div class="stat">
+                                <span class="stat-label">عدد المنتجات:</span>
+                                <span class="stat-value">@category.ProductsCount</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">تاريخ الإنشاء:</span>
+                                <span class="stat-value">@category.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <a asp-action="Details" asp-route-id="@category.Id" class="action-btn info" title="عرض التفاصيل">👁️</a>
+                        <a asp-action="Edit" asp-route-id="@category.Id" class="action-btn edit" title="تعديل التصنيف">✏️</a>
+                        <a asp-action="Delete" asp-route-id="@category.Id" class="action-btn delete" title="حذف التصنيف">🗑️</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🏷️</div>
+            <h4>لا توجد تصنيفات</h4>
+            <p>ابدأ بإنشاء تصنيف جديد لتنظيم منتجاتك</p>
+            <a asp-action="Create" class="action-button success">إنشاء تصنيف جديد</a>
+        </div>
+    }
+</div>
+
+<style>
+/* Categories Grid Styles */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.category-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+    transition: var(--transition);
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-green);
+}
+
+.category-card:hover::before {
+    background: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green));
+}
+
+.category-card.inactive {
+    opacity: 0.7;
+    border-color: var(--gray);
+}
+
+.category-card.inactive::before {
+    background: var(--gray);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.category-header h3 {
+    margin: 0;
+    color: var(--dark-gray);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success-green);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.inactive {
+    background: rgba(108, 117, 125, 0.1);
+    color: var(--gray);
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.category-content {
+    margin-bottom: 1.5rem;
+}
+
+.category-description {
+    color: var(--gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.category-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(222, 226, 230, 0.3);
+}
+
+.stat:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: var(--gray);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: var(--dark-gray);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.category-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.action-btn.info {
+    background: rgba(52, 152, 219, 0.1);
+    color: var(--info-blue);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.action-btn.info:hover {
+    background: var(--info-blue);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.action-btn.edit {
+    background: rgba(253, 203, 110, 0.1);
+    color: var(--warning-green);
+    border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.action-btn.edit:hover {
+    background: var(--warning-green);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.action-btn.delete {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-red);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.action-btn.delete:hover {
+    background: var(--danger-red);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+/* Responsive Design */
+media (max-width: 768px) {
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .category-card {
+        padding: 1rem;
+    }
+    
+    .category-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .category-actions {
+        justify-content: center;
+    }
+}
+
+media (max-width: 576px) {
+    .category-stats {
+        gap: 0.25rem;
+    }
+    
+    .stat {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>

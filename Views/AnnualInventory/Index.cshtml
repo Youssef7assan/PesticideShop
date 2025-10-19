@@ -1,0 +1,911 @@
+@{
+    ViewData["Title"] = "تقرير الجرد السنوي - Pharaonic";
+    var inventoryItems = ViewData["InventoryItems"] as List<PesticideShop.Models.Product>;
+    var currentPage = (int)ViewData["CurrentPage"];
+    var totalPages = (int)ViewData["TotalPages"];
+    var totalItems = (int)ViewData["TotalItems"];
+    var pageSize = (int)ViewData["PageSize"];
+}
+
+<div class="annual-inventory-container">
+    <!-- Modern Header -->
+    <div class="modern-header">
+        <div class="header-background">
+            <div class="header-content">
+                <div class="header-icon">
+                    <span class="icon-large">📊</span>
+                </div>
+                <div class="header-text">
+                    <h1 class="main-title">تقرير الجرد السنوي - Pharaonic</h1>
+                    <p class="subtitle">تقرير شامل للمخزون والأرصدة لعام @DateTime.Now.Year</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="@Url.Action("ExportToExcel")" class="btn btn-success btn-lg">
+                    <span class="btn-icon">📊</span>
+                    <span class="btn-text">تصدير Excel</span>
+                </a>
+                <a href="@Url.Action("ExportDetailedExcel")" class="btn btn-warning btn-lg">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">تصدير مفصل</span>
+                </a>
+                <button onclick="window.print()" class="btn btn-primary btn-lg">
+                    <span class="btn-icon">🖨️</span>
+                    <span class="btn-text">طباعة التقرير</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewData["DebugInfo"] != null)
+    {
+        <div class="debug-section">
+            <div class="debug-card">
+                <div class="debug-header">
+                    <h3>ℹ️ معلومات تصحيح</h3>
+                </div>
+                <div class="debug-content">
+                    <p>@ViewData["DebugInfo"]</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Enhanced Summary Cards -->
+    <div class="summary-section">
+        <div class="summary-grid">
+            <div class="summary-card primary">
+                <div class="card-icon">💰</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["TotalSales"] != null ? ((decimal)ViewData["TotalSales"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">إجمالي المبيعات</div>
+                    <div class="card-subtitle">مبيعات سنة @DateTime.Now.Year</div>
+                </div>
+            </div>
+            
+            <div class="summary-card success">
+                <div class="card-icon">💵</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["NetProfit"] != null ? ((decimal)ViewData["NetProfit"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">صافي الربح</div>
+                    <div class="card-subtitle">ربح سنة @DateTime.Now.Year</div>
+                </div>
+            </div>
+            
+            <div class="summary-card info">
+                <div class="card-icon">📊</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["ProfitMargin"] != null ? ((decimal)ViewData["ProfitMargin"]).ToString("N1") : "0.0")%
+                    </div>
+                    <div class="card-label">هامش الربح</div>
+                    <div class="card-subtitle">نسبة الربح</div>
+                </div>
+            </div>
+            
+            <div class="summary-card warning">
+                <div class="card-icon">📦</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["TotalInventoryValue"] != null ? ((decimal)ViewData["TotalInventoryValue"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">قيمة المخزون</div>
+                    <div class="card-subtitle">قيمة البضائع المتوفرة</div>
+                </div>
+            </div>
+            
+            <div class="summary-card secondary">
+                <div class="card-icon">📦</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(inventoryItems?.Count ?? 0)
+                    </div>
+                    <div class="card-label">عدد المنتجات</div>
+                    <div class="card-subtitle">إجمالي المنتجات</div>
+                </div>
+            </div>
+            
+            <div class="summary-card danger">
+                <div class="card-icon">↩️</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["ReturnValue"] != null ? ((decimal)ViewData["ReturnValue"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">المرتجعات</div>
+                    <div class="card-subtitle">@(ViewData["ReturnTransactionsCount"] ?? 0) معاملة إرجاع</div>
+                </div>
+            </div>
+            
+            <div class="summary-card warning">
+                <div class="card-icon">🔄</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["ExchangeValue"] != null ? ((decimal)ViewData["ExchangeValue"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">الاستبدالات</div>
+                    <div class="card-subtitle">@(ViewData["ExchangeTransactionsCount"] ?? 0) معاملة استبدال</div>
+                </div>
+            </div>
+            
+            <div class="summary-card success">
+                <div class="card-icon">🛍️</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["GrossSales"] != null ? ((decimal)ViewData["GrossSales"]).ToString("N2") : "0.00")
+                    </div>
+                    <div class="card-label">إجمالي المبيعات</div>
+                    <div class="card-subtitle">قبل الاسترجاع والاستبدال</div>
+                </div>
+            </div>
+            
+            <div class="summary-card secondary">
+                <div class="card-icon">👥</div>
+                <div class="card-content">
+                    <div class="card-value">
+                        @(ViewData["TotalCustomers"] ?? 0)
+                    </div>
+                    <div class="card-label">العملاء النشطين</div>
+                    <div class="card-subtitle">إجمالي العملاء المسجلين</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Enhanced Tables Section -->
+    <div class="tables-section">
+        <!-- Inventory Table -->
+        <div class="table-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <h3 class="section-title">📦 المخزون الحالي</h3>
+                    <span class="section-subtitle">إجمالي المنتجات: @(inventoryItems?.Count ?? 0)</span>
+                </div>
+                <div class="header-right">
+                    <span class="total-value">إجمالي القيمة: @(ViewData["TotalInventoryValue"] != null ? ((decimal)ViewData["TotalInventoryValue"]).ToString("N2") : "0.00") جنيه</span>
+                </div>
+            </div>
+            
+            @if (inventoryItems?.Any() == true)
+            {
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>📦 المنتج</th>
+                                <th>🏷️ الفئة</th>
+                                <th>📊 الكمية</th>
+                                <th>💰 السعر</th>
+                                <th>💵 القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in inventoryItems)
+                            {
+                                var totalValue = item.Price * item.Quantity;
+                                <tr>
+                                    <td class="product-name">
+                                        <div class="product-info">
+                                            <span class="product-name-text">@item.Name</span>
+                                            @if (!string.IsNullOrEmpty(item.Notes))
+                                            {
+                                                <small class="product-description">@item.Notes</small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="category-cell">
+                                        <span class="category-badge @(item.Category?.Name?.Contains("مبيد") == true ? "pesticide" : "fertilizer")">
+                                            @(item.Category?.Name ?? "غير محدد")
+                                        </span>
+                                    </td>
+                                    <td class="quantity-cell">
+                                        <span class="quantity-badge @(item.Quantity > 0 ? "in-stock" : "out-of-stock")">
+                                            @item.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="price-cell">@item.Price.ToString("N2") جنيه</td>
+                                    <td class="total-value-cell">
+                                        <span class="value-badge">@totalValue.ToString("N2") جنيه</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                @if (totalPages > 1)
+                {
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span>عرض @((currentPage - 1) * pageSize + 1) إلى @(Math.Min(currentPage * pageSize, totalItems)) من @totalItems منتج</span>
+                        </div>
+                        <div class="pagination-controls">
+                            @if (currentPage > 1)
+                            {
+                                <a href="@Url.Action("Index", new { page = 1 })" class="pagination-btn first">⏮️ الأولى</a>
+                                <a href="@Url.Action("Index", new { page = currentPage - 1 })" class="pagination-btn prev">◀️ السابقة</a>
+                            }
+                            
+                            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                            {
+                                <a href="@Url.Action("Index", new { page = i })" class="pagination-btn @(i == currentPage ? "active" : "")">@i</a>
+                            }
+                            
+                            @if (currentPage < totalPages)
+                            {
+                                <a href="@Url.Action("Index", new { page = currentPage + 1 })" class="pagination-btn next">▶️ التالية</a>
+                                <a href="@Url.Action("Index", new { page = totalPages })" class="pagination-btn last">⏭️ الأخيرة</a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">📦</div>
+                    <h4>لا توجد منتجات في المخزون</h4>
+                    <p>لم يتم إضافة أي منتجات بعد.</p>
+                </div>
+            }
+        </div>
+
+
+
+    <!-- Enhanced Report Footer -->
+    <div class="report-footer">
+        <div class="footer-card">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h4>تم توليد التقرير بتاريخ @DateTime.Now.ToString("yyyy/MM/dd")</h4>
+                    <p>نظام إدارة متجر Pharaonic</p>
+                </div>
+                <div class="footer-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">إجمالي المنتجات:</span>
+                        <span class="stat-value">@(inventoryItems?.Count ?? 0)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">إجمالي العملاء:</span>
+                        <span class="stat-value">@(ViewData["TotalCustomers"] ?? 0)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .annual-inventory-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Modern Header */
+        .modern-header {
+            margin-bottom: 30px;
+        }
+
+        .header-background {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-icon {
+            margin-left: 20px;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+        }
+
+        /* Debug Section */
+        .debug-section {
+            margin-bottom: 30px;
+        }
+
+        .debug-card {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .debug-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+        }
+
+        /* Enhanced Summary Cards */
+        .summary-section {
+            margin-bottom: 40px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--card-color);
+        }
+
+        .summary-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .summary-card.primary { --card-color: #007bff; }
+        .summary-card.success { --card-color: #28a745; }
+        .summary-card.info { --card-color: #17a2b8; }
+        .summary-card.warning { --card-color: #ffc107; }
+        .summary-card.danger { --card-color: #dc3545; }
+        .summary-card.secondary { --card-color: #6c757d; }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--card-color);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 1rem;
+            color: #666;
+            opacity: 0.8;
+        }
+
+        /* Enhanced Tables */
+        .tables-section {
+            margin-bottom: 40px;
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 35px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0;
+            color: #333;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 8px;
+            display: block;
+            opacity: 0.8;
+        }
+
+        .total-value {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .modern-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 18px 15px;
+            text-align: right;
+            font-weight: 700;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 1.05rem;
+        }
+
+        .modern-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+            font-size: 1rem;
+        }
+
+        .modern-table tbody tr:hover {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Product and Customer Info */
+        .product-info, .customer-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name-text, .customer-name-text {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        /* Badges */
+        .category-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: inline-block;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .category-badge.pesticide {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .category-badge.fertilizer {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .quantity-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .quantity-badge.in-stock {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .quantity-badge.out-of-stock {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .value-badge {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .amount-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .amount-badge.purchase {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+        }
+
+        .amount-badge.paid {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .amount-badge.danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .balance-badge {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .balance-badge.debt {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .balance-badge.credit {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .count-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            display: inline-block;
+            min-width: 40px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .count-badge.danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .count-badge.warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+
+        .no-data {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        /* Report Footer */
+        .report-footer {
+            margin-top: 40px;
+        }
+
+        .footer-card {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 25px;
+        }
+
+        .footer-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .footer-info p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .footer-stats {
+            display: flex;
+            gap: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .annual-inventory-container {
+                padding: 15px;
+            }
+
+            .header-background {
+                padding: 20px;
+            }
+
+            .main-title {
+                font-size: 2rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-stats {
+                justify-content: center;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .modern-table {
+                font-size: 0.85rem;
+            }
+
+            .modern-table th,
+            .modern-table td {
+                padding: 10px 8px;
+            }
+
+            .card-value {
+                font-size: 1.5rem;
+            }
+
+            .card-icon {
+                font-size: 2rem;
+            }
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            padding: 10px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .pagination-btn:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .pagination-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .pagination-btn.first,
+        .pagination-btn.last {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border-color: #6c757d;
+        }
+
+        .pagination-btn.prev,
+        .pagination-btn.next {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-color: #17a2b8;
+        }
+
+        /* Print Styles */
+        @@media print {
+            .header-actions,
+            .debug-section,
+            .pagination-container {
+                display: none;
+            }
+
+            .annual-inventory-container {
+                padding: 0;
+            }
+
+            .summary-card,
+            .table-section,
+            .footer-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+}

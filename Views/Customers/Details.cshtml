@@ -1,0 +1,641 @@
+@model PesticideShop.Models.Customer
+
+@{
+    ViewData["Title"] = "تفاصيل العميل";
+    var remainingBalance = ViewData["RemainingBalance"] as decimal? ?? 0;
+    var invoices = ViewData["Invoices"] as List<PesticideShop.Models.Invoice>;
+    
+    // حساب دقيق للمعاملات مع معالجة الإرجاع والاستبدال
+    var transactions = Model.Transactions ?? new List<PesticideShop.Models.CustomerTransaction>();
+    
+    var totalPurchases = transactions.Sum(t => t.TotalPrice);
+    var totalPaid = transactions.Sum(t => t.AmountPaid);
+    var actualBalance = totalPurchases - totalPaid;
+    
+    // تصنيف المعاملات
+    var positiveTransactions = transactions.Where(t => t.TotalPrice > 0).ToList(); // مشتريات
+    var negativeTransactions = transactions.Where(t => t.TotalPrice < 0).ToList(); // إرجاع/استبدال
+    var zeroTransactions = transactions.Where(t => t.TotalPrice == 0).ToList(); // معاملات أخرى
+    
+    var totalSales = positiveTransactions.Sum(t => t.TotalPrice);
+    var totalReturns = Math.Abs(negativeTransactions.Sum(t => t.TotalPrice));
+    var netPurchases = totalSales - totalReturns;
+    
+    var totalPaidForSales = positiveTransactions.Sum(t => t.AmountPaid);
+    var totalPaidForReturns = negativeTransactions.Sum(t => t.AmountPaid);
+    
+    // اكتشاف أخطاء الدفع (فقط للإرجاع العادي، وليس الاستبدال)
+    var incorrectPayments = negativeTransactions.Where(t => t.AmountPaid > 0 && t.Notes?.Contains("استبدال") != true).ToList();
+    var totalIncorrectAmount = incorrectPayments.Sum(t => t.AmountPaid + Math.Abs(t.TotalPrice));
+    
+    // معاملات الاستبدال
+    var exchangeTransactions = negativeTransactions.Where(t => t.Notes?.Contains("استبدال") == true).ToList();
+    var exchangePayments = exchangeTransactions.Where(t => t.AmountPaid > 0).ToList();
+    var totalExchangeAmount = exchangePayments.Sum(t => t.AmountPaid);
+    
+    // إحصائيات إضافية
+    var totalDiscount = transactions.Sum(t => t.Discount);
+    var averageTransactionValue = transactions.Any() ? transactions.Average(t => t.TotalPrice) : 0;
+    var mostFrequentProduct = transactions.GroupBy(t => t.Product?.Name)
+                                         .OrderByDescending(g => g.Count())
+                                         .FirstOrDefault();
+    var lastVisit = transactions.OrderByDescending(t => t.Date).FirstOrDefault()?.Date;
+    var firstVisit = transactions.OrderBy(t => t.Date).FirstOrDefault()?.Date;
+    var customerLifetime = lastVisit.HasValue && firstVisit.HasValue ? (lastVisit.Value - firstVisit.Value).Days : 0;
+    
+    // دالة لتحويل طريقة الدفع إلى نص عربي
+    string GetPaymentMethodDisplayName(string paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            "cash" => "💵 نقداً",
+            "visa" => "💳 فيزا",
+            "instapay" => "📱 انستاباي",
+            "wallet" => "👛 محفظة إلكترونية",
+            "delivery" => "🚚 دفع عند الاستلام",
+            _ => paymentMethod
+        };
+    }
+}
+
+<style>
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .sortable:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .sortable::after {
+        content: '↕️';
+        margin-right: 5px;
+        opacity: 0.5;
+    }
+    
+    .sortable.sort-asc::after {
+        content: '↑';
+        opacity: 1;
+    }
+    
+    .sortable.sort-desc::after {
+        content: '↓';
+        opacity: 1;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .transaction-type-filter {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .filter-btn {
+        padding: 5px 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .quick-action-card {
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .export-options {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: none;
+        min-width: 150px;
+    }
+    
+    .export-options.show {
+        display: block;
+    }
+    
+    .export-options a {
+        display: block;
+        padding: 8px 15px;
+        text-decoration: none;
+        color: #333;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .export-options a:last-child {
+        border-bottom: none;
+    }
+    
+    .export-options a:hover {
+        background: #f8f9fa;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .btn-group-vertical .btn {
+        margin-bottom: 2px;
+    }
+    
+    .btn-group-vertical .btn:last-child {
+        margin-bottom: 0;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="mb-2">👥 دفتر حساب العميل</h1>
+                            <p class="mb-0">سجل المعاملات والمنتجات الكامل مع تتبع الحسابات</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a asp-action="AddTransaction" asp-route-id="@Model.Id" class="btn btn-success me-2">
+                                💰 إضافة معاملة
+                            </a>
+                            <a asp-action="Index" class="btn btn-outline-light">
+                                ← العودة للقائمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Information & Account Summary -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">👤 بيانات العميل</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">اسم العميل:</label>
+                            <p class="fw-bold customer-name">@Model.Name</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">رقم الهاتف:</label>
+                            <p class="fw-bold font-monospace customer-phone">@Model.PhoneNumbers</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">البريد الإلكتروني:</label>
+                            <p class="fw-bold customer-email">@(string.IsNullOrEmpty(Model.Email) ? "غير محدد" : Model.Email)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">العنوان الكامل:</label>
+                            <p class="fw-bold customer-address">@Model.FullAddress</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">عدد المعاملات:</label>
+                            <p class="fw-bold">@(Model.Transactions?.Count ?? 0) معاملة</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">حالة الحساب:</label>
+                            <p class="fw-bold @(actualBalance > 0 ? "text-danger" : "text-success")">
+                                @(actualBalance > 0 ? "مدين" : "مُسدد")
+                            </p>
+                        </div>
+                    </div>
+                    @if (lastVisit.HasValue)
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">آخر زيارة:</label>
+                                <p class="fw-bold">@lastVisit.Value.ToString("dd/MM/yyyy")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">عمر العميل:</label>
+                                <p class="fw-bold">@customerLifetime يوم</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">💰 ملخص الحساب</h5>
+                </div>
+                <div class="card-body">
+                    @if (invoices?.Any() == true)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">مصدر الطلبات:</label>
+                                <div>
+                                    @{
+                                        var orderOrigins = invoices.Select(i => i.OrderOrigin).Distinct().ToList();
+                                        var originCounts = orderOrigins.ToDictionary(o => o, o => invoices.Count(i => i.OrderOrigin == o));
+                                    }
+                                    @foreach (var origin in originCounts)
+                                    {
+                                        var icon = origin.Key switch
+                                        {
+                                            PesticideShop.Models.OrderOrigin.Website => "🌐",
+                                            PesticideShop.Models.OrderOrigin.Instagram => "📷",
+                                            PesticideShop.Models.OrderOrigin.Facebook => "📘",
+                                            PesticideShop.Models.OrderOrigin.WhatsApp => "💬",
+                                            PesticideShop.Models.OrderOrigin.Phone => "📞",
+                                            PesticideShop.Models.OrderOrigin.WalkIn => "🚶",
+                                            _ => "❓"
+                                        };
+                                        <span class="badge bg-secondary me-1">@icon @origin.Value</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">💳 طرق الدفع المستخدمة:</label>
+                                <div>
+                                    @{
+                                        var paymentMethods = invoices.Where(i => !string.IsNullOrEmpty(i.PaymentMethod))
+                                                                   .Select(i => i.PaymentMethod)
+                                                                   .Distinct()
+                                                                   .ToList();
+                                    }
+                                    @if (paymentMethods.Any())
+                                    {
+                                        @foreach (var method in paymentMethods.Take(3))
+                                        {
+                                            <span class="badge bg-info me-1">@GetPaymentMethodDisplayName(method)</span>
+                                        }
+                                        @if (paymentMethods.Count > 3)
+                                        {
+                                            <span class="badge bg-light text-dark">+@(paymentMethods.Count - 3) أكثر</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (incorrectPayments.Any())
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <h6>⚠️ تحذير: أخطاء في الدفع!</h6>
+                            <p class="mb-1">يوجد @incorrectPayments.Count معاملة إرجاع تم الدفع فيها بدلاً من الاسترداد.</p>
+                            <p class="mb-0"><strong>إجمالي الخطأ:</strong> @totalIncorrectAmount.ToString("N2") جنيه</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Statistics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📈 إحصائيات متقدمة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">🛒</div>
+                                <h4 data-total-sales="@totalSales.ToString("N2")">@positiveTransactions.Count</h4>
+                                <small class="text-muted">معاملة شراء</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">↩️</div>
+                                <h4 data-total-returns="@totalReturns.ToString("N2")">@negativeTransactions.Count</h4>
+                                <small class="text-muted">معاملة إرجاع</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">📦</div>
+                                <h4>@(positiveTransactions.Sum(t => Math.Abs(t.Quantity)))</h4>
+                                <small class="text-muted">قطعة مشتراة</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">💰</div>
+                                <h4>@averageTransactionValue.ToString("N0")</h4>
+                                <small class="text-muted">متوسط المعاملة</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">🎯</div>
+                                <h4>@totalDiscount.ToString("N0")</h4>
+                                <small class="text-muted">إجمالي الخصم</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center mb-3">
+                            <div class="border rounded p-3 stats-card">
+                                <div class="fs-1 mb-2">💳</div>
+                                @{
+                                    var lastTransaction = transactions.OrderByDescending(t => t.Date).FirstOrDefault();
+                                }
+                                @if (lastTransaction != null)
+                                {
+                                    <h4>@lastTransaction.Date.ToString("dd/MM")</h4>
+                                    <small class="text-muted">@lastTransaction.Date.Year</small>
+                                }
+                                else
+                                {
+                                    <h4>-</h4>
+                                    <small class="text-muted">لا توجد معاملات</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden data for JavaScript -->
+                    <div style="display: none;">
+                        <span data-net-purchases="@netPurchases.ToString("N2")"></span>
+                        <span data-actual-balance="@actualBalance.ToString("N2")"></span>
+                    </div>
+                    
+                    @if (mostFrequentProduct != null)
+                    {
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6>🏆 المنتج الأكثر طلباً</h6>
+                                    <p class="mb-0"><strong>@mostFrequentProduct.Key</strong> - تم طلبه @mostFrequentProduct.Count() مرة</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label">البحث في المعاملات:</label>
+                        <input type="text" class="form-control search-box" id="searchInput" placeholder="ابحث في المنتجات أو الملاحظات...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">نوع المعاملة:</label>
+                        <div class="transaction-type-filter">
+                            <button class="filter-btn active" data-filter="all">الكل</button>
+                            <button class="filter-btn" data-filter="sale">🛍️ المبيعات</button>
+                            <button class="filter-btn" data-filter="return">↩️ المرتجعات</button>
+                            <button class="filter-btn" data-filter="exchange">🔄 الاستبدالات</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ترتيب حسب:</label>
+                        <select class="form-select" id="sortSelect">
+                            <option value="date-desc">التاريخ (الأحدث)</option>
+                            <option value="date-asc">التاريخ (الأقدم)</option>
+                            <option value="product-asc">المنتج (أ-ي)</option>
+                            <option value="product-desc">المنتج (ي-أ)</option>
+                            <option value="total-desc">الإجمالي (الأكبر)</option>
+                            <option value="total-asc">الإجمالي (الأصغر)</option>
+                            <option value="remaining-desc">المتبقي (الأكبر)</option>
+                            <option value="remaining-asc">المتبقي (الأصغر)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <a href="#" onclick="printCustomerReport()" class="card text-decoration-none h-100 quick-action-card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">🖨️</div>
+                    <h6>طباعة التقرير</h6>
+                    <small class="text-muted">طباعة تقرير مفصل</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 quick-action-card position-relative">
+                <div class="card-body text-center" onclick="toggleExportOptions()">
+                    <div class="fs-1 mb-2">📊</div>
+                    <h6>تصدير البيانات</h6>
+                    <small class="text-muted">CSV, Excel, PDF</small>
+                </div>
+                <div class="export-options" id="exportOptions">
+                    <a href="#" onclick="exportCustomerData('csv')">📄 CSV</a>
+                    <a href="#" onclick="exportCustomerData('excel')">📊 Excel</a>
+                    <a href="#" onclick="exportCustomerData('pdf')">📋 PDF</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-action="AddTransaction" asp-route-id="@Model.Id" class="card text-decoration-none h-100 quick-action-card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">💰</div>
+                    <h6>إضافة معاملة</h6>
+                    <small class="text-muted">بيع، إرجاع، استبدال</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="card text-decoration-none h-100 quick-action-card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">✏️</div>
+                    <h6>تعديل البيانات</h6>
+                    <small class="text-muted">تحديث معلومات العميل</small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📋 سجل المعاملات</h5>
+                    <span class="badge bg-primary" id="transactionsCount">@transactions.Count معاملة</span>
+                </div>
+                <div class="card-body">
+                    @if (transactions.Any())
+                    {
+                        <div class="table-container">
+                            <table class="table table-hover" id="transactionsTable">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="date">التاريخ</th>
+                                        <th class="sortable" data-sort="product">المنتج</th>
+                                        <th class="sortable" data-sort="quantity">الكمية</th>
+                                        <th class="sortable" data-sort="price">السعر</th>
+                                        <th class="sortable" data-sort="discount">الخصم</th>
+                                        <th class="sortable" data-sort="total">الإجمالي</th>
+                                        <th class="sortable" data-sort="paid">المدفوع</th>
+                                        <th class="sortable" data-sort="remaining">المتبقي</th>
+                                        <th>النوع</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var transaction in transactions.OrderByDescending(t => t.Date))
+                                    {
+                                        var isReturn = transaction.Quantity < 0;
+                                        var isExchange = transaction.Notes?.Contains("استبدال") == true;
+                                        var remaining = transaction.TotalPrice - transaction.AmountPaid;
+                                        
+                                        <tr class="@(isReturn ? "table-warning" : remaining > 0 ? "table-light" : "")" 
+                                            data-type="@(isExchange ? "exchange" : isReturn ? "return" : "sale")"
+                                            data-product="@(transaction.Product?.Name ?? "")"
+                                            data-notes="@(transaction.Notes ?? "")">
+                                            <td data-date="@transaction.Date.Ticks">@transaction.Date.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (transaction.Product != null)
+                                                {
+                                                    <span>@transaction.Product.Name</span>
+                                                    @if (!string.IsNullOrEmpty(transaction.Product.Category?.Name))
+                                                    {
+                                                        <br><small class="text-muted">@transaction.Product.Category.Name</small>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">منتج محذوف</span>
+                                                }
+                                            </td>
+                                            <td data-quantity="@transaction.Quantity">
+                                                <span class="@(isReturn ? "text-danger" : "text-success")">
+                                                    @(isReturn ? "↩️" : "📦") @Math.Abs(transaction.Quantity)
+                                                </span>
+                                            </td>
+                                            <td data-price="@transaction.Price">@transaction.Price.ToString("N2") جنيه</td>
+                                            <td data-discount="@transaction.Discount">@transaction.Discount.ToString("N2") جنيه</td>
+                                            <td data-total="@transaction.TotalPrice">@transaction.TotalPrice.ToString("N2") جنيه</td>
+                                            <td data-paid="@transaction.AmountPaid">@transaction.AmountPaid.ToString("N2") جنيه</td>
+                                            <td data-remaining="@remaining">
+                                                <span class="@(remaining > 0 ? "text-danger" : remaining < 0 ? "text-success" : "text-muted")">
+                                                    @remaining.ToString("N2") جنيه
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (isExchange)
+                                                {
+                                                    <span class="badge bg-warning">🔄 استبدال</span>
+                                                }
+                                                else if (isReturn)
+                                                {
+                                                    <span class="badge bg-danger">↩️ إرجاع</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">🛍️ بيع</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group-vertical btn-group-sm" role="group">
+                                                    <a asp-action="EditTransaction" asp-route-id="@transaction.Id" 
+                                                       class="btn btn-outline-warning btn-sm" title="تعديل المعاملة">
+                                                      
+                                                    </a>
+                                                    <form asp-action="DeleteTransaction" asp-route-id="@transaction.Id" 
+                                                          method="post" class="d-inline" 
+                                                          onsubmit="return confirm('هل أنت متأكد من حذف هذه المعاملة؟')">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="حذف المعاملة">
+                                                         
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div class="fs-1 mb-3">📋</div>
+                            <h4>لا توجد معاملات</h4>
+                            <p class="text-muted">لم يتم تسجيل أي معاملات لهذا العميل بعد.</p>
+                            <a asp-action="AddTransaction" asp-route-id="@Model.Id" class="btn btn-primary">
+                                💰 إضافة أول معاملة
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript for Customers Details page is now in site.js
+// The page will automatically initialize when loaded
+</script>

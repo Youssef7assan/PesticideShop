@@ -1,0 +1,485 @@
+@model PesticideShop.Models.MultiDeleteReturnRequest
+@using PesticideShop.Models
+
+@{
+    ViewData["Title"] = "حذف متعدد للمرتجعات";
+    var returnItems = ViewBag.ReturnItems as List<ReturnDeleteItem>;
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                🗑️ حذف متعدد للمرتجعات
+                            </h2>
+                            <p class="mb-0 opacity-75">حذف عدة مرتجعات في عملية واحدة مع إرجاع المخزون تلقائياً</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Index", "Return")" class="btn btn-outline-light">
+                                ⬅️ العودة للمرتجعات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ✅ @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ❌ @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            ⚠️ @TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form asp-action="MultiDelete" method="post" id="multiDeleteForm">
+        <div class="row">
+            <!-- Delete Form -->
+            <div class="col-md-9">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            📋 قائمة المرتجعات المتاحة للحذف
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (returnItems != null && returnItems.Any())
+                        {
+                            <!-- Selection Toolbar -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="btn-toolbar" role="toolbar">
+                                        <div class="btn-group me-2" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">
+                                                ☑️ تحديد الكل
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">
+                                                ⬜ إلغاء التحديد
+                                            </button>
+                                        </div>
+                                        <div class="btn-group me-2" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" id="selectTodayBtn">
+                                                📅 تحديد مرتجعات اليوم
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning" id="selectWeekBtn">
+                                                📅 تحديد مرتجعات الأسبوع
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Returns Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle" id="returnsTable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th width="50">
+                                                <input type="checkbox" class="form-check-input" id="selectAllCheckbox">
+                                            </th>
+                                            <th>رقم فاتورة الإرجاع</th>
+                                            <th>الفاتورة الأصلية</th>
+                                            <th>المنتج</th>
+                                            <th>الكمية المرتجعة</th>
+                                            <th>سبب الإرجاع</th>
+                                            <th>تاريخ الإرجاع</th>
+                                            <th>أنشأ بواسطة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < returnItems.Count; i++)
+                                        {
+                                            var item = returnItems[i];
+                                            var isToday = item.ReturnDate.Date == DateTime.Today;
+                                            var isThisWeek = item.ReturnDate >= DateTime.Today.AddDays(-7);
+                                            
+                                            <tr class="return-item @(isToday ? "table-info" : "") @(isThisWeek ? "table-warning" : "")" 
+                                                data-return-id="@item.ReturnId" 
+                                                data-is-today="@isToday.ToString().ToLower()" 
+                                                data-is-week="@isThisWeek.ToString().ToLower()">
+                                                <td>
+                                                    <input type="checkbox" 
+                                                           class="form-check-input return-checkbox" 
+                                                           name="ReturnIds" 
+                                                           value="@item.ReturnId"
+                                                           data-return-id="@item.ReturnId"
+                                                           data-product-name="@item.ProductName"
+                                                           data-quantity="@item.ReturnedQuantity">
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-danger">@item.ReturnInvoiceNumber</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">@item.OriginalInvoiceNumber</span>
+                                                </td>
+                                                <td>
+                                                    <strong>@item.ProductName</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-warning text-dark">@item.ReturnedQuantity</span>
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(item.ReturnReason))
+                                                    {
+                                                        <span class="text-muted">@item.ReturnReason</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">غير محدد</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">@item.ReturnDate.ToString("yyyy-MM-dd HH:mm")</small>
+                                                    @if (isToday)
+                                                    {
+                                                        <span class="badge bg-info ms-1">اليوم</span>
+                                                    }
+                                                    else if (isThisWeek)
+                                                    {
+                                                        <span class="badge bg-warning ms-1">هذا الأسبوع</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">@item.CreatedBy</small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-undo fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">لا توجد مرتجعات</h5>
+                                <p class="text-muted">لم يتم تسجيل أي مرتجعات بعد</p>
+                                <a href="@Url.Action("Create", "Return")" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    إرجاع جديد
+                                </a>
+                            </div>
+                        }
+
+                        <!-- Notes -->
+                        @if (returnItems != null && returnItems.Any())
+                        {
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <label asp-for="Notes" class="form-label">
+                                        📝 ملاحظات إضافية (اختياري)
+                                    </label>
+                                    <textarea asp-for="Notes" class="form-control" rows="3" 
+                                              placeholder="أي ملاحظات حول عملية الحذف المتعدد..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-danger" id="submitBtn" disabled>
+                                            🗑️ حذف المرتجعات المحددة
+                                        </button>
+                                        <button type="reset" class="btn btn-outline-secondary">
+                                            🔄 إعادة تعيين
+                                        </button>
+                                        <a href="@Url.Action("Index", "Return")" class="btn btn-outline-danger">
+                                            ❌ إلغاء
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            📊 ملخص الحذف
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6 class="text-muted">عدد المرتجعات المحددة</h6>
+                            <h2 class="text-danger" id="selectedCount">0</h2>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted">إجمالي الكميات</h6>
+                            <h3 id="totalQuantity">0</h3>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted">المنتجات المتأثرة</h6>
+                            <div id="affectedProducts" class="small">
+                                <p class="text-muted">لم يتم تحديد أي مرتجعات بعد</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning Card -->
+                <div class="card border-0 shadow-sm mt-3 bg-warning bg-opacity-10">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            ⚠️ تحذير هام
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2">
+                                ⚠️ عملية الحذف لا يمكن التراجع عنها
+                            </li>
+                            <li class="mb-2">
+                                📦 سيتم إرجاع المخزون تلقائياً
+                            </li>
+                            <li class="mb-2">
+                                🧾 سيتم حذف الفواتير المرتبطة
+                            </li>
+                            <li class="mb-0">
+                                💰 سيتم حذف المعاملات المالية
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                @if (returnItems != null && returnItems.Any())
+                {
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                📈 إحصائيات
+                            </h6>
+                        </div>
+                        <div class="card-body small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>إجمالي المرتجعات:</span>
+                                <strong>@returnItems.Count</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>مرتجعات اليوم:</span>
+                                <strong>@returnItems.Count(r => r.ReturnDate.Date == DateTime.Today)</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>مرتجعات الأسبوع:</span>
+                                <strong>@returnItems.Count(r => r.ReturnDate >= DateTime.Today.AddDays(-7))</strong>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Select All checkbox
+            $('#selectAllCheckbox').change(function() {
+                $('.return-checkbox').prop('checked', $(this).prop('checked'));
+                updateSummary();
+            });
+
+            // Individual checkbox
+            $(document).on('change', '.return-checkbox', function() {
+                updateSelectAllCheckbox();
+                updateSummary();
+            });
+
+            // Select All button
+            $('#selectAllBtn').click(function() {
+                $('.return-checkbox').prop('checked', true);
+                $('#selectAllCheckbox').prop('checked', true);
+                updateSummary();
+            });
+
+            // Deselect All button
+            $('#deselectAllBtn').click(function() {
+                $('.return-checkbox').prop('checked', false);
+                $('#selectAllCheckbox').prop('checked', false);
+                updateSummary();
+            });
+
+            // Select Today button
+            $('#selectTodayBtn').click(function() {
+                $('.return-item[data-is-today="true"] .return-checkbox').prop('checked', true);
+                updateSelectAllCheckbox();
+                updateSummary();
+            });
+
+            // Select Week button
+            $('#selectWeekBtn').click(function() {
+                $('.return-item[data-is-week="true"] .return-checkbox').prop('checked', true);
+                updateSelectAllCheckbox();
+                updateSummary();
+            });
+
+            function updateSelectAllCheckbox() {
+                const totalCheckboxes = $('.return-checkbox').length;
+                const checkedCheckboxes = $('.return-checkbox:checked').length;
+                $('#selectAllCheckbox').prop('checked', totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes);
+            }
+
+            function updateSummary() {
+                const selectedCheckboxes = $('.return-checkbox:checked');
+                const selectedCount = selectedCheckboxes.length;
+                let totalQuantity = 0;
+                const products = new Map();
+
+                selectedCheckboxes.each(function() {
+                    const quantity = parseInt($(this).data('quantity')) || 0;
+                    const productName = $(this).data('product-name');
+                    
+                    totalQuantity += quantity;
+                    
+                    if (products.has(productName)) {
+                        products.set(productName, products.get(productName) + quantity);
+                    } else {
+                        products.set(productName, quantity);
+                    }
+                });
+
+                $('#selectedCount').text(selectedCount);
+                $('#totalQuantity').text(totalQuantity);
+
+                if (selectedCount > 0) {
+                    let productsHtml = '<ul class="mb-0">';
+                    products.forEach((quantity, productName) => {
+                        productsHtml += `<li><strong>${productName}</strong>: ${quantity} وحدة</li>`;
+                    });
+                    productsHtml += '</ul>';
+                    $('#affectedProducts').html(productsHtml);
+                    $('#submitBtn').prop('disabled', false);
+                } else {
+                    $('#affectedProducts').html('<p class="text-muted">لم يتم تحديد أي مرتجعات بعد</p>');
+                    $('#submitBtn').prop('disabled', true);
+                }
+            }
+
+            // Form submission
+            $('#multiDeleteForm').on('submit', function(e) {
+                const selectedCount = $('.return-checkbox:checked').length;
+                
+                if (selectedCount === 0) {
+                    e.preventDefault();
+                    alert('يرجى تحديد مرتجع واحد على الأقل للحذف');
+                    return false;
+                }
+
+                const confirmMessage = `⚠️ هل أنت متأكد من حذف ${selectedCount} مرتجع؟\n\n` +
+                    `هذا الإجراء سيؤدي إلى:\n` +
+                    `• حذف ${selectedCount} مرتجع\n` +
+                    `• إرجاع المخزون للمنتجات المتأثرة\n` +
+                    `• حذف الفواتير والمعاملات المرتبطة\n\n` +
+                    `⚠️ لا يمكن التراجع عن هذا الإجراء!`;
+
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Reset form
+            $('button[type="reset"]').click(function() {
+                $('.return-checkbox').prop('checked', false);
+                $('#selectAllCheckbox').prop('checked', false);
+                updateSummary();
+            });
+
+            // Initialize
+            updateSummary();
+        });
+    </script>
+
+    <style>
+        .bg-gradient-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333) !important;
+        }
+
+        .opacity-75 {
+            opacity: 0.75;
+        }
+
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,.15) !important;
+        }
+
+        .return-item {
+            transition: background-color 0.2s ease;
+        }
+
+        .return-item:hover {
+            background-color: rgba(0, 123, 255, 0.05) !important;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 0.8em;
+        }
+
+        .btn-toolbar {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .sticky-top {
+            position: -webkit-sticky;
+            position: sticky;
+        }
+
+        .form-check-input {
+            cursor: pointer;
+            width: 1.2em;
+            height: 1.2em;
+        }
+
+        .bg-warning.bg-opacity-10 {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+
+        .table-info {
+            background-color: rgba(13, 202, 240, 0.1) !important;
+        }
+
+        .table-warning {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+    </style>
+}
+

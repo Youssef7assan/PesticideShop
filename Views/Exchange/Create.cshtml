@@ -1,0 +1,571 @@
+@model PesticideShop.Controllers.ExchangeRequest
+
+@{
+    ViewData["Title"] = "استبدال منتج";
+    var products = ViewBag.Products as List<PesticideShop.Models.Product>;
+    var originalInvoiceNumber = ViewBag.OriginalInvoiceNumber as string;
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="fas fa-exchange-alt"></i>
+                                استبدال منتج
+                            </h2>
+                            <p class="mb-0 opacity-75">استبدال منتج موجود في فاتورة سابقة بمنتج آخر</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("MultiCreate", new { originalInvoiceNumber = originalInvoiceNumber })" class="btn btn-warning me-2" title="استبدال متعدد للمنتجات">
+                                🔄 استبدال متعدد
+                            </a>
+                            <a href="@Url.Action("Index", "Invoices")" class="btn btn-light">
+                                ⬅️ العودة للفواتير
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" id="exchangeForm">
+        <div class="row">
+            <!-- Exchange Form -->
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit text-primary"></i>
+                            بيانات الاستبدال
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Original Invoice -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="OriginalInvoiceNumber" class="form-label">
+                                    <i class="fas fa-file-invoice"></i>
+                                    رقم الفاتورة الأصلية *
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="OriginalInvoiceNumber" class="form-control" 
+                                           placeholder="مثال: INV-20241225-001" 
+                                           value="@originalInvoiceNumber" />
+                                    <button type="button" id="loadInvoiceBtn" class="btn btn-outline-primary">
+                                        🔍 تحميل
+                                    </button>
+                                </div>
+                                <span asp-validation-for="OriginalInvoiceNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    رقم فاتورة الاستبدال *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">EXC</span>
+                                    <input type="text" id="exchangeInvoiceNumber" class="form-control" 
+                                           placeholder="أدخل باقي الرقم..." 
+                                           maxlength="20" />
+                                </div>
+                                <small class="form-text text-muted">سيتم إنشاء رقم فاتورة الاستبدال تلقائياً: EXC + الرقم الذي تدخله</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Status -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div id="invoiceStatus">
+                                    <!-- Invoice status will be shown here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Original Product Selection -->
+                        <div class="row mb-3" id="originalProductSection" style="display: none;">
+                            <div class="col-md-6">
+                                <label asp-for="OldProductId" class="form-label">
+                                    <i class="fas fa-box"></i>
+                                    المنتج المراد استبداله *
+                                </label>
+                                <select asp-for="OldProductId" class="form-select" id="oldProductSelect">
+                                    <option value="">اختر المنتج...</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                                <span asp-validation-for="OldProductId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ExchangedQuantity" class="form-label">
+                                    <i class="fas fa-sort-numeric-up"></i>
+                                    الكمية المراد استبدالها *
+                                </label>
+                                <input asp-for="ExchangedQuantity" type="number" class="form-control" 
+                                       min="1" placeholder="1" />
+                                <span asp-validation-for="ExchangedQuantity" class="text-danger"></span>
+                                <small class="form-text text-muted" id="availableQuantityText"></small>
+                            </div>
+                        </div>
+
+                        <!-- New Product Selection -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="NewProductId" class="form-label">
+                                    <i class="fas fa-box-open"></i>
+                                    المنتج الجديد *
+                                </label>
+                                <select asp-for="NewProductId" class="form-select" id="newProductSelect">
+                                    <option value="">اختر المنتج الجديد...</option>
+                                    @if (products != null && products.Any())
+                                    {
+                                        @foreach (var product in products)
+                                        {
+                                            <option value="@product.Id" 
+                                                    data-price="@product.Price" 
+                                                    data-quantity="@product.Quantity">
+                                                @product.Name - @product.Price.ToString("N2") ج.م (متوفر: @product.Quantity)
+                                            </option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="" disabled>لا توجد منتجات متاحة</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="NewProductId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-calculator"></i>
+                                    فرق السعر
+                                </label>
+                                <div id="priceDifference" class="form-control-plaintext">
+                                    <span class="text-muted">سيتم حساب الفرق تلقائياً</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Reason -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="ExchangeReason" class="form-label">
+                                    <i class="fas fa-comment"></i>
+                                    سبب الاستبدال
+                                </label>
+                                <select asp-for="ExchangeReason" class="form-select">
+                                    <option value="">اختر السبب...</option>
+                                    <option value="عيب في المنتج">عيب في المنتج</option>
+                                    <option value="مقاس غير مناسب">مقاس غير مناسب</option>
+                                    <option value="لون غير مرغوب">لون غير مرغوب</option>
+                                    <option value="تفضيل العميل">تفضيل العميل</option>
+                                    <option value="منتج منتهي الصلاحية">منتج منتهي الصلاحية</option>
+                                    <option value="أخرى">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Notes" class="form-label">
+                                    <i class="fas fa-sticky-note"></i>
+                                    ملاحظات إضافية
+                                </label>
+                                <textarea asp-for="Notes" class="form-control" rows="3" 
+                                          placeholder="أي ملاحظات إضافية حول عملية الاستبدال..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success" id="submitBtn">
+                                        ✅ تنفيذ الاستبدال
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        🔄 إعادة تعيين
+                                    </button>
+                                    <a href="@Url.Action("Index", "Invoices")" class="btn btn-outline-danger">
+                                        ❌ إلغاء
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list"></i>
+                            ملخص الاستبدال
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="exchangeSummary">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p>قم بملء بيانات الاستبدال لرؤية الملخص</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exchange Rules -->
+                <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            قواعد الاستبدال
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                يمكن استبدال المنتجات المباعة فقط
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                المنتج الجديد يجب أن يكون متوفراً
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                يتم تحديث المخزون تلقائياً
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success"></i>
+                                يتم إنشاء فاتورة استبدال جديدة
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-info text-info"></i>
+                                قد تحتاج لدفع أو استرداد الفرق في السعر
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3) !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-label i {
+    margin-right: 5px;
+    color: #6c757d;
+}
+
+#priceDifference {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+}
+
+.price-positive {
+    color: #dc3545 !important;
+}
+
+.price-negative {
+    color: #28a745 !important;
+}
+
+.price-zero {
+    color: #6c757d !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const originalInvoiceInput = document.querySelector('[name="OriginalInvoiceNumber"]');
+    const loadInvoiceBtn = document.getElementById('loadInvoiceBtn');
+    const oldProductSelect = document.getElementById('oldProductSelect');
+    const newProductSelect = document.getElementById('newProductSelect');
+    const quantityInput = document.querySelector('[name="ExchangedQuantity"]');
+    const originalProductSection = document.getElementById('originalProductSection');
+    const invoiceStatus = document.getElementById('invoiceStatus');
+    const priceDifferenceDiv = document.getElementById('priceDifference');
+    const exchangeSummary = document.getElementById('exchangeSummary');
+    const exchangeInvoiceNumberInput = document.getElementById('exchangeInvoiceNumber');
+
+    let invoiceItems = [];
+    let oldProductPrice = 0;
+
+    // Generate exchange invoice number automatically
+    function generateExchangeInvoiceNumber() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const time = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+        
+        // Generate a unique number based on timestamp
+        const uniqueNumber = `${year}${month}${day}${time}`;
+        
+        // Set the input value
+        exchangeInvoiceNumberInput.value = uniqueNumber;
+        
+        // Show preview
+        showExchangeInvoicePreview();
+    }
+
+    // Show exchange invoice number preview
+    function showExchangeInvoicePreview() {
+        const userInput = exchangeInvoiceNumberInput.value.trim();
+        if (userInput) {
+            const fullNumber = `EXC${userInput}`;
+            const preview = document.getElementById('exchangeInvoicePreview');
+            if (preview) {
+                preview.textContent = `رقم الفاتورة الكامل: ${fullNumber}`;
+            } else {
+                // Create preview element if it doesn't exist
+                const previewElement = document.createElement('small');
+                previewElement.id = 'exchangeInvoicePreview';
+                previewElement.className = 'form-text text-success fw-bold';
+                previewElement.textContent = `رقم الفاتورة الكامل: ${fullNumber}`;
+                exchangeInvoiceNumberInput.parentNode.parentNode.appendChild(previewElement);
+            }
+        } else {
+            const preview = document.getElementById('exchangeInvoicePreview');
+            if (preview) {
+                preview.remove();
+            }
+        }
+    }
+
+    // Auto-generate exchange invoice number on page load
+    generateExchangeInvoiceNumber();
+
+    // Update preview when user types
+    exchangeInvoiceNumberInput.addEventListener('input', showExchangeInvoicePreview);
+
+    // Load invoice items
+    loadInvoiceBtn.addEventListener('click', async function() {
+        const invoiceNumber = originalInvoiceInput.value.trim();
+        
+        if (!invoiceNumber) {
+            alert('يرجى إدخال رقم الفاتورة');
+            return;
+        }
+
+        try {
+            loadInvoiceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+            loadInvoiceBtn.disabled = true;
+
+            const response = await fetch(`/Exchange/GetInvoiceItems?invoiceNumber=${encodeURIComponent(invoiceNumber)}`);
+            const data = await response.json();
+
+            if (data.success) {
+                invoiceItems = data.items;
+                populateOldProductSelect();
+                originalProductSection.style.display = 'block';
+                invoiceStatus.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        تم تحميل الفاتورة بنجاح (${data.items.length} منتج)
+                    </div>
+                `;
+            } else {
+                invoiceStatus.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${data.message}
+                    </div>
+                `;
+                originalProductSection.style.display = 'none';
+            }
+        } catch (error) {
+            invoiceStatus.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    حدث خطأ في تحميل الفاتورة
+                </div>
+            `;
+        } finally {
+            loadInvoiceBtn.innerHTML = '<i class="fas fa-search"></i> تحميل';
+            loadInvoiceBtn.disabled = false;
+        }
+    });
+
+    // Populate old product select
+    function populateOldProductSelect() {
+        oldProductSelect.innerHTML = '<option value="">اختر المنتج...</option>';
+        
+        invoiceItems.forEach(item => {
+            if (item.canExchange) {
+                const option = document.createElement('option');
+                option.value = item.productId;
+                
+                // Build display text with color information
+                let displayText = `${item.productName}`;
+                if (item.color && item.color.trim() !== '') {
+                    displayText += ` - 🎨 ${item.color}`;
+                }
+                if (item.size && item.size.trim() !== '') {
+                    displayText += ` - 📏 ${item.size}`;
+                }
+                displayText += ` - ${item.unitPrice.toFixed(2)} ج.م (الكمية: ${item.quantity})`;
+                
+                option.textContent = displayText;
+                option.dataset.price = item.unitPrice;
+                option.dataset.maxQuantity = item.quantity;
+                oldProductSelect.appendChild(option);
+            }
+        });
+    }
+
+    // Update available quantity
+    oldProductSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const maxQuantity = selectedOption.dataset.maxQuantity;
+            oldProductPrice = parseFloat(selectedOption.dataset.price);
+            quantityInput.max = maxQuantity;
+            quantityInput.value = Math.min(quantityInput.value || 1, maxQuantity);
+            document.getElementById('availableQuantityText').textContent = 
+                `الحد الأقصى: ${maxQuantity} قطعة`;
+            updatePriceDifference();
+        } else {
+            oldProductPrice = 0;
+            document.getElementById('availableQuantityText').textContent = '';
+            updatePriceDifference();
+        }
+    });
+
+    // Update price difference
+    newProductSelect.addEventListener('change', updatePriceDifference);
+    quantityInput.addEventListener('input', updatePriceDifference);
+
+    function updatePriceDifference() {
+        const newProductOption = newProductSelect.options[newProductSelect.selectedIndex];
+        const quantity = parseInt(quantityInput.value) || 0;
+
+        if (newProductOption.value && oldProductPrice > 0 && quantity > 0) {
+            const newProductPrice = parseFloat(newProductOption.dataset.price);
+            const difference = (newProductPrice - oldProductPrice) * quantity;
+
+            let differenceText, differenceClass;
+            if (difference > 0) {
+                differenceText = `+${difference.toFixed(2)} ج.م (يجب دفع المبلغ)`;
+                differenceClass = 'price-positive';
+            } else if (difference < 0) {
+                differenceText = `${difference.toFixed(2)} ج.م (استرداد للعميل)`;
+                differenceClass = 'price-negative';
+            } else {
+                differenceText = '0.00 ج.م (لا يوجد فرق)';
+                differenceClass = 'price-zero';
+            }
+
+            priceDifferenceDiv.innerHTML = `<span class="${differenceClass}">${differenceText}</span>`;
+            updateExchangeSummary(difference);
+        } else {
+            priceDifferenceDiv.innerHTML = '<span class="text-muted">سيتم حساب الفرق تلقائياً</span>';
+            updateExchangeSummary(0);
+        }
+    }
+
+    function updateExchangeSummary(priceDifference) {
+        const oldProductOption = oldProductSelect.options[oldProductSelect.selectedIndex];
+        const newProductOption = newProductSelect.options[newProductSelect.selectedIndex];
+        const quantity = parseInt(quantityInput.value) || 0;
+
+        if (oldProductOption.value && newProductOption.value && quantity > 0) {
+            exchangeSummary.innerHTML = `
+                <div class="summary-item mb-3">
+                    <h6 class="text-primary">المنتج القديم:</h6>
+                    <p class="mb-1">${oldProductOption.textContent}</p>
+                    <small class="text-muted">الكمية: ${quantity}</small>
+                </div>
+                <div class="summary-item mb-3">
+                    <h6 class="text-success">المنتج الجديد:</h6>
+                    <p class="mb-1">${newProductOption.textContent}</p>
+                    <small class="text-muted">الكمية: ${quantity}</small>
+                </div>
+                <hr>
+                <div class="summary-item">
+                    <h6>فرق السعر:</h6>
+                    <p class="mb-0 ${priceDifference > 0 ? 'text-danger' : priceDifference < 0 ? 'text-success' : 'text-muted'}">
+                        ${priceDifference > 0 ? '+' : ''}${priceDifference.toFixed(2)} ج.م
+                    </p>
+                    ${priceDifference > 0 ? '<small class="text-danger">يجب دفع الفرق</small>' : 
+                      priceDifference < 0 ? '<small class="text-success">استرداد للعميل</small>' : 
+                      '<small class="text-muted">لا يوجد فرق في السعر</small>'}
+                </div>
+            `;
+        } else {
+            exchangeSummary.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <p>قم بملء بيانات الاستبدال لرؤية الملخص</p>
+                </div>
+            `;
+        }
+    }
+
+    // Auto-load if original invoice number is provided
+    if (originalInvoiceInput.value) {
+        loadInvoiceBtn.click();
+    }
+
+    // Handle form submission
+    document.getElementById('exchangeForm').addEventListener('submit', function(e) {
+        const userInput = exchangeInvoiceNumberInput.value.trim();
+        if (!userInput) {
+            e.preventDefault();
+            alert('يرجى إدخال رقم فاتورة الاستبدال');
+            exchangeInvoiceNumberInput.focus();
+            return;
+        }
+
+        // Create hidden input with full exchange invoice number
+        const fullExchangeNumber = `EXC${userInput}`;
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'ExchangeInvoiceNumber';
+        hiddenInput.value = fullExchangeNumber;
+        this.appendChild(hiddenInput);
+
+        // Show confirmation
+        if (!confirm(`هل أنت متأكد من إنشاء استبدال برقم الفاتورة: ${fullExchangeNumber}؟`)) {
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

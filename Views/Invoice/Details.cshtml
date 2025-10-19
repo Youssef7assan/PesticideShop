@@ -1,0 +1,565 @@
+@model PesticideShop.Models.Invoice
+
+@{
+    ViewData["Title"] = "تفاصيل الفاتورة";
+    var totalAmount = Model.TotalAmount; // استخدام المبلغ المخزن في قاعدة البيانات
+    var isExchange = Model.Type == InvoiceType.Exchange;
+    var isReturn = Model.Type == InvoiceType.Return;
+    var isSale = Model.Type == InvoiceType.Sale;
+    var remaining = Model.RemainingAmount; // استخدام المبلغ المتبقي المخزن
+    var actualRemaining = Math.Abs(totalAmount) - Model.AmountPaid;
+}
+
+
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            @if (isExchange)
+            {
+                
+                <span class="text-info">فاتورة استبدال</span>
+            }
+            else if (isReturn)
+            {
+                
+                <span class="text-warning">فاتورة إرجاع</span>
+            }
+            else
+            {
+                
+                <span class="text-success">فاتورة بيع</span>
+            }
+            #@Model.InvoiceNumber
+        </h2>
+        <div>
+            <a asp-action="Index" asp-controller="Invoices" class="btn btn-outline-secondary">
+                ⬅️ العودة للفواتير
+            </a>
+            @if (Model.CustomerId > 0)
+            {
+                <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.CustomerId" class="btn btn-outline-primary">
+                    👤 ملف العميل
+                </a>
+            }
+            <button onclick="window.print()" class="btn btn-info">
+                🖨️ طباعة
+            </button>
+        </div>
+    </div>
+
+    <!-- Invoice Info Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        
+                        معلومات الفاتورة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>رقم الفاتورة:</strong>
+                        </div>
+                        <div class="col-6">
+                            @Model.InvoiceNumber
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>النوع:</strong>
+                        </div>
+                        <div class="col-6">
+                            @if (isExchange)
+                            {
+                                <span class="badge bg-info">استبدال</span>
+                            }
+                            else if (isReturn)
+                            {
+                                <span class="badge bg-warning">إرجاع</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">بيع</span>
+                            }
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>التاريخ:</strong>
+                        </div>
+                        <div class="col-6">
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                    <hr>
+                    @{
+                        // تحديد نوع الفاتورة
+                        var shouldShowCashier = isSale || isReturn || isExchange;
+                        var cashierName = Model.CashierName;
+                        
+                        // حل بديل: إذا لم نجد اسم الكاشير، استخدم اسم المستخدم الحالي
+                        if (string.IsNullOrEmpty(cashierName))
+                        {
+                            cashierName = User.Identity?.Name ?? "نظام";
+                        }
+                    }
+                    @if (shouldShowCashier && !string.IsNullOrEmpty(cashierName))
+                    {
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>اسم الكاشير:</strong>
+                            </div>
+                            <div class="col-6">
+                                @cashierName
+                            </div>
+                        </div>
+                        <hr>
+                    }
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>حالة الدفع:</strong>
+                        </div>
+                        <div class="col-6">
+                            @switch (Model.Status)
+                            {
+                                case InvoiceStatus.Paid:
+                                    <span class="badge bg-success">مدفوع</span>
+                                    break;
+                                case InvoiceStatus.PartiallyPaid:
+                                    <span class="badge bg-warning">مدفوع جزئياً</span>
+                                    break;
+                                case InvoiceStatus.Draft:
+                                    <span class="badge bg-secondary">في المكتب</span>
+                                    break;
+                                case InvoiceStatus.Overdue:
+                                    <span class="badge bg-danger">متأخر</span>
+                                    break;
+                                case InvoiceStatus.Cancelled:
+                                    <span class="badge bg-dark">ملغي</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+                    @if (Model.ShippingType.HasValue)
+                    {
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>نوع الشحن:</strong>
+                            </div>
+                            <div class="col-6">
+                                @switch (Model.ShippingType.Value)
+                                {
+                                    case PesticideShop.Models.ShippingType.Bosta:
+                                        <span class="badge bg-primary">📦 بوسطا</span>
+                                        break;
+                                    case PesticideShop.Models.ShippingType.Cairo:
+                                        <span class="badge bg-info">🚛 كايرو</span>
+                                        break;
+                                    case PesticideShop.Models.ShippingType.NoShipping:
+                                        <span class="badge bg-secondary">❌ بدون شحن</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-light text-dark">غير محدد</span>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>ملاحظات:</strong>
+                            </div>
+                            <div class="col-6">
+                                @Model.Notes
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        
+                        معلومات العميل
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Customer != null)
+                    {
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>اسم العميل:</strong>
+                            </div>
+                            <div class="col-6">
+                                @Model.Customer.Name
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>رقم الهاتف:</strong>
+                            </div>
+                            <div class="col-6">
+                                @Model.Customer.PhoneNumber
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Customer.Address))
+                        {
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>العنوان:</strong>
+                                </div>
+                                <div class="col-6">
+                                    @Model.Customer.Address
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">
+                           
+                            عميل غير محدد
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+             
+                تفاصيل الأصناف
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Items?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>اسم المنتج</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th>الإجمالي</th>
+                                <th>نوع العملية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr class="@(item.Quantity < 0 ? "table-warning" : "")">
+                                    <td>
+                                        <div class="fw-bold">@item.Product?.Name</div>
+                                        @{
+                                            // Get product default color and size
+                                            var productDefaultColor = item.Product?.Color ?? "";
+                                            var productDefaultSize = item.Product?.Size.ToString() ?? "";
+                                            
+                                            // Check if custom color/size was selected (different from default)
+                                            var isCustomColor = !string.IsNullOrEmpty(item.Color) && item.Color != productDefaultColor;
+                                            var isCustomSize = !string.IsNullOrEmpty(item.Size) && item.Size != productDefaultSize;
+                                            
+                                            // Display color and size
+                                            var displayColor = !string.IsNullOrEmpty(item.Color) ? item.Color : productDefaultColor;
+                                            var displaySize = !string.IsNullOrEmpty(item.Size) ? item.Size : productDefaultSize;
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(displayColor) || !string.IsNullOrEmpty(displaySize))
+                                        {
+                                            <div class="mt-1">
+                                                @if (!string.IsNullOrEmpty(displayColor))
+                                                {
+                                                    <span class="badge @(isCustomColor ? "bg-warning" : "bg-info") badge-sm" title="@(isCustomColor ? "لون مخصص" : "اللون الافتراضي")">
+                                                        🎨 @displayColor
+                                                    </span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(displaySize))
+                                                {
+                                                    <span class="badge @(isCustomSize ? "bg-warning" : "bg-secondary") badge-sm" title="@(isCustomSize ? "مقاس مخصص" : "المقاس الافتراضي")">
+                                                        📏 @displaySize
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Quantity < 0)
+                                        {
+                                            <span class="text-warning">
+                                               
+                                                @Math.Abs(item.Quantity)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">
+                                               
+                                                @item.Quantity
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@item.UnitPrice.ToString("N2") ج.م</td>
+                                    <td>
+                                        @{
+                                            var itemTotal = item.Quantity * item.UnitPrice;
+                                        }
+                                        @if (itemTotal < 0)
+                                        {
+                                            <span class="text-warning">(@Math.Abs(itemTotal).ToString("N2")) ج.م</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">@itemTotal.ToString("N2") ج.م</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Quantity < 0)
+                                        {
+                                            @if (isReturn)
+                                            {
+                                                <span class="badge bg-warning">إرجاع</span>
+                                            }
+                                            else if (isExchange)
+                                            {
+                                                <span class="badge bg-info">منتج مُسترجع</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if (isExchange)
+                                            {
+                                                <span class="badge bg-success">منتج جديد</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-primary">بيع</span>
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                  
+                    <p>لا توجد أصناف في هذه الفاتورة</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="row mt-4">
+        <div class="col-md-6 offset-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator"></i>
+                        ملخص الفاتورة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>إجمالي الفاتورة:</strong>
+                        </div>
+                        <div class="col-6">
+                            @if (totalAmount < 0)
+                            {
+                                <span class="text-warning">(@Math.Abs(totalAmount).ToString("N2")) ج.م</span>
+                            }
+                            else
+                            {
+                                <span class="text-success">@totalAmount.ToString("N2") ج.م</span>
+                            }
+                        </div>
+                    </div>
+                    
+                    @if (Model.AmountPaid > 0)
+                    {
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>المبلغ المدفوع:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-info">@Model.AmountPaid.ToString("N2") ج.م</span>
+                            </div>
+                        </div>
+                        
+                        @if (remaining > 0)
+                        {
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>المتبقي:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-danger">@remaining.ToString("N2") ج.م</span>
+                                </div>
+                            </div>
+                        }
+                        else if (remaining < 0)
+                        {
+                            @if (totalAmount < 0)
+                            {
+                                <!-- فاتورة إرجاع أو استبدال بصافي سالب -->
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>المبلغ المستحق للعميل:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-warning">@Math.Abs(totalAmount).ToString("N2") ج.م</span>
+                                    </div>
+                                </div>
+                                
+                                @if (isExchange)
+                                {
+                                    <!-- فاتورة استبدال - العميل دفع فرق السعر -->
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>فرق السعر المدفوع:</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-info">@Model.AmountPaid.ToString("N2") ج.م</span>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (actualRemaining > 0)
+                                    {
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <strong>المتبقي للاسترداد:</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <span class="text-warning">@actualRemaining.ToString("N2") ج.م</span>
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (actualRemaining < 0)
+                                    {
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <strong class="text-danger">خطأ: العميل دفع أكثر من المطلوب!</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <span class="text-danger">@Math.Abs(actualRemaining).ToString("N2") ج.م</span>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <!-- فاتورة إرجاع عادية - خطأ في الدفع -->
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong class="text-danger">خطأ: العميل دفع بدلاً من الاسترداد!</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-danger">@(Model.AmountPaid + Math.Abs(totalAmount)).ToString("N2") ج.م</span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <!-- فاتورة عادية بفائض دفع -->
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>فائض الدفع:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-success">@Math.Abs(remaining).ToString("N2") ج.م</span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchange/Return specific info -->
+    @if (isExchange)
+    {
+        <div class="alert alert-info mt-4">
+            <h5>
+            
+                معلومات الاستبدال
+            </h5>
+            <p class="mb-0">
+                هذه الفاتورة تمثل عملية استبدال منتج. 
+                الأصناف ذات الكمية السالبة تمثل المنتجات المُسترجعة، 
+                والأصناف ذات الكمية الموجبة تمثل المنتجات الجديدة.
+            </p>
+        </div>
+    }
+    
+    @if (isReturn)
+    {
+        <div class="alert alert-warning mt-4">
+            <h5>
+             
+                معلومات الإرجاع
+            </h5>
+            <p class="mb-0">
+                هذه الفاتورة تمثل عملية إرجاع منتجات. 
+                جميع الكميات سالبة لأنها تمثل أصناف مُسترجعة من العميل.
+            </p>
+        </div>
+    }
+</div>
+
+<style>
+    @@media print {
+        .btn, .alert {
+            display: none !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            page-break-inside: avoid;
+        }
+        
+        .table {
+            border: 1px solid #000 !important;
+        }
+        
+        .table th, .table td {
+            border: 1px solid #000 !important;
+        }
+    }
+</style>
+
+
+

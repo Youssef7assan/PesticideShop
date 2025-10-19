@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "إعادة تعيين الإحصائيات";
+}
+
+<div class="fade-in" dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🔄 إعادة تعيين الإحصائيات</h1>
+        <a asp-action="Index" class="btn btn-secondary">
+            ← الرجوع إلى لوحة التحكم
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⚠️ إعادة تعيين كل الإحصائيات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6>⚠️ تنبيه: هذا الإجراء لا يمكن التراجع عنه!</h6>
+                        <p class="mb-0">سيتم حذف جميع معاملات العملاء نهائيًا، مما سيؤدي إلى إعادة تعيين كافة إحصائيات المبيعات والأرباح والأرصدة.</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6>📋 ما سيتم حذفه:</h6>
+                        <ul class="mb-0">
+                            <li>جميع معاملات العملاء (سجلات البيع)</li>
+    
+                            <li>إحصائيات إجمالي المبيعات</li>
+                            <li>حسابات الأرباح</li>
+                            <li>الأرصدة المستحقة على العملاء</li>
+
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <h6>✅ ما سيتم الاحتفاظ به:</h6>
+                        <ul class="mb-0">
+                            <li>جميع المنتجات (مخزون البضائع)</li>
+                            <li>كل العملاء (معلومات العملاء)</li>
+
+                            <li>كميات المخزون الحالية</li>
+                            <li>أسعار المنتجات والفئات</li>
+                        </ul>
+                    </div>
+
+                    <form asp-action="ResetStatisticsConfirmed" method="post">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmReset" required>
+                            <label class="form-check-label" for="confirmReset">
+                                أنا أقر بأن هذا الإجراء سيحذف جميع بيانات المعاملات ويعيد تعيين كافة الإحصائيات نهائيًا
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-danger" id="resetButton" disabled>
+                                🔄 إعادة تعيين كل الإحصائيات
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 الإحصائيات الحالية</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">معاملات العملاء</h6>
+                                <div class="h4 text-primary" id="customerTransactionsCount">جارٍ التحميل...</div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>ملاحظة:</strong> بعد إعادة التعيين، يمكنك البدء من جديد بإضافة معاملات جديدة للعملاء.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmReset');
+    const resetButton = document.getElementById('resetButton');
+
+    confirmCheckbox.addEventListener('change', function() {
+        resetButton.disabled = !this.checked;
+    });
+
+    loadStatistics();
+
+    function loadStatistics() {
+        document.getElementById('customerTransactionsCount').textContent = 'غير متوفر';
+
+    }
+});
+</script>

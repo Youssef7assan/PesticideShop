@@ -1,0 +1,124 @@
+@{
+    ViewData["Title"] = "غير مصرح بالوصول";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-8 col-lg-6">
+            <div class="text-center">
+                <div class="access-denied-page">
+                    <div class="access-denied-icon">
+                        <div class="icon-container">
+                            <i class="fas fa-lock fa-5x text-danger"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="access-denied-message">
+                        <h1 class="display-4 text-danger mb-4">🚫 غير مصرح بالوصول</h1>
+                        
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">⚠️ تنبيه أمني</h5>
+                            <p class="mb-0">
+                                عذراً، ليس لديك الصلاحيات المطلوبة للوصول إلى هذه الصفحة.
+                                يرجى التواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.
+                            </p>
+                        </div>
+                        
+                        <div class="access-info mt-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">🔍 معلومات إضافية:</h5>
+                                    <ul class="list-unstyled">
+                                        <li>📅 التاريخ: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</li>
+                                        <li>🌐 الصفحة: @Context.Request.Path</li>
+                                        <li>👤 المستخدم: @User.Identity?.Name</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="access-actions mt-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-4 mb-3">
+                                <a href="javascript:history.back()" class="btn btn-primary btn-lg w-100">
+                                    ← العودة للصفحة السابقة
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-success btn-lg w-100">
+                                    🏠 الصفحة الرئيسية
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-warning btn-lg w-100">
+                                    🔑 تسجيل الدخول
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="access-help mt-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">💡 حلول مقترحة:</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✅ تأكد من تسجيل دخولك</li>
+                                            <li>✅ تحقق من صلاحياتك</li>
+                                            <li>✅ جرب تسجيل الخروج وإعادة الدخول</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✅ تواصل مع المسؤول</li>
+                                            <li>✅ تأكد من صحة الرابط</li>
+                                            <li>✅ امسح ذاكرة التخزين المؤقت</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.access-denied-page {
+    padding: 2rem;
+}
+
+.access-denied-icon {
+    margin-bottom: 2rem;
+}
+
+.icon-container {
+    display: inline-block;
+    padding: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.access-denied-message {
+    margin: 2rem 0;
+}
+
+.access-actions {
+    margin-top: 3rem;
+}
+
+.access-help {
+    margin-top: 3rem;
+}
+
+media (max-width: 768px) {
+    .access-actions .btn {
+        margin-bottom: 1rem;
+    }
+}
+</style> 

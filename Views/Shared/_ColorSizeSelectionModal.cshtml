@@ -1,0 +1,215 @@
+<div class="modal fade" id="colorSizeSelectionModal" tabindex="-1" aria-labelledby="colorSizeSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="colorSizeSelectionModalLabel">
+                    🎨 اختيار اللون والمقاس
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectedColor" class="form-label">اللون:</label>
+                    <select class="form-select" id="selectedColor">
+                        <option value="">اختر اللون</option>
+                        <option value="أحمر">أحمر</option>
+                        <option value="أزرق">أزرق</option>
+                        <option value="أخضر">أخضر</option>
+                        <option value="أصفر">أصفر</option>
+                        <option value="برتقالي">برتقالي</option>
+                        <option value="بنفسجي">بنفسجي</option>
+                        <option value="وردي">وردي</option>
+                        <option value="أسود">أسود</option>
+                        <option value="أبيض">أبيض</option>
+                        <option value="رمادي">رمادي</option>
+                        <option value="بني">بني</option>
+                        <option value="ذهبي">ذهبي</option>
+                        <option value="فضي">فضي</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectedSize" class="form-label">المقاس:</label>
+                    <select class="form-select" id="selectedSize">
+                        <option value="">اختر المقاس</option>
+                        <option value="Size32">32</option>
+                        <option value="Size33">33</option>
+                        <option value="Size34">34</option>
+                        <option value="Size35">35</option>
+                        <option value="Size36">36</option>
+                        <option value="Size37">37</option>
+                        <option value="Size38">38</option>
+                        <option value="Size39">39</option>
+                        <option value="Size40">40</option>
+                        <option value="Size41">41</option>
+                        <option value="Size42">42</option>
+                        <option value="Size43">43</option>
+                        <option value="Size44">44</option>
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                        <option value="XXXL">XXXL</option>
+                        <option value="OneSize">موحد</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="confirmColorSize">تأكيد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedProductInfo = null;
+
+function showColorSizeSelection(productId, productName, productPrice) {
+    selectedProductInfo = { productId, productName, productPrice };
+    
+    // Reset selections
+    document.getElementById('selectedColor').value = '';
+    document.getElementById('selectedSize').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('colorSizeSelectionModal'));
+    modal.show();
+}
+
+document.getElementById('confirmColorSize').addEventListener('click', function() {
+    const selectedColor = document.getElementById('selectedColor').value;
+    const selectedSize = document.getElementById('selectedSize').value;
+    
+    if (!selectedColor || !selectedSize) {
+        alert('⚠️ يرجى اختيار اللون والمقاس');
+        return;
+    }
+    
+    if (selectedProductInfo) {
+        // Add to cart with color and size info
+        addProductToCartWithColorSize(
+            selectedProductInfo.productId, 
+            selectedProductInfo.productName, 
+            selectedProductInfo.productPrice,
+            selectedColor,
+            selectedSize
+        );
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('colorSizeSelectionModal'));
+        modal.hide();
+        
+        selectedProductInfo = null;
+    }
+});
+
+function addProductToCartWithColorSize(productId, productName, productPrice, color, size) {
+    // Enhanced duplicate prevention at cart level
+    const now = Date.now();
+    const cartKey = `${productId}_${productName}_${color}_${size}`;
+    
+    // Initialize cart tracker
+    if (!window.cartAddTracker) {
+        window.cartAddTracker = {};
+    }
+    
+    // Prevent adding the same product within 1 second
+    if (window.cartAddTracker[cartKey] && (now - window.cartAddTracker[cartKey]) < 1000) {
+        console.log(`⚠️ Cart: Preventing duplicate add of ${productName}`);
+        return;
+    }
+    
+    // Update tracker
+    window.cartAddTracker[cartKey] = now;
+    
+    try {
+        console.log(`🔄 Adding product to cart: ID=${productId}, Name="${productName}", Price=${productPrice}, Color=${color}, Size=${size}`);
+        console.log(`🔄 Return mode: ${isReturnMode}`);
+        
+        // Determine quantity based on current mode
+        const baseQuantity = 1;
+        const quantity = isReturnMode ? -baseQuantity : baseQuantity;
+        const total = quantity * productPrice;
+        
+        console.log(`📊 Calculated: Quantity=${quantity}, Total=${total}`);
+        
+        // Validate productId
+        if (!productId || productId === 0) {
+            console.error('❌ Invalid productId:', productId);
+            alert('❌ معرف المنتج غير صحيح');
+            return;
+        }
+        
+        // Create cart item
+        const cartItem = {
+            id: Date.now(),
+            productId: parseInt(productId),
+            name: productName,
+            price: parseFloat(productPrice),
+            quantity: quantity,
+            total: total,
+            discount: 0,
+            color: color,
+            size: size
+        };
+        
+        // Ensure total is correctly calculated
+        cartItem.total = quantity * productPrice;
+        
+        console.log('📦 Created cart item:', cartItem);
+        
+        // Check for duplicate returns prevention
+        if (isReturnMode) {
+            const existingReturnItem = cart.find(item => 
+                (item.productId == cartItem.productId || item.name === cartItem.name) && 
+                item.quantity < 0 && 
+                item.color === color && 
+                item.size === size
+            );
+            
+            if (existingReturnItem) {
+                console.log(`⚠️ Product already in cart for return, updating quantity instead of adding new item`);
+                existingReturnItem.quantity -= 1;
+                
+                // Recalculate total with discount
+                const itemSubTotal = Math.abs(existingReturnItem.price * existingReturnItem.quantity);
+                const discountAmount = existingReturnItem.discount || 0;
+                existingReturnItem.total = -(itemSubTotal - discountAmount);
+                
+                console.log(`📊 Updated existing return item:`, existingReturnItem);
+            } else {
+                cart.push(cartItem);
+            }
+        } else {
+            cart.push(cartItem);
+        }
+        
+        window.cart = cart;
+        
+        // Update display
+        updateCartDisplay();
+        updateCartSummary();
+        
+        // Update process button state safely
+        if (typeof updateProcessButtonState === 'function') {
+            updateProcessButtonState();
+        } else {
+            console.warn('⚠️ updateProcessButtonState function not available');
+        }
+        
+        const modeText = isReturnMode ? 'للإرجاع' : 'للبيع';
+        console.log(`✅ Added ${modeText}: ${productName} (${color} - ${size}) (Qty: ${quantity})`);
+        console.log('🛒 Cart after addition:', cart);
+        console.log('🛒 Total items in cart:', cart.length);
+        
+        // Show success notification
+        showMessage(`✅ تم إضافة ${productName} (${color} - ${size}) ${modeText}`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Error adding product to cart:', error);
+        showMessage('❌ خطأ في إضافة المنتج إلى السلة', 'error');
+    }
+}
+</script>

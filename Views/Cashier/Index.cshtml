@@ -1,0 +1,4006 @@
+@{
+    ViewData["Title"] = "الكاشير";
+    var customers = ViewData["Customers"] as List<PesticideShop.Models.Customer>;
+    Layout = "_Layout";
+}
+
+<style>
+/* Reset margins and padding for full screen */
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Override any site.css or Bootstrap rules that might add spacing */
+.cashier-page * {
+    box-sizing: border-box;
+}
+
+.cashier-page .container,
+.cashier-page .container-fluid,
+.cashier-page .row {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.cashier-page .col-lg-6,
+.cashier-page .col-lg-8,
+.cashier-page .col-lg-4 {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+
+/* Glass Morphism Design for Cashier */
+.cashier-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg,rgb(174, 152, 230) 0%,rgb(149, 116, 182) 100%);
+    position: relative;
+    overflow-x: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove layout paddings that add bottom gap on this page */
+.content-area { padding: 0 !important; }
+main.pb-3 { padding-bottom: 0 !important; }
+
+/* Ensure proper centering for cashier page */
+.cashier-page .container,
+.cashier-page .container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+/* Ensure proper column layout */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+/* Ensure columns are side by side on large screens */
+@@media (min-width: 992px) {
+    .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+/* Force vertical stacking on all mobile and tablet screens */
+@@media (max-width: 991px) {
+    .col-lg-6,
+    .col-lg-8,
+    .col-lg-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px;
+    }
+}
+
+.cashier-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.12) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.cashier-container {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Remove footer top margin for cashier page to eliminate white gap */
+.footer,
+.footer-global,
+footer {
+    margin-top: 0 !important;
+}
+
+/* Glass Cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Header Styles */
+.cashier-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    animation: slideInDown 0.8s ease-out;
+}
+
+.cashier-title {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.cashier-info {
+    text-align: right;
+    color: white;
+}
+
+.cashier-user, .cashier-time {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cashier-user i, .cashier-time i {
+    color: #ffd700;
+    font-size: 1.2rem;
+}
+
+/* Animations */
+@@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.6s ease-out;
+}
+
+/* Staggered Animation Delays */
+.fade-in:nth-child(1) { animation-delay: 0.1s; }
+.fade-in:nth-child(2) { animation-delay: 0.2s; }
+.fade-in:nth-child(3) { animation-delay: 0.3s; }
+.fade-in:nth-child(4) { animation-delay: 0.4s; }
+.fade-in:nth-child(5) { animation-delay: 0.5s; }
+
+/* QR Scanner Interface */
+.qr-scanner-interface {
+    position: relative;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 20px;
+}
+
+.qr-input-group {
+    position: relative;
+    margin: 20px 0;
+}
+
+.qr-input {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.qr-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+.qr-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.scanner-controls {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.btn-qr-clear, .btn-qr-paste {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-qr-clear:hover, .btn-qr-paste:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.scanner-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+}
+
+.status-text {
+    font-weight: 500;
+}
+
+/* Glass Card Components */
+.glass-card-header {
+    padding: 25px 30px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.glass-card-title {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-title i {
+    color: #ffd700;
+    font-size: 1.3rem;
+}
+
+.glass-card-body {
+    padding: 30px;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.form-label i {
+    color: #ffd700;
+    font-size: 1rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    padding: 12px 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Select Dropdown Styling */
+select.form-control,
+.form-select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 12px 16px !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px !important;
+    padding-right: 40px !important;
+}
+
+select.form-control:focus,
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    outline: none !important;
+}
+
+select.form-control option,
+.form-select option {
+    background: rgba(30, 41, 59, 0.95) !important;
+    color: white !important;
+    padding: 10px 15px !important;
+    border: none !important;
+}
+
+select.form-control option:hover,
+.form-select option:hover {
+    background: rgba(59, 130, 246, 0.8) !important;
+    color: white !important;
+}
+
+select.form-control option:checked,
+.form-select option:checked {
+    background: rgba(59, 130, 246, 0.9) !important;
+    color: white !important;
+}
+
+/* Custom dropdown arrow */
+select.form-control::-ms-expand,
+.form-select::-ms-expand {
+    display: none !important;
+}
+
+/* Additional select styling for better compatibility */
+select.form-control,
+.form-select {
+    cursor: pointer !important;
+}
+
+/* Modal Glass Styling */
+.modal-content {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    color: white !important;
+}
+
+.modal-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px 20px 0 0 !important;
+    color: white !important;
+}
+
+.modal-title {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.modal-body {
+    background: transparent !important;
+    color: white !important;
+    padding: 30px !important;
+}
+
+.modal-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-backdrop {
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+/* Modal form elements */
+.modal .form-control,
+.modal .form-select,
+.modal select,
+.modal input,
+.modal textarea {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus,
+.modal select:focus,
+.modal input:focus,
+.modal textarea:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+.modal .form-control::placeholder,
+.modal .form-select::placeholder,
+.modal input::placeholder,
+.modal textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.modal .form-label {
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+/* Modal buttons */
+.modal .btn {
+    border-radius: 12px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.modal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.modal .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.modal .btn-secondary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+.modal .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Close button */
+.modal .btn-close {
+    filter: invert(1) !important;
+    opacity: 0.8 !important;
+}
+
+.modal .btn-close:hover {
+    opacity: 1 !important;
+}
+
+/* Ensure all form elements in glass cards have glass styling */
+.glass-card .form-control,
+.glass-card .form-select,
+.glass-card select,
+.glass-card input,
+.glass-card textarea {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.glass-card .form-control:focus,
+.glass-card .form-select:focus,
+.glass-card select:focus,
+.glass-card input:focus,
+.glass-card textarea:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+.glass-card .form-control::placeholder,
+.glass-card .form-select::placeholder,
+.glass-card input::placeholder,
+.glass-card textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+select.form-control:disabled,
+.form-select:disabled {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: not-allowed !important;
+}
+
+/* Ensure select elements inherit the glass effect */
+select.form-control,
+.form-select {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+select.form-control:hover,
+.form-select:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 12px;
+    font-weight: 500;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a6fd8, #6a4190);
+}
+
+.btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Input Groups */
+.input-group {
+    position: relative;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+
+/* Status Indicators */
+.status-indicator {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    color: white;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    margin-top: 20px;
+}
+
+/* Section Titles */
+.section-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Text Muted */
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Invalid Feedback */
+.invalid-feedback {
+    color: #ff6b6b;
+    font-size: 0.875rem;
+    margin-top: 5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Search Mode Tabs */
+.search-mode-tabs {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.search-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.search-tab-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Product Info Display */
+.product-info-display {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+    backdrop-filter: blur(10px);
+    color: white;
+}
+
+.product-info-display h6 {
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.product-info-display p {
+    margin-bottom: 5px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Cart Section */
+.cart-section {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* Cart Table */
+.cart-table {
+    background: transparent;
+    color: white;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 600px; /* Minimum width to ensure horizontal scroll on small screens */
+}
+
+.cart-table thead th {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 15px 12px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.cart-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.cart-table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.cart-table tbody td {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: none;
+    padding: 15px 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    vertical-align: middle;
+}
+
+.cart-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cart-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.cart-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 12px;
+}
+
+.cart-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 12px;
+}
+
+/* Empty Cart Row */
+#emptyCartRow td {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+#emptyCartRow i {
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 10px;
+}
+
+/* Table Responsive Container */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.cart-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 30px;
+    border-radius: 20px 20px 0 0;
+}
+
+.cart-title {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cart-title i {
+    color: #ffd700;
+    font-size: 1.3rem;
+}
+
+.cart-body {
+    padding: 30px;
+}
+
+/* Cart Items */
+.cart-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.cart-item-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cart-item-name {
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.cart-item-price {
+    color: #ffd700;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.cart-item-details {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 5px 10px;
+}
+
+.quantity-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.quantity-input {
+    background: transparent;
+    border: none;
+    color: white;
+    text-align: center;
+    width: 50px;
+    font-weight: 600;
+}
+
+.remove-item-btn {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.remove-item-btn:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Cart Summary */
+.cart-summary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.summary-row.total {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 15px;
+    margin-top: 15px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #ffd700;
+}
+
+/* Transaction Button */
+.transaction-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.transaction-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    background: linear-gradient(135deg, #218838, #1ea085);
+}
+
+.transaction-btn:disabled {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .cashier-container {
+        padding: 15px;
+    }
+    
+    .cashier-header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .cashier-title {
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .cashier-info {
+        text-align: center;
+    }
+    
+    .glass-card-header {
+        padding: 20px 20px 15px;
+    }
+    
+    .glass-card-body {
+        padding: 20px;
+    }
+    
+    .glass-card-title {
+        font-size: 1.2rem;
+    }
+    
+    .form-control {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+    
+    /* Select dropdowns on mobile */
+    select.form-control,
+    .form-select {
+        padding: 10px 14px !important;
+        padding-right: 35px !important;
+        font-size: 0.9rem !important;
+        background-size: 14px !important;
+        background-position: right 10px center !important;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .search-mode-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .search-tab-btn {
+        padding: 10px 14px;
+    }
+    
+    .cart-item {
+        padding: 15px;
+    }
+    
+    .cart-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .cart-item-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .quantity-control {
+        padding: 4px 8px;
+    }
+    
+    .quantity-btn {
+        width: 25px;
+        height: 25px;
+        font-size: 0.8rem;
+    }
+    
+    .quantity-input {
+        width: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .transaction-btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+    
+    /* Force all columns to stack vertically on mobile */
+    .col-lg-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px;
+    }
+    
+    .col-lg-8 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px;
+    }
+    
+    .col-lg-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px;
+    }
+    
+    /* Cart table responsive */
+    .cart-table {
+        font-size: 0.9rem;
+        min-width: 500px; /* Smaller minimum width for tablets */
+    }
+    
+    .cart-table thead th,
+    .cart-table tbody td {
+        padding: 10px 8px;
+    }
+    
+    .cart-table thead th {
+        font-size: 0.85rem;
+    }
+    
+    /* Table responsive on tablets */
+    .table-responsive {
+        margin: 0 -15px; /* Extend to edges on mobile */
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}
+
+@@media (max-width: 480px) {
+    .cashier-title {
+        font-size: 1.5rem;
+    }
+    
+    .glass-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .form-control {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    /* Select dropdowns on small phones */
+    select.form-control,
+    .form-select {
+        padding: 8px 12px !important;
+        padding-right: 30px !important;
+        font-size: 0.85rem !important;
+        background-size: 12px !important;
+        background-position: right 8px center !important;
+    }
+    
+    .btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .cart-item {
+        padding: 12px;
+    }
+    
+    .cart-item-name {
+        font-size: 1rem;
+    }
+    
+    .cart-item-price {
+        font-size: 1rem;
+    }
+    
+    .summary-row {
+        font-size: 0.9rem;
+    }
+    
+    .summary-row.total {
+        font-size: 1rem;
+    }
+    
+    /* Cart table for small phones */
+    .cart-table {
+        font-size: 0.8rem;
+        min-width: 450px; /* Even smaller minimum width for small phones */
+    }
+    
+    .cart-table thead th,
+    .cart-table tbody td {
+        padding: 8px 6px;
+    }
+    
+    .cart-table thead th {
+        font-size: 0.8rem;
+    }
+    
+    .cart-table thead th i,
+    .cart-table tbody td i {
+        font-size: 0.7rem;
+    }
+    
+    /* Table responsive on small phones */
+    .table-responsive {
+        margin: 0 -10px; /* Extend to edges on small phones */
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    /* Custom scrollbar for small screens */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.4);
+    }
+    
+    /* Ensure all columns stack on very small screens */
+    .col-lg-6,
+    .col-lg-8,
+    .col-lg-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 15px;
+    }
+}
+</style>
+
+<div class="cashier-page">
+    <div class="cashier-container">
+        
+        <!-- Header with Cashier Info -->
+        <div class="cashier-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="cashier-title">
+                        <i class="fas fa-cash-register me-3"></i>
+                        نظام الكاشير - Pharaonic
+                    </h1>
+                </div>
+                <div class="col-md-4">
+                    <div class="cashier-info">
+                        <div class="cashier-user">
+                            <i class="fas fa-user"></i>
+                            الكاشير: <strong id="cashierName">@User.Identity.Name</strong>
+                        </div>
+                        <div class="cashier-time">
+                            <i class="fas fa-clock"></i>
+                            <span id="currentTime"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Customer Information Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="glass-card fade-in">
+                    <div class="glass-card-header">
+                        <h3 class="glass-card-title">
+                            <i class="fas fa-user-circle me-2"></i>
+                            معلومات العميل
+                        </h3>
+                        <small class="text-muted">الحقول المطلوبة بعلامة *</small>
+                    </div>
+                    <div class="glass-card-body">
+                                    <!-- Customer Selection and Search Row -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerSelect" class="form-label">
+                                                    <i class="fas fa-users"></i>
+                                                    اختيار عميل موجود:
+                                                </label>
+                                                <select id="customerSelect" class="form-control customer-select" onchange="handleCustomerSelection()">
+                                                    <option value="">-- اختر عميل --</option>
+                                                    @if (customers != null)
+                                                    {
+                                                        @foreach (var customer in customers)
+                                                        {
+                                                            <option value="@customer.Id" 
+                                                                    data-name="@customer.Name" 
+                                                                    data-phone="@customer.PhoneNumber"
+                                                                    data-additional-phone="@customer.AdditionalPhone"
+                                                                    data-email="@customer.Email"
+                                                                    data-governorate="@customer.Governorate"
+                                                                    data-district="@customer.District"
+                                                                    data-detailed-address="@customer.DetailedAddress">
+                                                                @customer.Name - @customer.PhoneNumber
+                                                            @if (!string.IsNullOrEmpty(customer.AdditionalPhone))
+                                                            {
+                                                                <span class="text-muted"> / @customer.AdditionalPhone</span>
+                                                            }
+                                                            </option>
+                                                        }
+                                                    }
+                                                </select>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    اختر من العملاء المسجلين سابقاً
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerPhone" class="form-label">
+                                                    <i class="fas fa-search me-1"></i>
+                                                    البحث برقم الهاتف:
+                                                </label>
+                                                <div class="input-group">
+                                                                                                    <input type="text" 
+                                                       id="customerPhone" 
+                                                       class="form-control phone-input" 
+                                                       placeholder="01xxxxxxxxx">
+                                                    <button type="button" 
+                                                            id="searchCustomerBtn" 
+                                                            class="btn btn-primary search-btn" 
+                                                            title="البحث عن العميل" 
+                                                            onclick="searchCustomerByPhone()">
+                                                        <i class="fas fa-search"></i>
+                                                        بحث
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-keyboard me-1"></i>
+                                                    انقر Enter للبحث السريع
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Clear Customer Button -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <button type="button" 
+                                                    class="btn btn-outline-secondary btn-sm" 
+                                                    onclick="clearCustomerData()"
+                                                    title="مسح بيانات العميل">
+                                                <i class="fas fa-eraser me-1"></i>
+                                                مسح البيانات
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Row 1: Basic Info -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerName" class="form-label">
+                                                    <i class="fas fa-user me-1"></i>
+                                                    اسم العميل: 
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" 
+                                                       id="customerName" 
+                                                       class="form-control customer-name-input" 
+                                                       placeholder="ادخل اسم العميل كاملاً"
+                                                       required 
+                                                       minlength="2"
+                                                       autocomplete="name">
+                                                <div class="invalid-feedback">
+                                                    يرجى إدخال اسم العميل (على الأقل حرفين)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerEmail" class="form-label">
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                    البريد الإلكتروني:
+                                                </label>
+                                                <input type="email" 
+                                                       id="customerEmail" 
+                                                       class="form-control email-input" 
+                                                       placeholder="example@email.com"
+                                                       autocomplete="email">
+                                                <div class="invalid-feedback">
+                                                    يرجى إدخال بريد إلكتروني صحيح
+                                                </div>
+                                                <small class="text-muted">اختياري</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Row 2: Phone Numbers -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerPhoneInput" class="form-label">
+                                                    <i class="fas fa-phone"></i>
+                                                    رقم الهاتف الأول: 
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" 
+                                                       id="customerPhoneInput" 
+                                                       class="form-control phone-input" 
+                                                       placeholder="01xxxxxxxxx" 
+                                                       required 
+                                                       maxlength="11"
+                                                       pattern="[0-9]{11}">
+                                                <div class="invalid-feedback">
+                                                    يرجى إدخال رقم هاتف صحيح (11 رقم)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="customerAdditionalPhone" class="form-label">
+                                                    <i class="fas fa-mobile-alt"></i>
+                                                    رقم الهاتف الثاني:
+                                                </label>
+                                                <input type="text" 
+                                                       id="customerAdditionalPhone" 
+                                                       class="form-control phone-input" 
+                                                       placeholder="01xxxxxxxxx"
+                                                       maxlength="11"
+                                                       pattern="[0-9]{11}">
+                                                <div class="invalid-feedback">
+                                                    يرجى إدخال رقم هاتف صحيح (11 رقم)
+                                                </div>
+                                                <small class="text-muted">اختياري</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Row 3: Address Info -->
+                                    <div class="address-section">
+                                        <h6 class="section-title">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            بيانات العنوان
+                                            <small class="text-muted">(اختياري)</small>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group mb-3">
+                                                    <label for="customerGovernorate" class="form-label">
+                                                        <i class="fas fa-map me-1"></i>
+                                                        المحافظة:
+                                                    </label>
+                                                    <select id="customerGovernorate" class="form-control governorate-select">
+                                                        <option value="">-- اختر المحافظة --</option>
+                                                        <option value="القاهرة">القاهرة</option>
+                                                        <option value="الجيزة">الجيزة</option>
+                                                        <option value="الإسكندرية">الإسكندرية</option>
+                                                        <option value="الشرقية">الشرقية</option>
+                                                        <option value="المنوفية">المنوفية</option>
+                                                        <option value="الغربية">الغربية</option>
+                                                        <option value="الدقهلية">الدقهلية</option>
+                                                        <option value="كفر الشيخ">كفر الشيخ</option>
+                                                        <option value="دمياط">دمياط</option>
+                                                        <option value="بورسعيد">بورسعيد</option>
+                                                        <option value="السويس">السويس</option>
+                                                        <option value="الإسماعيلية">الإسماعيلية</option>
+                                                        <option value="القليوبية">القليوبية</option>
+                                                        <option value="البحيرة">البحيرة</option>
+                                                        <option value="المنيا">المنيا</option>
+                                                        <option value="بني سويف">بني سويف</option>
+                                                        <option value="الفيوم">الفيوم</option>
+                                                        <option value="أسيوط">أسيوط</option>
+                                                        <option value="سوهاج">سوهاج</option>
+                                                        <option value="قنا">قنا</option>
+                                                        <option value="الأقصر">الأقصر</option>
+                                                        <option value="أسوان">أسوان</option>
+                                                        <option value="البحر الأحمر">البحر الأحمر</option>
+                                                        <option value="شمال سيناء">شمال سيناء</option>
+                                                        <option value="جنوب سيناء">جنوب سيناء</option>
+                                                        <option value="مطروح">مطروح</option>
+                                                        <option value="الوادي الجديد">الوادي الجديد</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group mb-3">
+                                                    <label for="customerDistrict" class="form-label">
+                                                        <i class="fas fa-city me-1"></i>
+                                                        المدينة/المنطقة:
+                                                    </label>
+                                                    <input type="text" 
+                                                           id="customerDistrict" 
+                                                           class="form-control district-input" 
+                                                           placeholder="اسم المدينة أو المنطقة"
+                                                           autocomplete="address-level2">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group mb-3">
+                                                    <label for="customerDetailedAddress" class="form-label">
+                                                        <i class="fas fa-home me-1"></i>
+                                                        العنوان التفصيلي:
+                                                    </label>
+                                                    <input type="text" 
+                                                           id="customerDetailedAddress" 
+                                                           class="form-control address-input" 
+                                                           placeholder="الشارع والرقم"
+                                                           autocomplete="street-address">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                        <!-- Customer Status Indicator -->
+                        <div class="customer-status">
+                            <div id="customerStatusIndicator" class="status-indicator">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="customerStatusText">يرجى إدخال بيانات العميل</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Product Search Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="glass-card slide-in-right">
+                    <div class="glass-card-header">
+                        <h3 class="glass-card-title">
+                            <i class="fas fa-search me-2"></i>
+                            نظام البحث المتقدم
+                        </h3>
+                    </div>
+                    <div class="glass-card-body">
+                        <!-- Search Mode Tabs -->
+                        <div class="search-mode-tabs mb-3">
+                                <i class="fas fa-search me-1"></i>
+                                البحث الذكي
+                            </button>
+                            <button type="button" id="nameModeBtn" class="search-tab-btn" onclick="showCategoryProducts()">
+                                <i class="fas fa-th-list me-1"></i>
+                                عرض المنتجات
+                            </button>
+                        </div>
+
+                        <!-- Advanced Search Interface -->
+                        <div class="advanced-search-interface">
+                            <div class="advanced-search-header">
+                                <h3 class="advanced-search-title">
+                                    <i class="fas fa-search-plus"></i>
+                                    نظام البحث المتقدم
+                                </h3>
+                                <div class="advanced-search-modes">
+                                    <button class="search-mode-btn active" onclick="switchAdvancedSearchMode('barcode')">
+                                        <i class="fas fa-barcode"></i> باركود
+                                    </button>
+                                    <button class="search-mode-btn" onclick="switchAdvancedSearchMode('name')">
+                                        <i class="fas fa-search"></i> اسم
+                                    </button>
+                                    <button class="search-mode-btn" onclick="switchAdvancedSearchMode('category')">
+                                        <i class="fas fa-th-list"></i> تصنيف
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Search Input -->
+                            <div class="advanced-search-input-group">
+                                <input type="text" 
+                                       id="advancedSearchInput"
+                                       class="advanced-search-input"
+                                       placeholder="اكتب ID، اسم المنتج، أو امسح الباركود..." 
+                                       autocomplete="off" 
+                                       spellcheck="false"
+                                       autofocus
+                                       tabindex="1"
+                                       oncontextmenu="return false;">
+                            </div>
+
+                            <!-- Control Buttons -->
+                            <div class="advanced-search-controls">
+                                <button type="button" class="btn-advanced-search-clear" title="مسح" onclick="clearSimpleAdvancedSearch()">
+                                    <i class="fas fa-broom"></i> مسح
+                                </button>
+                                <button type="button" class="btn-advanced-search-paste" title="لصق من الحافظة" onclick="pasteFromClipboard()">
+                                    <i class="fas fa-clipboard"></i> لصق
+                                </button>
+                            </div>
+                            
+                            <!-- Status Display -->
+                            <div class="advanced-search-status">
+                                <i class="fas fa-search"></i>
+                                <span class="status-text" id="advancedSearchStatus">نظام البحث المتقدم جاهز</span>
+                            </div>
+                        </div>
+
+                        <!-- Search Results Container -->
+                        <div id="advancedSearchResults" class="search-results-container" style="display: none;"></div>
+
+                                <!-- Scanner Statistics -->
+                                <div class="scanner-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">آخر مسح:</span>
+                                        <span class="stat-value" id="lastScanTime">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">المسح اليوم:</span>
+                                        <span class="stat-value" id="dailyScans">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Products Mode -->
+                        <div id="nameSearchMode" class="search-mode" style="display: none;">
+                            <div class="category-products-container">
+                                <div class="search-header mb-3">
+                                    <h5><i class="fas fa-clipboard-list"></i> عرض جميع المنتجات مصنفة</h5>
+                                    <p class="text-muted mb-0">جميع المنتجات المتوفرة مرتبة حسب الفئات مع إمكانية الإضافة المباشرة للسلة</p>
+                                </div>
+                                
+                                <div class="category-controls mb-3">
+                                    <button class="btn btn-outline-primary" onclick="refreshCategoryProducts()">
+                                        <i class="fas fa-sync-alt"></i> تحديث المنتجات
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="scrollToCategory()">
+                                        <i class="fas fa-list"></i> انتقال سريع للفئات
+                                    </button>
+                                </div>
+                                
+                                <!-- Category Products Container -->
+                                <div id="nameSearchResults" class="category-products-results" style="display: block;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Cart Section -->
+        <div class="cart-section scale-in">
+            <div class="cart-header">
+                <h3 class="cart-title">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    <span id="cartTitle">سلة المشتريات</span>
+                </h3>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="showColorSizeSelectionForCart()" title="اختيار لون آخر ومقاس">
+                    <i class="fas fa-palette me-1"></i> 
+                    اختيار لون آخر ومقاس
+                </button>
+            </div>
+            <div class="cart-body">
+                <!-- Cart Table -->
+                <div class="table-responsive">
+                    <table id="cartTable" class="table cart-table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-box me-1"></i> المنتج</th>
+                                <th><i class="fas fa-tag me-1"></i> السعر</th>
+                                <th><i class="fas fa-hashtag me-1"></i> الكمية</th>
+                                <th><i class="fas fa-percentage me-1"></i> الخصم</th>
+                                <th><i class="fas fa-calculator me-1"></i> الإجمالي</th>
+                                <th><i class="fas fa-cogs me-1"></i> الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr id="emptyCartRow">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                    <br>
+                                    السلة فارغة - قم بإضافة منتجات
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+               
+                
+                
+            </div>
+        </div>
+
+        <!-- Transaction Summary Section -->
+        <div class="row mt-4">
+            <div class="col-lg-8 mb-4">
+                <div class="glass-card slide-in-left">
+                    <div class="glass-card-header">
+                        <h3 class="glass-card-title">
+                            <i class="fas fa-calculator me-2"></i>
+                            ملخص المعاملة
+                        </h3>
+                    </div>
+                    <div class="glass-card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-invoice me-1"></i>
+                                        رقم الفاتورة
+                                    </label>
+                                    <input type="text" id="invoiceNumber" class="form-control" placeholder="اكتب رقم الفاتورة" onblur="checkInvoiceNumberDuplicate(this.value)">
+                                    <div id="invoiceNumberStatus" class="mt-1 small text-muted"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-shopping-bag me-1"></i>
+                                        رقم الأوردر
+                                    </label>
+                                    <input type="text" id="orderNumber" class="form-control" placeholder="اكتب رقم الأوردر" onblur="checkOrderNumberDuplicate(this.value)">
+                                    <div id="orderNumberStatus" class="mt-1 small text-muted"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-contract me-1"></i>
+                                        رقم البوليصة
+                                    </label>
+                                    <input type="text" id="policyNumber" class="form-control" placeholder="رقم البوليصة (اختياري)">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-invoice me-1"></i>
+                                        نوع الفاتورة
+                                    </label>
+                                    <select id="invoiceType" class="form-control">
+                                        <option value="1" selected>فاتورة بيع</option>
+                                        <option value="2">فاتورة تبديل</option>
+                                        <option value="3">فاتورة مرتجع</option>
+                                        <option value="4">فاتورة صيانة</option>
+                                        <option value="5">فاتورة تقديرية</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        حالة الفاتورة
+                                    </label>
+                                    <select id="invoiceStatus" class="form-control">
+                                        <option value="1">في المكتب</option>
+                                        <option value="2">مرسل</option>
+                                        <option value="3" selected>مدفوع</option>
+                                        <option value="4">متأخر</option>
+                                        <option value="5">ملغي</option>
+                                        <option value="6">مدفوع جزئياً</option>
+                                        <option value="7">مؤجل</option>
+                                        <option value="8">تحت التسليم</option>
+                                        <option value="9">لم يسلم</option>
+                                        <option value="10">تم التسليم</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الطلب والدفع -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-store me-1"></i>
+                                        مصدر الطلب
+                                    </label>
+                                    <select id="orderOrigin" class="form-control">
+                                        <option value="7" selected>متجر فعلي (الكاشير)</option>
+                                        <option value="1">الموقع الإلكتروني</option>
+                                        <option value="2">انستجرام</option>
+                                        <option value="3">فيسبوك</option>
+                                        <option value="4">واتساب</option>
+                                        <option value="5">هاتف</option>
+                                        <option value="6">حضور شخصي</option>
+                                        <option value="8">أخرى</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-credit-card me-1"></i>
+                                        طريقة الدفع
+                                    </label>
+                                    <select id="paymentMethod" class="form-control">
+                                        <option value="">-- اختر طريقة الدفع --</option>
+                                        <option value="cash">نقداً</option>
+                                        <option value="visa">فيزا</option>
+                                        <option value="instapay">انستاباي</option>
+                                        <option value="wallet">محفظة إلكترونية</option>
+                                        <option value="delivery">دفع عند الاستلام</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الشحن -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-money-bill me-1"></i>
+                                        سعر الشحن
+                                    </label>
+                                    <input type="number" id="shippingCost" class="form-control" step="0.01" min="0" placeholder="0.00" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-truck me-1"></i>
+                                        نوع الشحن
+                                    </label>
+                                    <select id="shippingType" class="form-control">
+                                        <option value="">-- اختر نوع الشحن --</option>
+                                        <option value="1">بوسطا</option>
+                                        <option value="2">كايرو</option>
+                                        <option value="3">بدون شحن</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المبلغ المدفوع -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-money-bill me-1"></i>
+                                        المبلغ المدفوع
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" id="amountPaid" class="form-control" step="0.01" min="0" placeholder="0.00">
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ملخص مالي -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calculator me-1"></i>
+                                        المجموع الفرعي
+                                    </label>
+                                    <div class="form-control-plaintext text-white" id="subtotal">0.00 ج.م</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-percentage me-1"></i>
+                                        إجمالي الخصم
+                                    </label>
+                                        <div class="form-control-plaintext text-white" id="totalDiscount">0.00 ج.م</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-truck me-1"></i>
+                                        مصاريف الشحن
+                                    </label>
+                                    <div class="form-control-plaintext text-info" id="shippingCostDisplay">0.00 ج.م</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-target me-1"></i>
+                                        المجموع النهائي
+                                    </label>
+                                    <div class="form-control-plaintext text-warning" id="grandTotal">0.00 ج.م</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-clock me-1"></i>
+                                        المبلغ المتبقي
+                                    </label>
+                                    <div class="form-control-plaintext text-warning" id="remainingAmount">0.00 ج.م</div>
+                                </div>
+                            </div>
+                        </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+            <div class="col-lg-4 mb-4">
+                <div class="glass-card slide-in-right">
+                    <div class="glass-card-header">
+                        <h3 class="glass-card-title">
+                            <i class="fas fa-bolt me-2"></i>
+                            إجراءات المعاملة
+                        </h3>
+                    </div>
+                    <div class="glass-card-body">
+                        <!-- زر إنجاز المعاملة -->
+                        <div class="d-grid gap-2 mb-3">
+                            <button 
+                                type="button" 
+                                id="processTransactionBtn" 
+                                class="btn btn-success btn-lg w-100 mb-2"
+                                onclick="processTransaction()">
+                                <i class="fas fa-credit-card me-2"></i>
+                                إنجاز المعاملة والدفع
+                            </button>
+                        </div>
+                        
+                        <!-- زر الاستبدال -->
+                        <div class="d-grid gap-2 mb-3">
+                            <button 
+                                type="button" 
+                                id="openExchangeBtn" 
+                                class="btn btn-info btn-lg w-100 mb-2"
+                                onclick="openExchangeDialog()">
+                                <i class="fas fa-exchange-alt me-2"></i> 
+                                استبدال منتج
+                            </button>
+                        </div>
+                        
+                        <!-- زر مسح السلة -->
+                        <div class="d-grid gap-2 mb-2">
+                            <button 
+                                type="button" 
+                                id="clearCartBtn" 
+                                class="btn btn-outline-danger w-100"
+                                onclick="clearCart()">
+                                <i class="fas fa-trash me-2"></i>
+                                مسح جميع المنتجات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* ===== متغيرات CSS للألوان والتصميم ===== */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0891b2;
+            --light-bg: #f8fafc;
+            --dark-bg: #1e293b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== إعدادات عامة للصفحة ===== */
+        .cashier-page {
+            font-family: 'Cairo', sans-serif !important;
+            background: linear-gradient(135deg, #667eea 0%,rgb(138, 108, 168) 90%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .cashier-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: transparent;
+        }
+
+        /* ===== تصميم الهيدر ===== */
+        .cashier-header {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #334155 100%);
+            border-radius: var(--border-radius-lg);
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-xl);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cashier-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            pointer-events: none;
+        }
+
+        .cashier-header .row {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cashier-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .cashier-title i {
+            color: #fbbf24;
+            margin-left: 15px;
+            font-size: 2.8rem;
+        }
+
+        .cashier-info {
+            text-align: left;
+        }
+
+        .cashier-user {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .cashier-user i {
+            color: #34d399;
+            margin-left: 8px;
+        }
+
+        .cashier-time {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fbbf24;
+        }
+
+        .cashier-time i {
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+
+   @@keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ===== بطاقات المحتوى ===== */
+        .cashier-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            overflow: hidden;
+        }
+
+        .cashier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .cashier-card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%);
+            color: white;
+            padding: 20px 25px;
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .cashier-card-header.customer {
+            background: linear-gradient(135deg, var(--info-color) 0%, #06b6d4 100%);
+        }
+
+        .cashier-card-header.products {
+            background: linear-gradient(135deg, var(--success-color) 0%, #10b981 100%);
+        }
+
+        .cashier-card-header.cart {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #f59e0b 100%);
+        }
+
+        .cashier-card-header.summary {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #6b7280 100%);
+        }
+
+        .cashier-card-body {
+            padding: 25px;
+        }
+
+        /* ===== تصميم أزرار أوضاع التشغيل ===== */
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            color: #495057;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .mode-btn:hover::before {
+            left: 100%;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2e7d32 100%);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .mode-btn[data-mode="exchange"].active {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            border-color: #ff9800;
+            box-shadow: 0 6px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .mode-btn[data-mode="return"].active {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            border-color: #f44336;
+            box-shadow: 0 6px 15px rgba(244, 67, 54, 0.3);
+        }
+
+
+        .invoice-input {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .invoice-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .reason-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .reason-select:focus {
+            border-color: var(--warning-color);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+
+        .additional-options {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .form-check {
+            margin-bottom: 10px;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            color: var(--dark-bg);
+        }
+
+        .mode-status-indicator {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .mode-status-indicator .alert {
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        .mode-status-indicator .alert-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border-left: 4px solid var(--info-color);
+        }
+
+        .mode-status-indicator .alert-success {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            color: #2e7d32;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .mode-status-indicator .alert-warning {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+            color: #ef6c00;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .mode-status-indicator .alert-danger {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: #c62828;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* ===== تصميم قسم معلومات العميل ===== */
+        .customer-select {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .customer-select:focus {
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .phone-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .phone-input:focus {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .customer-name-input {
+            font-weight: 600;
+            color: var(--dark-bg);
+        }
+
+        .customer-name-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .email-input {
+            font-family: 'Courier New', monospace;
+        }
+
+        .email-input:focus {
+            border-color: var(--warning-color);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, var(--success-color) 0%, #10b981 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 20px;
+            transition: var(--transition);
+        }
+
+        .search-btn:hover {
+            background: linear-gradient(135deg, #047857 0%, var(--success-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        .address-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .governorate-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .governorate-select:focus {
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .district-input, .address-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .district-input:focus, .address-input:focus {
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .customer-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border-left: 4px solid rgba(59, 130, 246, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+        }
+
+        .status-indicator.success {
+            color: var(--success-color);
+            border-left-color: var(--success-color);
+        }
+
+        .status-indicator.warning {
+            color: var(--warning-color);
+            border-left-color: var(--warning-color);
+        }
+
+        .status-indicator.error {
+            color: var(--danger-color);
+            border-left-color: var(--danger-color);
+        }
+
+        /* Form validation styles */
+        .form-control.is-valid {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+        }
+
+        .form-control.is-invalid {
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+        }
+
+        .invalid-feedback {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--danger-color);
+            margin-top: 5px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-bg);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-label i {
+            color: var(--primary-color);
+        }
+
+        /* Customer info animation */
+        .customer-info-filled {
+            animation: customerFilled 0.5s ease-out;
+        }
+
+        @@keyframes customerFilled {
+            0% {
+                background-color: rgba(5, 150, 105, 0.1);
+                transform: scale(1);
+            }
+            50% {
+                background-color: rgba(5, 150, 105, 0.2);
+                transform: scale(1.02);
+            }
+            100% {
+                background-color: transparent;
+                transform: scale(1);
+            }
+        }
+
+
+        /* Summary Section Styles */
+        .summary-item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .summary-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .summary-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+            padding: 10px 15px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .summary-value.primary {
+            background: linear-gradient(135deg, #28a745, #34ce57);
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .summary-value.danger {
+            background: linear-gradient(135deg, #dc3545, #e85a67);
+            color: white;
+            border-color: #dc3545;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .summary-value.success {
+            background: linear-gradient(135deg, #28a745, #34ce57);
+            color: white;
+            border-color: #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .summary-value.warning {
+            background: linear-gradient(135deg, #ffc107, #ffcd39);
+            color: #212529;
+            border-color: #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        }
+
+        .summary-value.info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-color: #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+        }
+
+        /* تحسينات إضافية للكاردات */
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* تحسينات للفورم */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        /* Customer Auto-Fill Animations */
+        .customer-info-filled {
+            animation: customerFillPulse 0.6s ease;
+        }
+
+        @@keyframes customerFillPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3); }
+            100% { transform: scale(1); }
+        }
+
+        .form-control.filled {
+            animation: fieldFillGlow 0.4s ease;
+            border-color: #28a745 !important;
+        }
+
+        @@keyframes fieldFillGlow {
+            0% { border-color: #ced4da; background-color: #fff; }
+            50% { border-color: #28a745; background-color: #f8fff8; }
+            100% { border-color: #28a745; background-color: #fff; }
+        }
+
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 200px;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <!-- تحميل ملف JavaScript المنفصل -->
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="~/css/smart-search.css" asp-append-version="true" />
+    
+    <!-- JavaScript Files -->
+    <script src="~/js/phoneValidation.js" asp-append-version="true"></script>
+    <script src="~/js/smart-search.js" asp-append-version="true"></script>
+    <script src="~/js/enhanced-search.js" asp-append-version="true"></script>
+    <script src="~/js/category-products.js" asp-append-version="true"></script>
+    <script src="~/js/cashier.js" asp-append-version="true"></script>
+}
+
+<!-- Enhanced Search Styles -->
+<style>
+    /* Search Results Dropdown */
+    .search-results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: 4px;
+    }
+
+    .search-result-item {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .search-result-item.available {
+        border-left: 4px solid #28a745;
+    }
+
+    .search-result-item.out-of-stock {
+        border-left: 4px solid #dc3545;
+        opacity: 0.7;
+    }
+
+    .product-info {
+        flex: 1;
+    }
+
+    .product-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #333;
+    }
+
+    .product-details {
+        display: flex;
+        gap: 12px;
+        font-size: 0.9em;
+    }
+
+    .product-details span {
+        padding: 2px 6px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+
+    .price {
+        color: #007bff;
+        font-weight: 500;
+    }
+
+    .stock {
+        color: #28a745;
+    }
+
+    .out-of-stock .stock {
+        color: #dc3545;
+    }
+
+    .category {
+        color: #6c757d;
+    }
+
+    .product-actions {
+        margin-left: 12px;
+    }
+
+    .btn-add-search {
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .btn-add-search:hover {
+        background: #0056b3;
+        transform: scale(1.1);
+    }
+
+    .status-loading {
+        color: #007bff;
+    }
+
+    .status-success {
+        color: #28a745;
+    }
+
+    .status-error {
+        color: #dc3545;
+    }
+
+    .status-ready {
+        color: #6c757d;
+    }
+
+    /* Search loading/error states */
+    .search-loading,
+    .search-no-results,
+    .search-error {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .search-error {
+        color: #dc3545;
+    }
+
+    /* Advanced Search Results Grid */
+    .search-results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        transition: box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .product-card.available {
+        border-left: 4px solid #28a745;
+    }
+
+    .product-card.unavailable {
+        border-left: 4px solid #dc3545;
+        opacity: 0.7;
+    }
+
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 12px;
+    }
+
+    .product-body > div {
+        margin-bottom: 6px;
+    }
+
+    .stock-badge {
+        font-size: 0.8em;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .badge-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Enhanced input styles with autocomplete support */
+    .search-input-container {
+        position: relative;
+    }
+
+    .search-input-container input {
+        width: 100%;
+        padding-right: 40px;
+    }
+
+    .search-clear-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        font-size: 1.2em;
+    }
+
+    .search-clear-btn:hover {
+        color: #333;
+    }
+
+    /* Animation for search results */
+    .search-results-dropdown {
+        animation: fadeIn 0.3s ease;
+    }
+    
+    /* Invoice Search Results */
+    #invoiceSearchResult {
+        margin-top: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    #invoiceSearchResult .alert {
+        margin-bottom: 0;
+        border-radius: 8px;
+    }
+    
+    .invoice-found {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    
+    .invoice-not-found {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Search Mode Specific Styles */
+    .search-mode {
+        min-height: 200px;
+        transition: all 0.3s ease;
+    }
+
+    .name-search-container,
+    .advanced-search-container {
+        padding: 20px 0;
+    }
+
+    .search-results-container {
+        position: relative;
+        margin-top: 10px;
+    }
+
+    .quick-actions .btn {
+        transition: all 0.2s ease;
+    }
+
+    .quick-actions .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Advanced Search Filter Styling */
+    .advanced-search-container .row {
+        margin-bottom: 15px;
+    }
+
+    .advanced-search-container .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .advanced-search-container .form-control,
+    .advanced-search-container .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.2s ease;
+    }
+
+    .advanced-search-container .form-control:focus,
+    .advanced-search-container .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+    .advanced-results-container {
+        min-height: 100px;
+    }
+
+    /* Search Tab Button Improvements */
+    .search-tab-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-right: 8px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+    }
+
+    .search-tab-btn.active {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .search-tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .scanner-device-info {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        color: white;
+    }
+
+    .scanner-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .scanner-icon {
+        color: #7b1fa2;
+        font-size: 1.5em;
+        animation: pulse 2s infinite;
+    }
+
+    .scanner-label {
+        font-weight: 600;
+        color: white;
+        font-size: 1.1em;
+    }
+
+    .scanner-instructions {
+        color: rgba(255, 255, 255, 0.8);
+        font-style: italic;
+    }
+
+        position: relative;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+        background: transparent;
+        border: none;
+        padding: 20px;
+        font-size: 1.2em;
+        text-align: center;
+        color: white;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+        width: 100%;
+    }
+
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+        color: rgba(255, 255, 255, 0.6);
+        font-style: italic;
+        font-weight: normal;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        right: 15px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #28a745, #007bff, #28a745, transparent);
+        animation: scan 3s infinite ease-in-out;
+        border-radius: 2px;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.6);
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+    }
+
+    .scanner-target {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        pointer-events: none;
+    }
+
+    .target-corner {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        border: 3px solid #28a745;
+    }
+
+    .target-tl {
+        top: 0;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+        border-radius: 8px 0 0 0;
+    }
+
+    .target-tr {
+        top: 0;
+        right: 0;
+        border-left: none;
+        border-bottom: none;
+        border-radius: 0 8px 0 0;
+    }
+
+    .target-bl {
+        bottom: 0;
+        left: 0;
+        border-right: none;
+        border-top: none;
+        border-radius: 0 0 0 8px;
+    }
+
+    .target-br {
+        bottom: 0;
+        right: 0;
+        border-left: none;
+        border-top: none;
+        border-radius: 0 0 8px 0;
+    }
+
+    .scanner-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.1em;
+    }
+
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+        background: #c82333;
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    }
+
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+
+        background: #218838;
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+    }
+
+    @@keyframes scan {
+        0% { 
+            transform: translateY(-30px); 
+            opacity: 0; 
+        }
+        20% {
+            transform: translateY(-15px);
+            opacity: 0.6;
+        }
+        50% { 
+            transform: translateY(0); 
+            opacity: 1; 
+        }
+        80% {
+            transform: translateY(15px);
+            opacity: 0.6;
+        }
+        100% { 
+            transform: translateY(30px); 
+            opacity: 0; 
+        }
+    }
+
+    @@keyframes pulse {
+        0%, 100% { 
+            transform: scale(1); 
+            opacity: 1; 
+        }
+        50% { 
+            transform: scale(1.1); 
+            opacity: 0.8; 
+        }
+    }
+
+    /* Status indicator improvements */
+        font-weight: 500;
+        margin-left: 8px;
+    }
+
+    /* Enhanced responsiveness */
+    @@media (max-width: 768px) {
+        .search-tab-btn {
+            padding: 8px 12px;
+            margin-right: 4px;
+            font-size: 0.9em;
+        }
+        
+        .advanced-search-container .row {
+            margin-bottom: 10px;
+        }
+        
+        .search-results-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Toast Notification System */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+    }
+
+    .toast {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 10px;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        border-left: 4px solid #6c757d;
+        overflow: hidden;
+    }
+
+    .toast-show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast-hide {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    .toast-success {
+        border-left-color: #28a745;
+    }
+
+    .toast-error {
+        border-left-color: #dc3545;
+    }
+
+    .toast-warning {
+        border-left-color: #ffc107;
+    }
+
+    .toast-info {
+        border-left-color: #17a2b8;
+    }
+
+    .toast-content {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .toast-icon {
+        font-size: 1.2em;
+        flex-shrink: 0;
+    }
+
+    .toast-message {
+        flex: 1;
+        font-weight: 500;
+        color: #495057;
+        line-height: 1.4;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .toast-close:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+
+    /* Toast animations */
+    @@keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    /* Toast responsive design */
+    @@media (max-width: 768px) {
+        .toast-container {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+        
+        .toast-content {
+            padding: 10px 12px;
+        }
+        
+        .toast-message {
+            font-size: 0.9em;
+        }
+    }
+</style>
+
+<script>
+// Exchange Dialog Function
+function openExchangeDialog() {
+    // Show exchange modal or redirect to exchange page
+    const invoiceNumber = prompt('أدخل رقم الفاتورة المراد الاستبدال منها:');
+    
+    if (invoiceNumber && invoiceNumber.trim()) {
+        // Redirect to exchange page with invoice number
+        window.open(`/Exchange/Create?originalInvoiceNumber=${encodeURIComponent(invoiceNumber.trim())}`, '_blank');
+    } else if (invoiceNumber !== null) {
+        showMessage('يرجى إدخال رقم فاتورة صحيح', 'warning');
+    }
+}
+
+// Enhanced Exchange Dialog with Recent Invoices
+function openAdvancedExchangeDialog() {
+    // Create a modal with recent invoices
+    const modalHtml = `
+        <div class="modal fade" id="exchangeModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exchange-alt"></i>
+                            استبدال منتج
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="exchangeInvoiceNumber" class="form-label">رقم الفاتورة:</label>
+                            <input type="text" id="exchangeInvoiceNumber" class="form-control" 
+                                   placeholder="مثال: INV-20241225-001">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary" onclick="proceedToExchange()">
+                                <i class="fas fa-arrow-left"></i>
+                                الانتقال لصفحة الاستبدال
+                            </button>
+                        </div>
+                        <hr>
+                        <h6 class="text-muted">أو اختر من الفواتير الأخيرة:</h6>
+                        <div id="recentInvoicesList">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                جاري تحميل الفواتير الأخيرة...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page if not exists
+    if (!document.getElementById('exchangeModal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('exchangeModal'));
+    modal.show();
+    
+    // Load recent invoices (you can implement this later)
+    loadRecentInvoicesForExchange();
+}
+
+function proceedToExchange() {
+    const invoiceNumber = document.getElementById('exchangeInvoiceNumber').value.trim();
+    
+    if (invoiceNumber) {
+        // Close modal and redirect
+        const modal = bootstrap.Modal.getInstance(document.getElementById('exchangeModal'));
+        modal.hide();
+        
+        setTimeout(() => {
+            window.open(`/Exchange/Create?originalInvoiceNumber=${encodeURIComponent(invoiceNumber)}`, '_blank');
+        }, 300);
+    } else {
+        showMessage('يرجى إدخال رقم الفاتورة', 'warning');
+    }
+}
+
+function loadRecentInvoicesForExchange() {
+    // This can be implemented to load recent invoices via AJAX
+    const recentInvoicesList = document.getElementById('recentInvoicesList');
+    
+    setTimeout(() => {
+        recentInvoicesList.innerHTML = `
+            <div class="list-group">
+                <a href="#" class="list-group-item list-group-item-action" onclick="selectInvoiceForExchange('INV-20241225-001')">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">INV-20241225-001</h6>
+                        <small>اليوم</small>
+                    </div>
+                    <p class="mb-1">العميل: أحمد محمد</p>
+                    <small>500.00 ج.م</small>
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" onclick="selectInvoiceForExchange('INV-20241224-002')">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">INV-20241224-002</h6>
+                        <small>أمس</small>
+                    </div>
+                    <p class="mb-1">العميل: فاطمة أحمد</p>
+                    <small>300.00 ج.م</small>
+                </a>
+            </div>
+        `;
+    }, 1000);
+}
+
+        function selectInvoiceForExchange(invoiceNumber) {
+    document.getElementById('exchangeInvoiceNumber').value = invoiceNumber;
+    proceedToExchange();
+}
+
+// نظام معالجة اللصق من صفحة المنتجات
+    // السماح باللصق العادي أولاً
+    setTimeout(() => {
+        const pastedText = event.target.value;
+        
+        // محاولة تحليل النص كلصق من صفحة المنتجات
+        try {
+            
+            // التحقق من أن البيانات من صفحة المنتجات
+                
+                
+                
+                // إظهار رسالة نجاح
+                
+                } else {
+                    // Fallback: البحث العادي
+                }
+                
+                // إظهار معلومات المنتج إذا كانت متوفرة
+                    
+                    // إضافة المنتج للسلة تلقائياً
+                }
+                
+                return;
+            }
+        } catch (e) {
+        }
+        
+        }
+    }, 100);
+}
+
+// دالة لإظهار إشعار اللصق
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">${type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}</span>
+            <span class="notification-message">${message}</span>
+        </div>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+        color: ${type === 'success' ? '#155724' : '#721c24'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 500;
+        animation: slideInRight 0.3s ease-out;
+        max-width: 300px;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// دالة لإظهار معلومات المنتج من اللصق
+function showProductInfoFromPaste(productInfo) {
+    const infoHtml = `
+        <div class="pasted-product-info">
+            <div class="info-header">
+                <span class="info-icon"><i class="fas fa-box"></i></span>
+                <span class="info-title">معلومات المنتج المنسوخ</span>
+                <span class="info-subtitle">سيتم إضافته للسلة تلقائياً</span>
+            </div>
+            <div class="info-content">
+                <div class="info-item">
+                    <span class="info-label">الاسم:</span>
+                    <span class="info-value">${productInfo.name || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">السعر:</span>
+                    <span class="info-value">${productInfo.price ? productInfo.price.toFixed(2) + ' ج.م' : 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الكمية:</span>
+                    <span class="info-value">${productInfo.quantity || 'غير محدد'}</span>
+                </div>
+                ${productInfo.category ? `
+                <div class="info-item">
+                    <span class="info-label">الصنف:</span>
+                    <span class="info-value">${productInfo.category}</span>
+                </div>
+                ` : ''}
+                ${productInfo.color ? `
+                <div class="info-item">
+                    <span class="info-label">اللون:</span>
+                    <span class="info-value">${productInfo.color}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    // إضافة CSS للتصميم
+    if (!document.querySelector('#pasted-product-info-styles')) {
+        const style = document.createElement('style');
+        style.id = 'pasted-product-info-styles';
+        style.textContent = `
+            .pasted-product-info {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                border: 2px solid #2196f3;
+                border-radius: 12px;
+                padding: 16px;
+                box-shadow: 0 8px 24px rgba(33, 150, 243, 0.3);
+                z-index: 9999;
+                font-family: 'Cairo', sans-serif;
+                max-width: 300px;
+                animation: slideInRight 0.4s ease-out;
+            }
+            
+            .info-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(33, 150, 243, 0.2);
+            }
+            
+            .info-icon {
+                font-size: 1.2em;
+            }
+            
+            .info-title {
+                font-weight: 600;
+                color: #1976d2;
+                font-size: 1.1em;
+            }
+            
+            .info-subtitle {
+                font-weight: 500;
+                color: #28a745;
+                font-size: 0.9em;
+                margin-top: 4px;
+                display: block;
+            }
+            
+            .info-content {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .info-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;
+            }
+            
+            .info-label {
+                font-weight: 500;
+                color: #424242;
+                font-size: 0.9em;
+            }
+            
+            .info-value {
+                font-weight: 600;
+                color: #1976d2;
+                font-size: 0.9em;
+            }
+            
+            @@keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            @@keyframes slideOutRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // إزالة المعلومات السابقة إذا كانت موجودة
+    const existingInfo = document.querySelector('.pasted-product-info');
+    if (existingInfo) {
+        existingInfo.remove();
+    }
+    
+    // إضافة المعلومات الجديدة
+    document.body.insertAdjacentHTML('beforeend', infoHtml);
+    
+    // إزالة المعلومات بعد 5 ثوان
+    setTimeout(() => {
+        const infoElement = document.querySelector('.pasted-product-info');
+        if (infoElement) {
+            infoElement.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                if (infoElement.parentNode) {
+                    infoElement.parentNode.removeChild(infoElement);
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+// دالة إضافة المنتج للسلة من اللصق
+function addProductToCartFromPaste(productInfo) {
+    try {
+        
+        // التحقق من وجود البيانات المطلوبة
+        if (!productInfo || !productInfo.id || !productInfo.name || !productInfo.price) {
+            return;
+        }
+        
+        // التحقق من وجود دالة إضافة للسلة
+        if (typeof addProductToCartWithColorSize === 'function') {
+            // استخدام الدالة المتقدمة مع اللون والمقاس
+            addProductToCartWithColorSize(
+                productInfo.id,
+                productInfo.name,
+                productInfo.price,
+                productInfo.color || null,
+                productInfo.size || null
+            );
+            
+            
+        } else if (typeof addProductToCart === 'function') {
+            // استخدام الدالة البسيطة
+            addProductToCart(
+                productInfo.id,
+                productInfo.name,
+                productInfo.price
+            );
+            
+            
+        } else {
+            console.error('❌ لا توجد دالة إضافة للسلة متاحة');
+        }
+        
+    } catch (error) {
+        console.error('❌ خطأ في إضافة المنتج للسلة:', error);
+    }
+}
+
+// دالة اللصق من الحافظة
+async function pasteFromClipboard() {
+    try {
+        // محاولة قراءة النص من الحافظة
+        const clipboardText = await navigator.clipboard.readText();
+        
+        if (clipboardText) {
+            console.log('📋 تم قراءة النص من الحافظة:', clipboardText);
+            
+            // محاولة تحليل النص كلصق من صفحة المنتجات
+            try {
+                
+                // التحقق من أن البيانات من صفحة المنتجات
+                    
+                    
+                    // تحديث حقل الإدخال
+                        
+                        // إظهار رسالة نجاح
+                        
+                        // البحث عن المنتج
+                        }
+                        
+                        // إظهار معلومات المنتج إذا كانت متوفرة
+                            
+                            // إضافة المنتج للسلة تلقائياً
+                        }
+                        
+                        return;
+                    }
+                }
+            } catch (e) {
+            }
+            
+                
+                // إظهار رسالة نجاح
+                
+                // البحث عن المنتج
+                }
+            }
+        } else {
+        }
+    } catch (error) {
+        console.error('❌ خطأ في قراءة الحافظة:', error);
+    }
+}
+
+        function handleCustomerSelection() {
+            const select = document.getElementById('customerSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            console.log('👤 Customer selection changed:', selectedOption.value);
+            console.log('📋 Selected option data:', {
+                name: selectedOption.getAttribute('data-name'),
+                phone: selectedOption.getAttribute('data-phone'),
+                additionalPhone: selectedOption.getAttribute('data-additional-phone'),
+                email: selectedOption.getAttribute('data-email'),
+                governorate: selectedOption.getAttribute('data-governorate'),
+                district: selectedOption.getAttribute('data-district'),
+                detailedAddress: selectedOption.getAttribute('data-detailed-address')
+            });
+            
+            if (selectedOption.value) {
+                // Use the function from cashier.js that fills all fields
+                if (typeof fillCustomerDataFromOption === 'function') {
+                    fillCustomerDataFromOption(selectedOption);
+                } else {
+                    // Fallback to simple function
+                    fillCustomerDataSimple(selectedOption);
+                }
+                
+                const customerName = selectedOption.getAttribute('data-name');
+              
+            } else {
+               
+            }
+        }
+        
+        // دالة بسيطة لملء بيانات العميل
+        function fillCustomerDataSimple(option) {
+           
+            
+            // ملء الاسم
+            const nameField = document.getElementById('customerName');
+            if (nameField) {
+                nameField.value = option.getAttribute('data-name') || '';
+               
+            }
+            
+            // ملء رقم الهاتف (كلا الحقلين)
+            const phoneField = document.getElementById('customerPhone');
+            const phoneInputField = document.getElementById('customerPhoneInput');
+            const phoneValue = option.getAttribute('data-phone') || '';
+            
+            if (phoneField) {
+                phoneField.value = phoneValue;
+              
+            }
+            if (phoneInputField) {
+                phoneInputField.value = phoneValue;
+               
+            }
+            
+            // ملء رقم الهاتف الإضافي
+            const additionalPhoneField = document.getElementById('customerAdditionalPhone');
+            if (additionalPhoneField) {
+                additionalPhoneField.value = option.getAttribute('data-additional-phone') || '';
+                
+            }
+            
+            // ملء البريد الإلكتروني
+            const emailField = document.getElementById('customerEmail');
+            if (emailField) {
+                emailField.value = option.getAttribute('data-email') || '';
+                
+            }
+            
+            // ملء المحافظة
+            const governorateField = document.getElementById('customerGovernorate');
+            if (governorateField) {
+                governorateField.value = option.getAttribute('data-governorate') || '';
+               
+            }
+            
+            // ملء المنطقة
+            const districtField = document.getElementById('customerDistrict');
+            if (districtField) {
+                districtField.value = option.getAttribute('data-district') || '';
+                
+            }
+            
+            // ملء العنوان التفصيلي
+            const detailedAddressField = document.getElementById('customerDetailedAddress');
+            if (detailedAddressField) {
+                detailedAddressField.value = option.getAttribute('data-detailed-address') || '';
+               
+            }
+            
+          
+        }
+</script>
+
+<!-- Color and Size Selection Modal -->
+@await Html.PartialAsync("_ColorSizeSelectionModal")
+
+
+<!-- حل مشكلة validation الهاتف في الكاشير -->
+<script>
+// تجاهل validation الهاتف في الكاشير
+document.addEventListener('DOMContentLoaded', function() {
+    // إزالة validation من حقول الهاتف
+    const phoneFields = document.querySelectorAll('input[type="tel"], input[id*="Phone"], input[id*="phone"]');
+    phoneFields.forEach(field => {
+        // إزالة validation attributes
+        field.removeAttribute('pattern');
+        field.removeAttribute('minlength');
+        field.removeAttribute('maxlength');
+        
+        // إزالة validation classes
+        field.classList.remove('is-invalid');
+        field.classList.remove('is-valid');
+        
+        // إزالة رسائل الخطأ
+        const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    });
+    
+    // تجاهل validation عند تغيير القيم
+    phoneFields.forEach(field => {
+        field.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            this.classList.remove('is-valid');
+            
+            // إزالة رسائل الخطأ
+            const errorDiv = this.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        });
+    });
+    
+  
+}); 
+</script>
+
+<!-- نظام البحث المتقدم -->
+<link rel="stylesheet" href="~/css/advanced-search.css">
+<script src="~/js/simple-advanced-search.js"></script>
+
+<script>
+// دالة تبديل أوضاع البحث المتقدم
+function switchAdvancedSearchMode(mode) {
+    // إزالة الكلاس النشط من جميع الأزرار
+    document.querySelectorAll('.search-mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // إضافة الكلاس النشط للزر المحدد
+    event.target.classList.add('active');
+    
+    // تحديث الوضع الحالي
+    if (window.simpleAdvancedSearch) {
+        window.simpleAdvancedSearch.currentMode = mode;
+    }
+    
+    // تحديث placeholder
+    const searchInput = document.getElementById('advancedSearchInput');
+    if (searchInput) {
+        switch(mode) {
+            case 'barcode':
+                searchInput.placeholder = 'امسح الباركود أو اكتب الرمز...';
+                break;
+            case 'name':
+                searchInput.placeholder = 'اكتب اسم المنتج...';
+                break;
+            case 'category':
+                searchInput.placeholder = 'اكتب اسم التصنيف...';
+                break;
+            default:
+                searchInput.placeholder = 'اكتب ID، اسم المنتج، أو امسح الباركود...';
+        }
+    }
+    
+    // مسح النتائج السابقة
+    const resultsContainer = document.getElementById('advancedSearchResults');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+        resultsContainer.innerHTML = '';
+    }
+    
+    console.log(`🔍 تم تبديل وضع البحث إلى: ${mode}`);
+}
+
+// دالة اختبار للبحث
+function testSearch() {
+    console.log('🧪 اختبار البحث...');
+    const testTerm = '123'; // رقم اختبار
+    processSimpleAdvancedSearch(testTerm);
+}
+
+// دالة اختبار للصق
+function testPaste() {
+    console.log('🧪 اختبار اللصق...');
+    pasteFromClipboard();
+}
+
+// دالة اختبار للباركود
+function testBarcode() {
+    console.log('🧪 اختبار الباركود...');
+    const barcode = 'XCV51321'; // باركود اختبار
+    processSimpleAdvancedSearch(barcode);
+}
+</script>

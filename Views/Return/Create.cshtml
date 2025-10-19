@@ -1,0 +1,487 @@
+@model PesticideShop.Controllers.ReturnRequest
+
+@{
+    ViewData["Title"] = "إرجاع منتج";
+    var products = ViewBag.Products as List<PesticideShop.Models.Product>;
+    var originalInvoiceNumber = ViewBag.OriginalInvoiceNumber as string;
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="fas fa-undo"></i>
+                                إرجاع منتج
+                            </h2>
+                            <p class="mb-0 opacity-75">إرجاع منتج موجود في فاتورة سابقة</p>
+                        </div>
+                        <div>
+                            @if (!string.IsNullOrEmpty(originalInvoiceNumber))
+                            {
+                                <a href="@Url.Action("MultiReturn", "Return")" 
+                                   class="btn btn-success me-2" 
+                                   id="multiReturnBtn"
+                                   title="إرجاع عدة منتجات من هذه الفاتورة">
+                                    <i class="fas fa-undo-alt"></i> إرجاع متعدد
+                                </a>
+                            }
+                            <a href="@Url.Action("Index", "Return")" class="btn btn-light me-2">
+                                📋 المرتجعات
+                            </a>
+                            <a href="@Url.Action("Index", "Invoices")" class="btn btn-light">
+                                ⬅️ العودة للفواتير
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" id="returnForm">
+        <div class="row">
+            <!-- Return Form -->
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                           
+                            بيانات الإرجاع
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Original Invoice -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="OriginalInvoiceNumber" class="form-label">
+                                    <i class="fas fa-file-invoice"></i>
+                                    رقم الفاتورة الأصلية *
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="OriginalInvoiceNumber" class="form-control" 
+                                           placeholder="مثال: INV-20241225-001" 
+                                           value="@originalInvoiceNumber" />
+                                    <button type="button" id="loadInvoiceBtn" class="btn btn-outline-primary">
+                                        🔍 تحميل
+                                    </button>
+                                </div>
+                                <span asp-validation-for="OriginalInvoiceNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                   
+                                    رقم فاتورة الإرجاع *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-danger text-white">RTN</span>
+                                    <input type="text" id="returnInvoiceNumber" class="form-control" 
+                                           placeholder="أدخل باقي الرقم..." 
+                                           maxlength="20" />
+                                </div>
+                                <small class="form-text text-muted">سيتم إنشاء رقم فاتورة الإرجاع تلقائياً: RTN + الرقم الذي تدخله</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Status -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div id="invoiceStatus">
+                                    <!-- Invoice status will be shown here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Selection -->
+                        <div class="row mb-3" id="productSection" style="display: none;">
+                            <div class="col-md-6">
+                                <label asp-for="ProductId" class="form-label">
+                                  
+                                    المنتج المراد إرجاعه *
+                                </label>
+                                <select asp-for="ProductId" class="form-select" id="productSelect">
+                                    <option value="">اختر المنتج...</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                                <span asp-validation-for="ProductId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ReturnedQuantity" class="form-label">
+                                    
+                                    الكمية المراد إرجاعها *
+                                </label>
+                                <input asp-for="ReturnedQuantity" type="number" class="form-control" 
+                                       min="1" placeholder="1" />
+                                <span asp-validation-for="ReturnedQuantity" class="text-danger"></span>
+                                <small class="form-text text-muted" id="availableQuantityText"></small>
+                            </div>
+                        </div>
+
+                        <!-- Return Reason -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="ReturnReason" class="form-label">
+                                   
+                                    سبب الإرجاع
+                                </label>
+                                <select asp-for="ReturnReason" class="form-select">
+                                    <option value="">اختر السبب...</option>
+                                    <option value="عيب في المنتج">عيب في المنتج</option>
+                                    <option value="منتج غير مطابق للمواصفات">منتج غير مطابق للمواصفات</option>
+                                    <option value="تأخير في التسليم">تأخير في التسليم</option>
+                                    <option value="طلب العميل">طلب العميل</option>
+                                    <option value="منتج منتهي الصلاحية">منتج منتهي الصلاحية</option>
+                                    <option value="تلف أثناء النقل">تلف أثناء النقل</option>
+                                    <option value="أخرى">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Notes" class="form-label">
+                                 
+                                    ملاحظات إضافية
+                                </label>
+                                <textarea asp-for="Notes" class="form-control" rows="3" 
+                                          placeholder="أي ملاحظات إضافية حول عملية الإرجاع..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-danger" id="submitBtn">
+                                        ✅ تنفيذ الإرجاع
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        🔄 إعادة تعيين
+                                    </button>
+                                    <a href="@Url.Action("Index", "Invoices")" class="btn btn-outline-danger">
+                                        ❌ إلغاء
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            ملخص الإرجاع
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="returnSummary">
+                            <div class="text-center text-muted">
+                                <p>قم بملء بيانات الإرجاع لرؤية الملخص</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return Rules -->
+                <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            قواعد الإرجاع
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                يمكن إرجاع المنتجات المباعة فقط
+                            </li>
+                            <li class="mb-2">
+                                يجب تحديد سبب الإرجاع
+                            </li>
+                            <li class="mb-2">
+                                يتم تحديث المخزون تلقائياً
+                            </li>
+                            <li class="mb-2">
+                                يتم إنشاء فاتورة إرجاع جديدة
+                            </li>
+                            <li class="mb-0">
+                                سيتم استرداد المبلغ للعميل
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.bg-gradient-danger {
+    background: linear-gradient(45deg, #dc3545, #c82333) !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-label i {
+    margin-right: 5px;
+    color: #6c757d;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const originalInvoiceInput = document.querySelector('[name="OriginalInvoiceNumber"]');
+    const loadInvoiceBtn = document.getElementById('loadInvoiceBtn');
+    const productSelect = document.getElementById('productSelect');
+    const quantityInput = document.querySelector('[name="ReturnedQuantity"]');
+    const productSection = document.getElementById('productSection');
+    const invoiceStatus = document.getElementById('invoiceStatus');
+    const returnSummary = document.getElementById('returnSummary');
+    const returnInvoiceNumberInput = document.getElementById('returnInvoiceNumber');
+
+    let invoiceItems = [];
+
+    // Generate return invoice number automatically
+    function generateReturnInvoiceNumber() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const time = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+        
+        // Generate a unique number based on timestamp
+        const uniqueNumber = `${year}${month}${day}${time}`;
+        
+        // Set the input value
+        returnInvoiceNumberInput.value = uniqueNumber;
+        
+        // Show preview
+        showReturnInvoicePreview();
+    }
+
+    // Show return invoice number preview
+    function showReturnInvoicePreview() {
+        const userInput = returnInvoiceNumberInput.value.trim();
+        if (userInput) {
+            const fullNumber = `RTN${userInput}`;
+            const preview = document.getElementById('returnInvoicePreview');
+            if (preview) {
+                preview.textContent = `رقم الفاتورة الكامل: ${fullNumber}`;
+            } else {
+                // Create preview element if it doesn't exist
+                const previewElement = document.createElement('small');
+                previewElement.id = 'returnInvoicePreview';
+                previewElement.className = 'form-text text-danger fw-bold';
+                previewElement.textContent = `رقم الفاتورة الكامل: ${fullNumber}`;
+                returnInvoiceNumberInput.parentNode.parentNode.appendChild(previewElement);
+            }
+        } else {
+            const preview = document.getElementById('returnInvoicePreview');
+            if (preview) {
+                preview.remove();
+            }
+        }
+    }
+
+    // Auto-generate return invoice number on page load
+    generateReturnInvoiceNumber();
+
+    // Update preview when user types
+    returnInvoiceNumberInput.addEventListener('input', showReturnInvoicePreview);
+
+    // Load invoice items
+    loadInvoiceBtn.addEventListener('click', async function() {
+        const invoiceNumber = originalInvoiceInput.value.trim();
+        
+        if (!invoiceNumber) {
+            alert('يرجى إدخال رقم الفاتورة');
+            return;
+        }
+
+        try {
+            loadInvoiceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+            loadInvoiceBtn.disabled = true;
+
+            const response = await fetch(`/Return/GetInvoiceItems?invoiceNumber=${encodeURIComponent(invoiceNumber)}`);
+            const data = await response.json();
+
+            if (data.success) {
+                invoiceItems = data.items;
+                populateProductSelect();
+                productSection.style.display = 'block';
+                invoiceStatus.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        تم تحميل الفاتورة بنجاح (${data.items.length} منتج)
+                    </div>
+                `;
+            } else {
+                invoiceStatus.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${data.message}
+                    </div>
+                `;
+                productSection.style.display = 'none';
+            }
+        } catch (error) {
+            invoiceStatus.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    حدث خطأ في تحميل الفاتورة
+                </div>
+            `;
+        } finally {
+            loadInvoiceBtn.innerHTML = '<i class="fas fa-search"></i> تحميل';
+            loadInvoiceBtn.disabled = false;
+        }
+    });
+
+    // Populate product select
+    function populateProductSelect() {
+        productSelect.innerHTML = '<option value="">اختر المنتج...</option>';
+        
+        invoiceItems.forEach(item => {
+            if (item.canReturn) {
+                const option = document.createElement('option');
+                option.value = item.productId;
+                
+                // Build display text with color information
+                let displayText = `${item.productName}`;
+                if (item.color && item.color.trim() !== '') {
+                    displayText += ` - 🎨 ${item.color}`;
+                }
+                if (item.size && item.size.trim() !== '') {
+                    displayText += ` - 📏 ${item.size}`;
+                }
+                displayText += ` - ${item.unitPrice.toFixed(2)} ج.م (الكمية: ${item.quantity})`;
+                
+                option.textContent = displayText;
+                option.dataset.maxQuantity = item.quantity;
+                productSelect.appendChild(option);
+            }
+        });
+    }
+
+    // Update available quantity
+    productSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const maxQuantity = selectedOption.dataset.maxQuantity;
+            quantityInput.max = maxQuantity;
+            quantityInput.value = Math.min(quantityInput.value || 1, maxQuantity);
+            document.getElementById('availableQuantityText').textContent = 
+                `الحد الأقصى: ${maxQuantity} قطعة`;
+            updateReturnSummary();
+        } else {
+            document.getElementById('availableQuantityText').textContent = '';
+            updateReturnSummary();
+        }
+    });
+
+    // Update return summary
+    quantityInput.addEventListener('input', updateReturnSummary);
+
+    function updateReturnSummary() {
+        const productOption = productSelect.options[productSelect.selectedIndex];
+        const quantity = parseInt(quantityInput.value) || 0;
+
+        if (productOption.value && quantity > 0) {
+            returnSummary.innerHTML = `
+                <div class="summary-item mb-3">
+                    <h6 class="text-danger">المنتج المرتجع:</h6>
+                    <p class="mb-1">${productOption.textContent}</p>
+                    <small class="text-muted">الكمية: ${quantity}</small>
+                </div>
+                <hr>
+                <div class="summary-item">
+                    <h6>ملاحظة:</h6>
+                    <p class="mb-0 text-muted">
+                        سيتم إرجاع المنتج إلى المخزون واسترداد المبلغ للعميل
+                    </p>
+                </div>
+            `;
+        } else {
+            returnSummary.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <p>قم بملء بيانات الإرجاع لرؤية الملخص</p>
+                </div>
+            `;
+        }
+    }
+
+    // Auto-load if original invoice number is provided
+    if (originalInvoiceInput.value) {
+        loadInvoiceBtn.click();
+    }
+
+    // Handle form submission
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const userInput = returnInvoiceNumberInput.value.trim();
+        if (!userInput) {
+            e.preventDefault();
+            alert('يرجى إدخال رقم فاتورة الإرجاع');
+            returnInvoiceNumberInput.focus();
+            return;
+        }
+
+        // Create hidden input with full return invoice number
+        const fullReturnNumber = `RTN${userInput}`;
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'ReturnInvoiceNumber';
+        hiddenInput.value = fullReturnNumber;
+        this.appendChild(hiddenInput);
+
+        // Show confirmation
+        if (!confirm(`هل أنت متأكد من إنشاء إرجاع برقم الفاتورة: ${fullReturnNumber}؟`)) {
+            e.preventDefault();
+            return;
+        }
+    });
+
+    // Multi-return button: transfer invoice number to MultiReturn page
+    const multiReturnBtn = document.getElementById('multiReturnBtn');
+    if (multiReturnBtn) {
+        multiReturnBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const invoiceNumber = document.querySelector('[name="OriginalInvoiceNumber"]').value;
+            
+            if (invoiceNumber) {
+                // Store invoice number in sessionStorage
+                sessionStorage.setItem('multiReturnInvoiceNumber', invoiceNumber);
+                window.location.href = this.href;
+            } else {
+                alert('يرجى إدخال رقم الفاتورة أولاً');
+            }
+        });
+    }
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

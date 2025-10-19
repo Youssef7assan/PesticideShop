@@ -1,0 +1,370 @@
+@model PesticideShop.Models.CustomerTransaction
+
+@{
+    ViewData["Title"] = "إضافة معاملة";
+    var customerId = ViewData["CustomerId"] as int? ?? Model?.CustomerId ?? 0;
+    var customerName = ViewData["CustomerName"] as string;
+    var customerPhone = ViewData["CustomerPhone"] as string;
+    var productList = ViewData["ProductId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+}
+
+<div class="fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم بنجاح:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (string.IsNullOrWhiteSpace(customerPhone))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>⚠️ تنبيه:</strong> هذا العميل لا يملك رقم هاتف. لن تتمكن من إرسال فواتير عبر الواتساب.
+            <a asp-action="Edit" asp-route-id="@customerId" class="btn btn-sm btn-warning ms-2">إضافة رقم هاتف</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>💰 إضافة معاملة</h1>
+            <p class="text-muted mb-0">تسجيل شراء جديد للعميل @customerName</p>
+            @if (!string.IsNullOrWhiteSpace(customerPhone))
+            {
+                <small class="text-muted">رقم الهاتف: @customerPhone</small>
+            }
+        </div>
+        <a asp-action="Details" asp-route-id="@customerId" class="btn btn-secondary">
+            ← الرجوع إلى العميل
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">إضافة معاملة جديدة للعميل @customerName</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddTransaction" asp-route-id="@customerId" method="post" id="transactionForm" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <input type="hidden" name="CustomerId" value="@customerId" />
+                        <input type="hidden" asp-for="CustomerId" value="@customerId" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ProductId" class="form-label">المنتج *</label>
+                                <select asp-for="ProductId" asp-items="productList" class="form-select" required id="productSelect" name="ProductId">
+                                    <option value="">-- اختر المنتج --</option>
+                                </select>
+                                <span asp-validation-for="ProductId" class="text-danger"></span>
+                                <div id="productInfo" class="mt-2" style="display: none;">
+                                    <small class="text-muted">
+                                        الكمية المتاحة: <span id="availableQuantity" class="fw-bold"></span> قطعة
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Quantity" class="form-label">الكمية *</label>
+                                <input asp-for="Quantity" type="number" min="1" class="form-control" required id="quantityInput" name="Quantity" />
+                                <span asp-validation-for="Quantity" class="text-danger"></span>
+                                <div id="quantityWarning" class="mt-2" style="display: none;">
+                                    <small class="text-danger">
+                                        ⚠️ الكمية المطلوبة أكبر من الكمية المتاحة!
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TotalPrice" class="form-label">السعر الإجمالي *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="TotalPrice" type="number" step="0.01" min="0" class="form-control" required name="TotalPrice" />
+                                </div>
+                                <span asp-validation-for="TotalPrice" class="text-danger"></span>
+                                <small class="text-muted">إجمالي المبلغ لهذه المعاملة</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AmountPaid" class="form-label">المبلغ المدفوع *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="AmountPaid" type="number" step="0.01" min="0" class="form-control" required name="AmountPaid" />
+                                </div>
+                                <span asp-validation-for="AmountPaid" class="text-danger"></span>
+                                <small class="text-muted">المبلغ الذي دفعه العميل</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Date" class="form-label">تاريخ المعاملة *</label>
+                                <input asp-for="Date" type="date" class="form-control" required value="@DateTime.Now.ToString("yyyy-MM-dd")" name="Date" />
+                                <span asp-validation-for="Date" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الرصيد المتبقي</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" id="remainingBalance" class="form-control" readonly />
+                                </div>
+                                <small class="text-muted">يُحسب تلقائيًا</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success" id="submitBtn" onclick="return validateForm()">
+                                💰 حفظ المعاملة
+                            </button>
+                            <a asp-action="Details" asp-route-id="@customerId" class="btn btn-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 دليل المعاملة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>كيفية إضافة معاملة:</h6>
+                        <ol class="mb-0">
+                            <li>اختر المنتج الذي اشتراه العميل</li>
+                            <li>أدخل الكمية المشتراة (سيتم خصمها من المخزون)</li>
+                            <li>حدد السعر الإجمالي للمعاملة</li>
+                            <li>أدخل المبلغ الذي دفعه العميل</li>
+                            <li>الرصيد المتبقي يُحسب تلقائيًا</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6>ملاحظات مهمة:</h6>
+                        <ul class="mb-0">
+                            <li>السعر الإجمالي = سعر الوحدة × الكمية</li>
+                            <li>الرصيد المتبقي = السعر الإجمالي - المبلغ المدفوع</li>
+                            <li>إذا كان المبلغ المدفوع = السعر الإجمالي، يكون الرصيد $0</li>
+                            <li>يمكنك إضافة دفعات جزئية لاحقًا</li>
+                            <li>سيتم خصم الكمية تلقائيًا من مخزون المنتج</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Product data for quantity checking
+const productData = @Html.Raw(Json.Serialize(ViewData["ProductData"] ?? new Dictionary<string, object>()));
+
+// Auto-calculate remaining balance
+document.addEventListener('DOMContentLoaded', function() {
+    const totalPriceInput = document.querySelector('input[name="TotalPrice"]');
+    const amountPaidInput = document.querySelector('input[name="AmountPaid"]');
+    const remainingBalanceInput = document.getElementById('remainingBalance');
+    const productSelect = document.getElementById('productSelect');
+    const quantityInput = document.getElementById('quantityInput');
+    const productInfo = document.getElementById('productInfo');
+    const availableQuantity = document.getElementById('availableQuantity');
+    const quantityWarning = document.getElementById('quantityWarning');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    function calculateRemaining() {
+        const totalPrice = parseFloat(totalPriceInput.value) || 0;
+        const discount = parseFloat(document.querySelector('input[name="Discount"]')?.value || 0);
+        const amountPaid = parseFloat(amountPaidInput.value) || 0;
+        const actualTotal = totalPrice - discount;
+        const remaining = actualTotal - amountPaid;
+        
+        remainingBalanceInput.value = remaining.toFixed(2);
+        
+        if (remaining > 0) {
+            remainingBalanceInput.classList.add('text-danger', 'fw-bold');
+            remainingBalanceInput.classList.remove('text-success');
+        } else {
+            remainingBalanceInput.classList.add('text-success');
+            remainingBalanceInput.classList.remove('text-danger', 'fw-bold');
+        }
+    }
+    
+    function checkQuantity() {
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            // Extract product info from display name (format: "Product Name - $XX.XX (Qty: XX)")
+            const displayText = selectedOption.text;
+            const qtyMatch = displayText.match(/Qty: (\d+)/);
+            const availableQty = qtyMatch ? parseInt(qtyMatch[1]) : 0;
+            const requestedQty = parseInt(quantityInput.value) || 0;
+            
+            availableQuantity.textContent = availableQty;
+            productInfo.style.display = 'block';
+            
+            if (requestedQty > availableQty && requestedQty > 0) {
+                quantityWarning.style.display = 'block';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('btn-secondary');
+                submitBtn.classList.remove('btn-success');
+            } else {
+                quantityWarning.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.classList.add('btn-success');
+                submitBtn.classList.remove('btn-secondary');
+            }
+        } else {
+            productInfo.style.display = 'none';
+            quantityWarning.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.classList.add('btn-success');
+            submitBtn.classList.remove('btn-secondary');
+        }
+    }
+    
+    function calculateTotalPrice() {
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            // Extract price from display name (format: "Product Name - $XX.XX (Qty: XX)")
+            const displayText = selectedOption.text;
+            const priceMatch = displayText.match(/\$(\d+\.?\d*)/);
+            const unitPrice = priceMatch ? parseFloat(priceMatch[1]) : 0;
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const totalPrice = unitPrice * quantity;
+            totalPriceInput.value = totalPrice.toFixed(2);
+            calculateRemaining();
+        }
+    }
+    
+    totalPriceInput.addEventListener('input', calculateRemaining);
+    amountPaidInput.addEventListener('input', calculateRemaining);
+    productSelect.addEventListener('change', function() {
+        calculateTotalPrice();
+        checkQuantity();
+    });
+    quantityInput.addEventListener('input', function() {
+        calculateTotalPrice();
+        checkQuantity();
+    });
+    
+    // Validation function
+    function validateForm() {
+        const productId = document.querySelector('select[name="ProductId"]').value;
+        const quantity = document.querySelector('input[name="Quantity"]').value;
+        const totalPrice = document.querySelector('input[name="TotalPrice"]').value;
+        const amountPaid = document.querySelector('input[name="AmountPaid"]').value;
+        const date = document.querySelector('input[name="Date"]').value;
+        const customerId = document.querySelector('input[name="CustomerId"]').value;
+        
+        if (!productId) {
+            alert('يجب اختيار منتج');
+            return false;
+        }
+        
+        if (!quantity || quantity <= 0) {
+            alert('يجب إدخال كمية صحيحة');
+            return false;
+        }
+        
+        if (!totalPrice || totalPrice <= 0) {
+            alert('يجب إدخال سعر إجمالي صحيح');
+            return false;
+        }
+        
+        if (!amountPaid || amountPaid < 0) {
+            alert('يجب إدخال مبلغ مدفوع صحيح');
+            return false;
+        }
+        
+        if (!date) {
+            alert('يجب إدخال تاريخ صحيح');
+            return false;
+        }
+        
+        // Log form data for debugging
+        console.log('Form validation passed with data:', {
+            CustomerId: customerId,
+            ProductId: productId,
+            Quantity: quantity,
+            TotalPrice: totalPrice,
+            AmountPaid: amountPaid,
+            Date: date
+        });
+        
+        return true;
+    }
+    
+    // Form submission handler
+    const form = document.getElementById('transactionForm');
+    form.addEventListener('submit', function(e) {
+        // Basic client-side validation
+        const productId = document.querySelector('select[name="ProductId"]').value;
+        const quantity = document.querySelector('input[name="Quantity"]').value;
+        const totalPrice = document.querySelector('input[name="TotalPrice"]').value;
+        const amountPaid = document.querySelector('input[name="AmountPaid"]').value;
+        const date = document.querySelector('input[name="Date"]').value;
+        const customerId = document.querySelector('input[name="CustomerId"]').value;
+        
+        if (!productId) {
+            alert('يجب اختيار منتج');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!quantity || quantity <= 0) {
+            alert('يجب إدخال كمية صحيحة');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!totalPrice || totalPrice <= 0) {
+            alert('يجب إدخال سعر إجمالي صحيح');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!amountPaid || amountPaid < 0) {
+            alert('يجب إدخال مبلغ مدفوع صحيح');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!date) {
+            alert('يجب إدخال تاريخ صحيح');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Ensure submit button is enabled
+        submitBtn.disabled = false;
+        submitBtn.classList.add('btn-success');
+        submitBtn.classList.remove('btn-secondary');
+        
+        // Add loading state
+        submitBtn.innerHTML = '⏳ جاري الحفظ...';
+        submitBtn.disabled = true;
+        
+        // Log form data for debugging
+      );
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

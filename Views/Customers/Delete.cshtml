@@ -1,0 +1,89 @@
+@model PesticideShop.Models.Customer
+
+@{
+    ViewData["Title"] = "حذف عميل";
+}
+
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🗑️ حذف عميل</h1>
+        <a asp-action="Index" class="btn btn-secondary">
+            ← الرجوع إلى القائمة
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">⚠️ تأكيد الحذف</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger" role="alert">
+                <strong>🚨 تحذير خطير:</strong> 
+                <ul class="mb-0 mt-2">
+                    <li>سيتم حذف العميل وجميع البيانات المرتبطة به نهائياً</li>
+                    <li>سيتم حذف جميع المعاملات والفواتير المرتبطة بالعميل</li>
+                    <li>سيتم حذف جميع السجلات في التقارير اليومية</li>
+                    <li>لا يمكن التراجع عن هذا الإجراء!</li>
+                </ul>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>تفاصيل العميل:</h6>
+                    <dl class="row">
+                        <dt class="col-sm-4">الاسم:</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
+                        
+                        <dt class="col-sm-4">الهاتف:</dt>
+                        <dd class="col-sm-8">@Model.PhoneNumber</dd>
+                        
+                        <dt class="col-sm-4">المعاملات:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge badge-info">
+                                @(Model.Transactions?.Count ?? 0) معاملة
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">إجمالي المشتريات:</dt>
+                        <dd class="col-sm-8">
+                            <span class="text-success">
+                                @(Model.Transactions?.Sum(t => t.TotalPrice).ToString("N2") ?? "0.00") ج.م
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">إجمالي المدفوع:</dt>
+                        <dd class="col-sm-8">
+                            <span class="text-info">
+                                @(Model.Transactions?.Sum(t => t.AmountPaid).ToString("N2") ?? "0.00") ج.م
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">الرصيد المتبقي:</dt>
+                        <dd class="col-sm-8">
+                            @{
+                                var totalPurchases = Model.Transactions?.Sum(t => t.TotalPrice) ?? 0;
+                                var totalPaid = Model.Transactions?.Sum(t => t.AmountPaid) ?? 0;
+                                var remaining = totalPurchases - totalPaid;
+                            }
+                            <span class="@(remaining > 0 ? "text-danger" : "text-success")">
+                                @remaining.ToString("N2") ج.م
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ← إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        🗑️ حذف العميل
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

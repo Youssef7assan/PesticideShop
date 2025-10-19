@@ -1,0 +1,1093 @@
+@model PesticideShop.Models.Invoice
+
+@{
+    ViewData["Title"] = "فاتورة إلكترونية";
+    Layout = null;
+    
+    // حساب المجموع الفرعي
+    var subtotal = Model.Items?.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
+    
+    // حساب إجمالي الخصم
+    var totalDiscount = Model.Items?.Sum(i => i.Discount) ?? 0;
+    
+    // مصاريف الشحن
+    var shippingCost = Model.ShippingCost;
+    
+    // المجموع النهائي بعد الخصم والشحن
+    var finalTotal = subtotal - totalDiscount + shippingCost;
+    
+    // المتبقي
+    var remaining = finalTotal - Model.AmountPaid;
+    
+    var isExchange = Model.Type == InvoiceType.Exchange;
+    var isReturn = Model.Type == InvoiceType.Return;
+    var isSale = Model.Type == InvoiceType.Sale;
+    
+    // دالة لتحويل طريقة الدفع إلى نص عربي
+    string GetPaymentMethodDisplayName(string paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            "cash" => "نقداً",
+            "visa" => "فيزا",
+            "instapay" => "انستاباي",
+            "wallet" => "محفظة إلكترونية",
+            "delivery" => "دفع عند الاستلام",
+            _ => paymentMethod
+        };
+    }
+}
+
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- إضافة ملف validation الهاتف -->
+    <script src="~/js/phoneValidation.js"></script>
+    <style>
+        /* Print Optimization - Single Page */
+        @@media print {
+            @@page {
+                margin: 0.5cm;
+                size: A4;
+            }
+            
+            body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                font-size: 10px !important;
+                line-height: 1.2 !important;
+            }
+            
+            .invoice-container { 
+                max-width: 100% !important; 
+                margin: 0 !important; 
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+            }
+            
+            .invoice-header { 
+                padding: 8px !important; 
+                margin-bottom: 5px !important;
+            }
+            
+            .invoice-number { font-size: 1.2rem !important; margin-bottom: 3px !important; }
+            .invoice-type { font-size: 0.9rem !important; }
+            
+            .company-info { 
+                margin-bottom: 5px !important; 
+                padding: 8px !important;
+            }
+            
+            .company-name { font-size: 1.2rem !important; margin-bottom: 2px !important; }
+            .company-details { font-size: 0.7rem !important; }
+            
+            .customer-info { 
+                padding: 8px !important; 
+                margin-bottom: 8px !important;
+            }
+            
+            .items-table { 
+                margin-bottom: 10px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .table th, .table td { 
+                padding: 2px 3px !important; 
+                font-size: 9px !important;
+                line-height: 1.1 !important;
+            }
+            
+            .table th { font-size: 9px !important; }
+            
+            .summary-section { 
+                margin-bottom: 8px !important;
+                padding: 8px !important;
+            }
+            
+            .summary-row { 
+                margin-bottom: 3px !important; 
+                font-size: 9px !important;
+            }
+            
+            .footer { 
+                margin-top: 5px !important;
+                padding: 8px !important;
+            }
+            
+            .footer h6 { font-size: 9px !important; margin-bottom: 3px !important; }
+            .footer p { font-size: 8px !important; margin-bottom: 2px !important; }
+            
+            .alert { 
+                padding: 5px !important; 
+                margin-bottom: 5px !important;
+            }
+            
+            .alert h6 { font-size: 9px !important; margin-bottom: 2px !important; }
+            .alert p { font-size: 8px !important; }
+            
+            .badge { 
+                font-size: 8px !important; 
+                padding: 1px 3px !important;
+            }
+            
+            .btn, .no-print { 
+                display: none !important; 
+            }
+            
+            .compact-row { margin-bottom: 3px !important; }
+            .compact-text { font-size: 8px !important; margin-bottom: 1px !important; }
+            
+            /* Force single page */
+            html, body { height: 100% !important; }
+            .invoice-container { height: auto !important; min-height: auto !important; }
+            
+            /* Policy visibility rules */
+            .policy-container {
+                display: none !important; /* Hide policy by default when printing */
+            }
+            body.printing-policy .policy-container { 
+                display: block !important; 
+                max-width: 100% !important; 
+                margin: 0 !important; 
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .policy-header { 
+                padding: 10px !important; 
+                margin-bottom: 8px !important;
+                background: #f8f9fa !important;
+                border: 2px solid #333 !important;
+            }
+            
+            .policy-number { 
+                font-size: 1.4rem !important; 
+                font-weight: bold !important;
+                text-align: center !important;
+                margin-bottom: 5px !important;
+            }
+            
+            .policy-company { 
+                font-size: 1.1rem !important; 
+                text-align: center !important;
+                margin-bottom: 3px !important;
+            }
+            
+            .policy-details { 
+                font-size: 0.8rem !important; 
+                text-align: center !important;
+            }
+            
+            .policy-customer { 
+                padding: 8px !important; 
+                margin-bottom: 8px !important;
+                border: 1px solid #333 !important;
+            }
+            
+            .policy-items { 
+                margin-bottom: 8px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .policy-table th, .policy-table td { 
+                padding: 3px 4px !important; 
+                font-size: 10px !important;
+                border: 1px solid #333 !important;
+            }
+            
+            .policy-table th { 
+                background-color: #f8f9fa !important; 
+                font-weight: bold !important;
+            }
+            
+            .policy-footer { 
+                margin-top: 8px !important;
+                padding: 8px !important;
+                text-align: center !important;
+                border-top: 2px solid #333 !important;
+            }
+        }
+        
+        /* Policy Container - Hidden by default */
+        .policy-container {
+            display: none;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 0;
+            min-height: auto;
+            height: auto;
+        }
+        
+        .policy-header {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #333;
+        }
+        
+        .policy-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .policy-company {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .policy-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .policy-customer {
+            background: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+        }
+        
+        .policy-items {
+            margin-bottom: 15px;
+        }
+        
+        .policy-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .policy-table th {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            padding: 8px 6px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .policy-table td {
+            font-size: 0.9rem;
+            padding: 6px 4px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+        
+        .policy-footer {
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+            border-top: 2px solid #333;
+            font-size: 0.85rem;
+        }
+        
+        /* Print Policy Specific Styles */
+        body.printing-policy .invoice-container {
+            display: none !important;
+        }
+        
+        body.printing-policy .policy-container {
+            display: block !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+        }
+        
+        body.printing-policy .no-print {
+            display: none !important;
+        }
+        
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .invoice-container {
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 0;
+            /* Ensure single page layout */
+            min-height: auto;
+            height: auto;
+        }
+        
+        .invoice-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .invoice-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .invoice-type {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .company-info {
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        
+        .company-name {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .company-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .customer-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .items-table {
+            margin-bottom: 15px;
+        }
+        
+        .table th {
+            background-color: #343a40;
+            color: white;
+            font-size: 0.9rem;
+            padding: 8px 6px;
+        }
+        
+        .table td {
+            font-size: 0.9rem;
+            padding: 6px 4px;
+            vertical-align: middle;
+        }
+        
+        .summary-section {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .summary-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .summary-value {
+            color: #2c3e50;
+        }
+        
+        .total-row {
+            border-top: 2px solid #dee2e6;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        
+        .footer h6 {
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .footer p {
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .badge {
+            font-size: 0.8rem;
+            padding: 3px 6px;
+        }
+        
+        .alert {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+        
+        .alert h6 {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .alert p {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+        
+        /* Compact layout for print */
+        .compact-row {
+            margin-bottom: 8px;
+        }
+        
+        .compact-col {
+            padding: 0 5px;
+        }
+        
+        .compact-text {
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="invoice-number">فاتورة رقم: @Model.InvoiceNumber</div>
+            <div class="invoice-type">
+                @if (isSale)
+                {
+                    <span>🛒 فاتورة مبيعات</span>
+                }
+                else if (isReturn)
+                {
+                    <span>↩️ فاتورة إرجاع</span>
+                }
+                else if (isExchange)
+                {
+                    <span>🔄 فاتورة استبدال</span>
+                }
+            </div>
+        </div>
+
+        <!-- Company Info -->
+        <div class="company-info">
+            <div class="company-name"> Pharaonic</div>
+            <div class="company-details">
+                <div>01125011078 / 01015625250</div>
+                <div>www.bypharaonic.com</div>
+                
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="customer-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>العميل:</strong> @Model.Customer?.Name<br>
+                    <strong>الهاتف:</strong> @Model.Customer?.PhoneNumber<br>
+                  
+                    @if (!string.IsNullOrEmpty(Model.Customer?.AdditionalPhone))
+                    {
+                        <strong>هاتف إضافي:</strong> @Model.Customer.AdditionalPhone<br>
+                    }
+                </div>
+                <div class="col-md-6">
+                    @if (!string.IsNullOrEmpty(Model.Customer?.Governorate))
+                    {
+                        <strong>المحافظة:</strong> @Model.Customer.Governorate<br>
+                    }
+                    @{
+                        var parts = new List<string>();
+                        if (!string.IsNullOrEmpty(Model.Customer?.Governorate)) parts.Add(Model.Customer.Governorate);
+                        if (!string.IsNullOrEmpty(Model.Customer?.District)) parts.Add(Model.Customer.District);
+                        if (!string.IsNullOrEmpty(Model.Customer?.DetailedAddress)) parts.Add(Model.Customer.DetailedAddress);
+                        var fullAddress = string.Join(" - ", parts);
+                    }
+                    @if (!string.IsNullOrWhiteSpace(fullAddress))
+                    {
+                        <strong>العنوان الكامل:</strong> @fullAddress<br>
+                    }
+                </div>
+            </div>
+            <!-- Policy Print Button -->
+            <div class="text-center mt-3 no-print">
+                <button onclick="printPolicy()" class="btn btn-info btn-sm">
+                    📄 طباعة البوليصة
+                </button>
+            </div>
+        </div>
+
+        <!-- Invoice Details -->
+        <div class="container-fluid">
+            <div class="row compact-row">
+                <div class="col-md-3 compact-col">
+                    <div class="compact-text"><strong>📅 التاريخ:</strong></div>
+                    <div>@Model.InvoiceDate.ToString("dd/MM/yyyy")</div>
+                </div>
+                <div class="col-md-3 compact-col">
+                    <div class="compact-text"><strong>⏰ الوقت:</strong></div>
+                    <div>@Model.InvoiceDate.ToString("HH:mm")</div>
+                </div>
+                <div class="col-md-3 compact-col">
+                    <div class="compact-text"><strong>طريقة الدفع:</strong></div>
+                    <div>@GetPaymentMethodDisplayName(Model.PaymentMethod ?? "")</div>
+                </div>
+                <div class="col-md-3 compact-col">
+                    <div class="compact-text"><strong>مصدر الطلب:</strong></div>
+                    <div>
+                        @switch (Model.OrderOrigin)
+                        {
+                            case PesticideShop.Models.OrderOrigin.Website:
+                                <span>الموقع الإلكتروني</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.Instagram:
+                                <span>📷 انستجرام</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.Facebook:
+                                <span>📘 فيسبوك</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.WhatsApp:
+                                <span>💬 واتساب</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.Phone:
+                                <span>هاتف</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.WalkIn:
+                                <span>🚶 حضور شخصي</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.PhysicalStore:
+                                <span>🏪 متجر فعلي</span>
+                                break;
+                            case PesticideShop.Models.OrderOrigin.Other:
+                                <span>🔗 أخرى</span>
+                                break;
+                            default:
+                                <span>❓ غير محدد</span>
+                                break;
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="items-table">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th>المنتج</th>
+                        <th class="text-center">اللون/المقاس</th>
+                        <th class="text-center">الكمية</th>
+                        <th class="text-center">السعر</th>
+                        <th class="text-center">الخصم</th>
+                        <th class="text-center">الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null)
+                    {
+                        var itemNumber = 1;
+                        foreach (var item in Model.Items)
+                        {
+                            var itemTotal = (item.Quantity * item.UnitPrice) - item.Discount;
+                            <tr>
+                                <td class="text-center">@itemNumber</td>
+                                <td>
+                                    <div><strong>@item.Product?.Name</strong></div>
+                                    @if (!string.IsNullOrEmpty(item.Product?.QRCode))
+                                    {
+                                        <small class="text-muted">QR: @item.Product.QRCode</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @{
+                                        // Get product default color and size
+                                        var productDefaultColor = item.Product?.Color ?? "";
+                                        var productDefaultSize = item.Product?.Size.ToString() ?? "";
+                                        
+                                        // Check if custom color/size was selected (different from default)
+                                        var isCustomColor = !string.IsNullOrEmpty(item.Color) && item.Color != productDefaultColor;
+                                        var isCustomSize = !string.IsNullOrEmpty(item.Size) && item.Size != productDefaultSize;
+                                        
+                                        // Display color and size
+                                        var displayColor = !string.IsNullOrEmpty(item.Color) ? item.Color : productDefaultColor;
+                                        var displaySize = !string.IsNullOrEmpty(item.Size) ? item.Size : productDefaultSize;
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(displayColor) || !string.IsNullOrEmpty(displaySize))
+                                    {
+                                        @if (!string.IsNullOrEmpty(displayColor))
+                                        {
+                                            <div>
+                                                <span class="badge @(isCustomColor ? "bg-warning" : "bg-info")" title="@(isCustomColor ? "لون مخصص" : "اللون الافتراضي")">
+                                                    🎨 @displayColor
+                                                </span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(displaySize))
+                                        {
+                                            <div>
+                                                <span class="badge @(isCustomSize ? "bg-warning" : "bg-secondary")" title="@(isCustomSize ? "مقاس مخصص" : "المقاس الافتراضي")">
+                                                    📏 @displaySize
+                                                </span>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">@Math.Abs(item.Quantity)</td>
+                                <td class="text-center">@item.UnitPrice.ToString("N2") ج.م</td>
+                                <td class="text-center">
+                                    @if (item.Discount > 0)
+                                    {
+                                        <span class="text-danger">@item.Discount.ToString("N2") ج.م</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center"><strong>@itemTotal.ToString("N2") ج.م</strong></td>
+                            </tr>
+                            itemNumber++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-row">
+                <span class="summary-label">المجموع الفرعي:</span>
+                <span class="summary-value">@subtotal.ToString("N2") ج.م</span>
+            </div>
+            @if (totalDiscount > 0)
+            {
+                <div class="summary-row">
+                    <span class="summary-label">إجمالي الخصم:</span>
+                    <span class="summary-value text-danger">-@totalDiscount.ToString("N2") ج.م</span>
+                </div>
+            }
+            @if (shippingCost > 0)
+            {
+                <div class="summary-row">
+                    <span class="summary-label">مصاريف الشحن:</span>
+                    <span class="summary-value">+@shippingCost.ToString("N2") ج.م</span>
+                </div>
+            }
+            <div class="summary-row total-row">
+                <span class="summary-label">المجموع النهائي:</span>
+                <span class="summary-value">@finalTotal.ToString("N2") ج.م</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">المدفوع:</span>
+                <span class="summary-value text-success">@Model.AmountPaid.ToString("N2") ج.م</span>
+            </div>
+            @if (remaining > 0)
+            {
+                <div class="summary-row">
+                    <span class="summary-label">المتبقي:</span>
+                    <span class="summary-value text-warning">@remaining.ToString("N2") ج.م</span>
+                </div>
+            }
+        </div>
+
+        <!-- Special Notes -->
+        @if (isExchange)
+        {
+            <div class="alert alert-info">
+                <h6>ملاحظات الاستبدال</h6>
+                <p class="mb-0">✅ <strong>الاستبدال متساوي القيمة</strong></p>
+            </div>
+        }
+
+        @if (isReturn)
+        {
+            <div class="alert alert-warning">
+                <h6>ملاحظات الإرجاع</h6>
+                <p class="mb-0">↩️ هذه فاتورة إرجاع. جميع الأصناف مُسترجعة من العميل.</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <div class="alert alert-light">
+                <h6>ملاحظات إضافية</h6>
+                <p class="mb-0">@Model.Notes</p>
+            </div>
+        }
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="row">
+                
+               
+               
+            </div>
+            <hr>
+            
+            <p class="mb-1 text-center">Quality is our priority</p>
+            
+        </div>
+    </div>
+
+    <!-- Policy Container (Hidden by default) -->
+    <div class="policy-container" id="policyContainer">
+        <!-- Policy Header -->
+        <div class="policy-header">
+            <div class="policy-number">بوليصة رقم: @Model.InvoiceNumber</div>
+            <div class="policy-company">Pharaonic</div>
+            <div class="policy-details">
+                <div>01125011078 / 01015625250</div>
+                <div>www.bypharaonic.com</div>
+            </div>
+        </div>
+
+        <!-- Policy Customer Info -->
+        <div class="policy-customer">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>العميل:</strong> @Model.Customer?.Name<br>
+                    <strong>الهاتف:</strong> @Model.Customer?.PhoneNumber<br>
+                    @if (!string.IsNullOrEmpty(Model.Customer?.AdditionalPhone))
+                    {
+                        <strong>هاتف إضافي:</strong> @Model.Customer.AdditionalPhone<br>
+                    }
+                </div>
+                <div class="col-md-6">
+                    @if (!string.IsNullOrEmpty(Model.Customer?.Governorate))
+                    {
+                        <strong>المحافظة:</strong> @Model.Customer.Governorate<br>
+                    }
+                    @{
+                        var policyParts = new List<string>();
+                        if (!string.IsNullOrEmpty(Model.Customer?.Governorate)) policyParts.Add(Model.Customer.Governorate);
+                        if (!string.IsNullOrEmpty(Model.Customer?.District)) policyParts.Add(Model.Customer.District);
+                        if (!string.IsNullOrEmpty(Model.Customer?.DetailedAddress)) policyParts.Add(Model.Customer.DetailedAddress);
+                        var policyFullAddress = string.Join(" - ", policyParts);
+                    }
+                    @if (!string.IsNullOrWhiteSpace(policyFullAddress))
+                    {
+                        <strong>العنوان الكامل:</strong> @policyFullAddress<br>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Policy Items Table -->
+        <div class="policy-items">
+            <table class="policy-table">
+                <thead>
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th>المنتج</th>
+                        <th class="text-center">اللون/المقاس</th>
+                        <th class="text-center">الكمية</th>
+                        <th class="text-center">السعر</th>
+                        <th class="text-center">الخصم</th>
+                        <th class="text-center">الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null)
+                    {
+                        var itemNumber = 1;
+                        foreach (var item in Model.Items)
+                        {
+                            var itemTotal = (item.Quantity * item.UnitPrice) - item.Discount;
+                            <tr>
+                                <td class="text-center">@itemNumber</td>
+                                <td>
+                                    <div><strong>@item.Product?.Name</strong></div>
+                                    @if (!string.IsNullOrEmpty(item.Product?.QRCode))
+                                    {
+                                        <small class="text-muted">QR: @item.Product.QRCode</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @{
+                                        var productDefaultColor = item.Product?.Color ?? "";
+                                        var productDefaultSize = item.Product?.Size.ToString() ?? "";
+                                        var isCustomColor = !string.IsNullOrEmpty(item.Color) && item.Color != productDefaultColor;
+                                        var isCustomSize = !string.IsNullOrEmpty(item.Size) && item.Size != productDefaultSize;
+                                        var displayColor = !string.IsNullOrEmpty(item.Color) ? item.Color : productDefaultColor;
+                                        var displaySize = !string.IsNullOrEmpty(item.Size) ? item.Size : productDefaultSize;
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(displayColor) || !string.IsNullOrEmpty(displaySize))
+                                    {
+                                        @if (!string.IsNullOrEmpty(displayColor))
+                                        {
+                                            <div>
+                                                <span class="badge @(isCustomColor ? "bg-warning" : "bg-info")">
+                                                    @displayColor
+                                                </span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(displaySize))
+                                        {
+                                            <div>
+                                                <span class="badge @(isCustomSize ? "bg-warning" : "bg-secondary")">
+                                                    @displaySize
+                                                </span>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">@Math.Abs(item.Quantity)</td>
+                                <td class="text-center">@item.UnitPrice.ToString("N2") ج.م</td>
+                                <td class="text-center">
+                                    @if (item.Discount > 0)
+                                    {
+                                        <span class="text-danger">@item.Discount.ToString("N2") ج.م</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center"><strong>@itemTotal.ToString("N2") ج.م</strong></td>
+                            </tr>
+                            itemNumber++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (shippingCost > 0)
+        {
+            <div class="policy-summary" style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; font-weight: 700;">
+                <span>سعر الشحن:</span>
+                <span>@shippingCost.ToString("N2") ج.م</span>
+            </div>
+        }
+
+        <!-- Policy Footer -->
+        <div class="policy-footer">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <strong>مبلغ التحصيل:</strong> @finalTotal.ToString("N2") ج.م
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons (Hidden on print) -->
+    <div class="text-center mt-3 mb-3 no-print">
+        <button onclick="window.print()" class="btn btn-primary btn-lg me-2">
+            🖨️ طباعة الفاتورة
+        </button>
+        <button onclick="sendInvoiceViaWhatsApp()" class="btn btn-success btn-lg me-2">
+إرسال عبر الواتساب
+        </button>
+        <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+            ← رجوع
+        </a>
+    </div>
+
+    <script>
+        // Auto-focus for printing
+        window.addEventListener('load', function() {
+            // Auto print if URL contains print parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === 'true') {
+                setTimeout(() => window.print(), 500);
+            }
+        });
+
+        // Function to send invoice via WhatsApp
+        function sendInvoiceViaWhatsApp() {
+            try {
+                // Get customer phone number
+                const customerPhone = '@Model.Customer?.PhoneNumber';
+                if (!customerPhone) {
+                    alert('❌ لا يوجد رقم هاتف للعميل لإرسال الفاتورة');
+                    return;
+                }
+
+                // Show loading message
+                alert('🔄 جاري إرسال الرسالة عبر الواتساب...');
+                
+                // Send WhatsApp message directly
+                sendWhatsAppMessage(customerPhone).then((whatsappUrl) => {
+                    // Open WhatsApp with message
+                    window.open(whatsappUrl, '_blank');
+                }).catch(error => {
+                    console.error('Error sending WhatsApp message:', error);
+                    alert('❌ حدث خطأ في إرسال الرسالة عبر الواتساب');
+                });
+                
+            } catch (error) {
+                console.error('Error sending invoice via WhatsApp:', error);
+                alert('❌ حدث خطأ في إرسال الفاتورة عبر الواتساب');
+            }
+        }
+
+        // Function to send WhatsApp message
+        async function sendWhatsAppMessage(phoneNumber) {
+            try {
+                const invoiceId = '@Model.Id';
+                
+                // Use fetch to get WhatsApp URL and open in new tab
+                const response = await fetch(`/Invoice/SendWhatsApp/${invoiceId}`);
+                const htmlContent = await response.text();
+                
+                // Create a temporary div to execute the script
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                document.body.appendChild(tempDiv);
+                
+                // Execute the script
+                const script = tempDiv.querySelector('script');
+                if (script) {
+                    eval(script.textContent);
+                }
+                
+                // Clean up
+                document.body.removeChild(tempDiv);
+                
+            } catch (error) {
+                console.error('Error sending WhatsApp message:', error);
+                alert('حدث خطأ في إرسال الفاتورة عبر واتساب: ' + error.message);
+            }
+        }
+
+
+        // Fallback function for basic phone formatting
+        function formatPhoneForWhatsAppBasic(phone) {
+            if (!phone) return '';
+            
+            // Remove all non-digit characters
+            let cleaned = phone.replace(/[^\d]/g, '');
+            
+            // Remove leading zeros
+            while (cleaned.startsWith('0') && cleaned.length > 1) {
+                cleaned = cleaned.substring(1);
+            }
+            
+            // Add country code if not present
+            if (cleaned.startsWith('20')) {
+                return cleaned;
+            } else if (cleaned.startsWith('1') && cleaned.length === 10) {
+                return '20' + cleaned;
+            } else if (cleaned.length === 9) {
+                return '20' + cleaned;
+            } else if (cleaned.length === 10) {
+                return '20' + cleaned;
+            } else if (cleaned.length === 11) {
+                return cleaned;
+            }
+            
+            // Default: assume Egypt
+            return '20' + cleaned;
+        }
+
+        // Function to create invoice summary for WhatsApp
+        function createInvoiceSummary() {
+            const customerName = '@Model.Customer?.Name';
+            const orderNumber = '@Model.OrderNumber';
+            const invoiceDate = '@Model.InvoiceDate.ToString("dd/MM/yyyy")';
+            const totalAmount = '@finalTotal.ToString("N2")';
+            const itemsCount = '@(Model.Items?.Count ?? 0)';
+            
+            let message = `👔 *Pharaonic* - فاتورة جديدة\n\n`;
+            message += `📋 رقم الطلب: *${orderNumber}*\n`;
+            message += `العميل: *${customerName}*\n`;
+            message += `📅 التاريخ: *${invoiceDate}*\n`;
+            message += `🛍️ عدد الأصناف: *${itemsCount}*\n`;
+            message += `💰 المجموع: *${totalAmount} ج.م*\n\n`;
+            
+            // Add items summary
+            message += `📦 *تفاصيل المنتجات:*\n`;
+            
+            @if (Model.Items != null)
+            {
+                foreach (var item in Model.Items)
+                {
+                    <text>
+                    message += `• @Html.Raw(item.Product?.Name) - الكمية: @Math.Abs(item.Quantity) - السعر: @item.UnitPrice.ToString("N2") ج.م\n`;
+                    </text>
+                }
+            }
+            
+            message += `\n📞 للتواصل: 01125011078 / 01015625250\n`;
+            message += `www.bypharaonic.com\n`;
+            message += `\nشكراً لتعاملكم معنا 🙏`;
+            
+            return message;
+        }
+
+        // Function to print policy
+        function printPolicy() {
+            try {
+                // Hide the main invoice container
+                const invoiceContainer = document.querySelector('.invoice-container');
+                const policyContainer = document.getElementById('policyContainer');
+                
+                if (!policyContainer) {
+                    alert('❌ لم يتم العثور على البوليصة');
+                    return;
+                }
+                
+                // Store original display states
+                const originalInvoiceDisplay = invoiceContainer.style.display;
+                const originalPolicyDisplay = policyContainer.style.display;
+                
+                // Show policy and hide invoice
+                invoiceContainer.style.display = 'none';
+                policyContainer.style.display = 'block';
+                
+                // Add print-specific class to body
+                document.body.classList.add('printing-policy');
+                
+                // Print
+                window.print();
+                
+                // Restore original states after printing
+                setTimeout(() => {
+                    invoiceContainer.style.display = originalInvoiceDisplay;
+                    policyContainer.style.display = originalPolicyDisplay;
+                    document.body.classList.remove('printing-policy');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error printing policy:', error);
+                alert('❌ حدث خطأ في طباعة البوليصة: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+@model IEnumerable<PesticideShop.Models.Invoice>
+
+@{
+    ViewData["Title"] = "الأوردرات";
+    
+    // دالة لتحويل طريقة الدفع إلى نص عربي
+    string GetPaymentMethodDisplayName(string paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            "cash" => "<i class='fas fa-money-bill'></i> نقداً",
+            "visa" => "<i class='fas fa-credit-card'></i> فيزا",
+            "instapay" => "<i class='fas fa-mobile-alt'></i> انستاباي",
+            "wallet" => "<i class='fas fa-wallet'></i> محفظة إلكترونية",
+            "delivery" => "<i class='fas fa-truck'></i> دفع عند الاستلام",
+            _ => paymentMethod
+        };
+    }
+
+    // دالة لتحويل نوع الشحن إلى نص عربي
+    string GetShippingTypeDisplayName(PesticideShop.Models.ShippingType? shippingType)
+    {
+        return shippingType switch
+        {
+            PesticideShop.Models.ShippingType.Bosta => "<i class='fas fa-box'></i> بوسطا",
+            PesticideShop.Models.ShippingType.Cairo => "<i class='fas fa-truck'></i> كايرو",
+            PesticideShop.Models.ShippingType.NoShipping => "<i class='fas fa-times-circle'></i> بدون شحن",
+            _ => "غير محدد"
+        };
+    }
+}
+
+<div class="modern-header mb-5">
+    <div class="header-background">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="header-content">
+                        <div class="header-icon">
+                            
+                        </div>
+                        <div class="header-text">
+                            <h1 class="header-title">إدارة الأوردرات - Pharaonic</h1>
+                            <p class="header-subtitle">نظام متكامل لإدارة وتتبع جميع الطلبات والمبيعات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="header-actions">
+                        <a asp-controller="Cashier" asp-action="Index" class="btn btn-success btn-lg">
+                            <i class="fas fa-plus"></i>
+                            أوردر جديد
+                        </a>
+                        @if (Model.Any())
+                        {
+                            <button type="button" class="btn btn-danger btn-lg ms-2" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+                                <i class="fas fa-trash"></i>
+                                حذف الكل
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- رسائل النجاح والخطأ -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Filters and Search -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" asp-action="Index" id="filterForm">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="searchTerm">🔍 البحث:</label>
+                                    <input type="text" name="searchTerm" id="searchTerm" class="form-control" 
+                                           value="@ViewBag.SearchTerm" 
+                                           placeholder="رقم الفاتورة، الأوردر، اسم العميل، رقم الهاتف...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dateFrom">📅 من تاريخ:</label>
+                                    <input type="date" name="dateFrom" id="dateFrom" class="form-control" 
+                                           value="@ViewBag.DateFrom">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dateTo">📅 إلى تاريخ:</label>
+                                    <input type="date" name="dateTo" id="dateTo" class="form-control" 
+                                           value="@ViewBag.DateTo">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="statusFilter">📊 الحالة:</label>
+                                    <select name="statusFilter" id="statusFilter" class="form-select">
+                                        <option value="">جميع الحالات</option>
+                                        <option value="Draft" selected="@(ViewBag.StatusFilter == "Draft" ? "selected" : null)">🏢 في المكتب</option>
+                                        <option value="Sent" selected="@(ViewBag.StatusFilter == "Sent" ? "selected" : null)">📤 مرسل</option>
+                                        <option value="Paid" selected="@(ViewBag.StatusFilter == "Paid" ? "selected" : null)">✅ مدفوع</option>
+                                        <option value="Overdue" selected="@(ViewBag.StatusFilter == "Overdue" ? "selected" : null)">⏰ متأخر</option>
+                                        <option value="Cancelled" selected="@(ViewBag.StatusFilter == "Cancelled" ? "selected" : null)">❌ ملغي</option>
+                                        <option value="PartiallyPaid" selected="@(ViewBag.StatusFilter == "PartiallyPaid" ? "selected" : null)">💰 مدفوع جزئياً</option>
+                                        <option value="Postponed" selected="@(ViewBag.StatusFilter == "Postponed" ? "selected" : null)">⏳ مؤجل</option>
+                                        <option value="UnderDelivery" selected="@(ViewBag.StatusFilter == "UnderDelivery" ? "selected" : null)">🚚 تحت التسليم</option>
+                                        <option value="NotDelivered" selected="@(ViewBag.StatusFilter == "NotDelivered" ? "selected" : null)">❌ لم يسلم</option>
+                                        <option value="Delivered" selected="@(ViewBag.StatusFilter == "Delivered" ? "selected" : null)">✅ تم التسليم</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="typeFilter">📋 النوع:</label>
+                                    <select name="typeFilter" id="typeFilter" class="form-select">
+                                        <option value="">جميع الأنواع</option>
+                                        <option value="Sale" selected="@(ViewBag.TypeFilter == "Sale" ? "selected" : null)">🛒 بيع</option>
+                                        <option value="Return" selected="@(ViewBag.TypeFilter == "Return" ? "selected" : null)">↩️ إرجاع</option>
+                                        <option value="Exchange" selected="@(ViewBag.TypeFilter == "Exchange" ? "selected" : null)">🔄 استبدال</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="originFilter">🌐 المصدر:</label>
+                                    <select name="originFilter" id="originFilter" class="form-select">
+                                        <option value="">جميع المصادر</option>
+                                        <option value="InStore" selected="@(ViewBag.OriginFilter == "InStore" ? "selected" : null)">🏢 في المحل</option>
+                                        <option value="Instagram" selected="@(ViewBag.OriginFilter == "Instagram" ? "selected" : null)">📸 انستجرام</option>
+                                        <option value="Facebook" selected="@(ViewBag.OriginFilter == "Facebook" ? "selected" : null)">📘 فيسبوك</option>
+                                        <option value="Website" selected="@(ViewBag.OriginFilter == "Website" ? "selected" : null)">🌐 الموقع</option>
+                                        <option value="Phone" selected="@(ViewBag.OriginFilter == "Phone" ? "selected" : null)">📞 هاتف</option>
+                                        <option value="WhatsApp" selected="@(ViewBag.OriginFilter == "WhatsApp" ? "selected" : null)">💬 واتساب</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary flex-fill">
+                                            <i class="fas fa-search"></i> بحث وتصفية
+                                        </button>
+                                        <a href="@Url.Action("Index")" class="btn btn-secondary flex-fill">
+                                            <i class="fas fa-redo"></i> إعادة تعيين
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Info -->
+    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm) || !string.IsNullOrEmpty(ViewBag.StatusFilter) || !string.IsNullOrEmpty(ViewBag.TypeFilter) || !string.IsNullOrEmpty(ViewBag.OriginFilter) || !string.IsNullOrEmpty(ViewBag.PaymentFilter) || !string.IsNullOrEmpty(ViewBag.DateFrom) || !string.IsNullOrEmpty(ViewBag.DateTo))
+    {
+        <div class="row mb-2">
+            <div class="col-12">
+                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>نتائج البحث:</strong> تم العثور على <strong>@Model.Count()</strong> أوردر
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                        {
+                            <span class="badge bg-primary">البحث: @ViewBag.SearchTerm</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.StatusFilter))
+                        {
+                            <span class="badge bg-secondary">الحالة: @ViewBag.StatusFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.TypeFilter))
+                        {
+                            <span class="badge bg-success">النوع: @ViewBag.TypeFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.OriginFilter))
+                        {
+                            <span class="badge bg-warning">المصدر: @ViewBag.OriginFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.PaymentFilter))
+                        {
+                            <span class="badge bg-info">طريقة الدفع: @ViewBag.PaymentFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.DateFrom))
+                        {
+                            <span class="badge bg-dark">من: @ViewBag.DateFrom</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.DateTo))
+                        {
+                            <span class="badge bg-dark">إلى: @ViewBag.DateTo</span>
+                        }
+                    </div>
+                    <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times"></i> مسح الفلاتر
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+                        
+            قائمة الأوردرات
+        </h5>
+    </div>
+                <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                            <table class="table table-hover" id="ordersTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>رقم الطلب</th>
+                            <th>العميل</th>
+                                        <th>المنتجات</th>
+                            <th class="text-center">الكمية</th>
+                                        <th class="text-center">المجموع الفرعي</th>
+                            <th class="text-center">الإجمالي</th>
+                            <th class="text-center">المدفوع</th>
+                            <th class="text-center">المتبقي</th>
+                                        <th class="text-center">المصدر</th>
+                                        <th class="text-center">نوع الشحن</th>
+                                        <th class="text-center">الحالة</th>
+                            <th class="text-center">التاريخ</th>
+                                        <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                    @foreach (var order in Model)
+                                    {
+                            <tr>
+                                <td class="text-center">
+                                                <span class="badge bg-secondary">@order.Id</span>
+                                </td>
+                                <td>
+                                                        <span class="badge bg-info"><i class="fas fa-clipboard-list"></i> @order.OrderNumber</span>
+                                </td>
+                                <td>
+                                    <div class="customer-info">
+                                                    <div class="fw-bold">@order.Customer?.Name</div>
+                                                    <small class="text-muted">@order.Customer?.PhoneNumber</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="product-info">
+                                                    @if (order.Items != null && order.Items.Any())
+                                                    {
+                                                        <div class="fw-bold">@order.Items.Count منتج</div>
+                                                        @foreach (var item in order.Items.Take(2))
+                                                        {
+                                                            <div class="small">
+                                                                <span class="badge bg-light text-dark">@item.Product?.Name</span>
+                                                                @if (item.Quantity > 1)
+                                                                {
+                                                                    <span class="badge bg-info">×@item.Quantity</span>
+                                                }
+                                            </div>
+                                                        }
+                                                        @if (order.Items.Count > 2)
+                                                        {
+                                                            <small class="text-muted">+@(order.Items.Count - 2) منتجات أخرى</small>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">لا توجد منتجات</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                                <span class="badge bg-info">@(order.Items?.Sum(i => i.Quantity) ?? 0)</span>
+                                </td>
+                                <td class="text-center">
+                                                <span class="fw-bold text-primary">@order.SubTotal.ToString("N2")</span>
+                                </td>
+                                <td class="text-center">
+                                                @if (order.Discount > 0)
+                                    {
+                                        <div>
+                                                      
+                                                        <small class="text-muted text-decoration-line-through">@order.GrandTotal.ToString("N2")</small>
+                                                        <div class="fw-bold text-success">@order.SubTotal.ToString("N2")</div>
+                                                        <small class="text-danger">خصم: @order.Discount.ToString("N2")</small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                                    <span class="fw-bold text-success">@order.GrandTotal.ToString("N2")</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                                <span class="fw-bold text-info">@order.AmountPaid.ToString("N2")</span>
+                                </td>
+                                <td class="text-center">
+                                                @{
+                                                    var remaining = order.GrandTotal - order.AmountPaid;
+                                                }
+                                    @if (remaining > 0)
+                                    {
+                                        <span class="badge bg-danger">@remaining.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">مكتمل</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                                @switch (order.OrderOrigin)
+                                        {
+                                            case PesticideShop.Models.OrderOrigin.Website:
+                                                        <span class="badge bg-success"><i class="fas fa-globe"></i> الموقع</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.Instagram:
+                                                        <span class="badge bg-danger"><i class="fab fa-instagram"></i> انستجرام</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.Facebook:
+                                                        <span class="badge bg-primary"><i class="fab fa-facebook"></i> فيسبوك</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.WhatsApp:
+                                                        <span class="badge bg-success"><i class="fab fa-whatsapp"></i> واتساب</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.Phone:
+                                                        <span class="badge bg-warning"><i class="fas fa-phone"></i> هاتف</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.WalkIn:
+                                                        <span class="badge bg-secondary"><i class="fas fa-walking"></i> حضور</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.PhysicalStore:
+                                                        <span class="badge bg-info"><i class="fas fa-store"></i> متجر</span>
+                                                break;
+                                            case PesticideShop.Models.OrderOrigin.Other:
+                                                        <span class="badge bg-dark"><i class="fas fa-link"></i> أخرى</span>
+                                                break;
+                                            default:
+                                                        <span class="badge bg-light text-dark"><i class="fas fa-question-circle"></i> غير محدد</span>
+                                                break;
+                                        }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (order.ShippingType.HasValue)
+                                        {
+                                                    <span class="badge bg-info">@Html.Raw(GetShippingTypeDisplayName(order.ShippingType))</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                                @switch (order.Status)
+                                                {
+                                                    case PesticideShop.Models.InvoiceStatus.Draft:
+                                                        <span class="badge bg-secondary">في المكتب</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Sent:
+                                                        <span class="badge bg-warning">مرسل</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Paid:
+                                                        <span class="badge bg-success">مدفوع</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Overdue:
+                                                        <span class="badge bg-danger">متأخر</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Cancelled:
+                                                        <span class="badge bg-dark">ملغي</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.PartiallyPaid:
+                                                        <span class="badge bg-warning">مدفوع جزئياً</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Pending:
+                                                        <span class="badge bg-info">مؤجل</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.UnderDelivery:
+                                                        <span class="badge bg-primary">تحت التسليم</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.NotDelivered:
+                                                        <span class="badge bg-danger">لم يسلم</span>
+                                                        break;
+                                                    case PesticideShop.Models.InvoiceStatus.Delivered:
+                                                        <span class="badge bg-success">تم التسليم</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-light text-dark">غير محدد</span>
+                                                        break;
+                                                }
+                                </td>
+                                <td class="text-center">
+                                                <small class="text-muted">
+                                                    @order.InvoiceDate.ToString("dd/MM/yyyy")
+                                                    <br>
+                                                    @order.InvoiceDate.ToString("hh:mm tt")
+                                                </small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group-vertical btn-group-sm" role="group">
+                                                    <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary mb-1" title="عرض تفاصيل الأوردر والمنتجات">
+                                                        <span class="ms-1">تفاصيل</span>
+                                        </a>
+                                        @if (remaining > 0)
+                                        {
+                                                        <a asp-controller="Invoices" asp-action="UpdatePayment" asp-route-id="@order.Id" class="btn btn-sm btn-outline-success mb-1" title="تحديث المعاملة - إضافة مبلغ مدفوع">
+                                                            <span class="ms-1">تحديث المعاملة</span>
+                                            </a>
+                                        }
+                                                    <form asp-action="Delete" asp-route-id="@order.Id" method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف الأوردر رقم @order.OrderNumber؟')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف الأوردر">
+                                                           
+                                                            <span>حذف</span>
+                                                        </button>
+                                                    </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                          
+                            <h5 class="text-muted">لا توجد أوردرات</h5>
+                            <p class="text-muted">لم يتم إنشاء أي أوردرات بعد</p>
+                            <a asp-controller="Cashier" asp-action="Index" class="btn btn-primary">
+                              
+                                إنشاء أوردر جديد
+                            </a>
+                        </div>
+                    }
+                </div>
+                        </div>
+                    </div>
+                </div>
+                        </div>
+
+<!-- Modal لحذف جميع الأوردرات -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1" aria-labelledby="deleteAllModalLabel" aria-hidden="true" style="z-index: 1055;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <div class="modal-header bg-danger text-white" style="border-radius: 10px 10px 0 0;">
+                <h5 class="modal-title" id="deleteAllModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تأكيد حذف جميع الأوردرات
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-warning"></i> تحذير!</h6>
+                    <p>هل أنت متأكد من حذف <strong>جميع الأوردرات</strong>؟</p>
+                    <p class="mb-0">هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات المرتبطة بالأوردرات.</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-muted">عدد الأوردرات: <strong>@Model.Count()</strong></p>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #dee2e6; padding: 15px 20px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </button>
+                <form asp-action="DeleteAll" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                        حذف جميع الأوردرات
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .modern-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header-background {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-actions .btn {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .header-actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .table th {
+            background-color: #343a40;
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+        
+        .table td {
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .customer-info {
+            min-width: 150px;
+        }
+
+        .product-info {
+            min-width: 200px;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.4em 0.6em;
+        }
+
+        .btn-group .btn {
+            margin: 0 2px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+        }
+
+        /* تخصيص أزرار الحذف */
+        .btn-outline-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #dc3545 !important;
+        }
+
+        .btn-outline-danger:hover {
+            background-color: #c82333 !important;
+            color: white !important;
+            border-color: #bd2130 !important;
+        }
+
+        .btn-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #dc3545 !important;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333 !important;
+            color: white !important;
+            border-color: #bd2130 !important;
+        }
+
+        /* ضمان ظهور نص "حذف" بشكل صحيح */
+        .btn-outline-danger span,
+        .btn-danger span {
+            color: white !important;
+            font-weight: 500 !important;
+        }
+
+        /* تخصيص الـ Modal */
+        .modal {
+            z-index: 1055 !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+
+        .modal-dialog {
+            z-index: 1055 !important;
+        }
+
+        .modal-content {
+            background: white !important;
+            border: none !important;
+            border-radius: 10px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6 !important;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #dee2e6 !important;
+            border-radius: 0 0 10px 10px !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable if needed
+            if ($.fn.DataTable) {
+                $('#ordersTable').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+                    },
+                    "pageLength": 25,
+                    "order": [[0, "desc"]],
+                    "responsive": true
+                });
+            }
+
+            // ضمان عمل الـ Modal بشكل صحيح
+            $('#deleteAllModal').on('show.bs.modal', function (e) {
+                $('body').addClass('modal-open');
+            });
+
+            $('#deleteAllModal').on('hidden.bs.modal', function (e) {
+                $('body').removeClass('modal-open');
+            });
+        });
+
+        // Auto-submit on filter change for better UX
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            const selectFilters = filterForm.querySelectorAll('select');
+            
+            selectFilters.forEach(select => {
+                select.addEventListener('change', function() {
+                    filterForm.submit();
+                });
+            });
+        }
+    </script>
+}

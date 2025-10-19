@@ -1,0 +1,432 @@
+@{
+    ViewData["Title"] = "إرجاع متعدد";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="fas fa-undo-alt"></i>
+                                إرجاع متعدد
+                            </h2>
+                            <p class="mb-0 opacity-75">إرجاع عدة منتجات من فاتورة واحدة</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Index", "Return")" class="btn btn-light">
+                                <i class="fas fa-arrow-left"></i>
+                                العودة للمرتجعات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search Invoice -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search"></i>
+                        البحث عن الفاتورة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="invoiceNumber">رقم الفاتورة الأصلية:</label>
+                                <input type="text" id="invoiceNumber" class="form-control" placeholder="أدخل رقم الفاتورة...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-primary w-100" onclick="searchInvoice()">
+                                <i class="fas fa-search"></i> بحث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Details -->
+    <div id="invoiceDetails" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice"></i>
+                        تفاصيل الفاتورة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>رقم الفاتورة:</strong>
+                            <p id="invoiceNumberDisplay"></p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>اسم العميل:</strong>
+                            <p id="customerNameDisplay"></p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>تاريخ الفاتورة:</strong>
+                            <p id="invoiceDateDisplay"></p>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>إجمالي الفاتورة:</strong>
+                            <p id="totalAmountDisplay"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div id="productsSection" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i>
+                        المنتجات المتاحة للإرجاع
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="productsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                                    </th>
+                                    <th>المنتج</th>
+                                    <th>الكمية الأصلية</th>
+                                    <th>المرتجع سابقاً</th>
+                                    <th>المتاح للإرجاع</th>
+                                    <th>السعر</th>
+                                    <th>كمية الإرجاع</th>
+                                    <th>سبب الإرجاع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Form -->
+    <div id="returnForm" style="display: none;">
+        <form asp-action="MultiReturn" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="originalInvoiceNumber" name="OriginalInvoiceNumber">
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clipboard-list"></i>
+                                معلومات الإرجاع
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="returnReason">سبب الإرجاع العام (اختياري):</label>
+                                <textarea id="returnReason" name="ReturnReason" class="form-control" rows="2" placeholder="سبب عام لجميع المنتجات..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="returnItemsContainer"></div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="fas fa-check"></i> تأكيد الإرجاع المتعدد
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .product-row {
+        transition: all 0.3s ease;
+    }
+    
+    .product-row.selected {
+        background-color: #d4edda;
+    }
+    
+    .product-row:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+let invoiceData = null;
+let selectedProducts = [];
+
+async function searchInvoice() {
+    const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+    
+    if (!invoiceNumber) {
+        alert('يرجى إدخال رقم الفاتورة');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/Return/SearchInvoiceForReturn?invoiceNumber=${encodeURIComponent(invoiceNumber)}`);
+        const data = await response.json();
+
+        if (data.success) {
+            invoiceData = data.invoice;
+            displayInvoiceDetails();
+            displayProducts();
+        } else {
+            alert(data.message);
+            hideInvoiceDetails();
+        }
+    } catch (error) {
+        alert('حدث خطأ في البحث: ' + error.message);
+    }
+}
+
+function displayInvoiceDetails() {
+    document.getElementById('invoiceNumberDisplay').textContent = invoiceData.invoiceNumber;
+    document.getElementById('customerNameDisplay').textContent = invoiceData.customerName;
+    document.getElementById('invoiceDateDisplay').textContent = invoiceData.invoiceDate;
+    document.getElementById('totalAmountDisplay').textContent = invoiceData.totalAmount.toFixed(2) + ' جنيه';
+    
+    document.getElementById('invoiceDetails').style.display = 'block';
+    document.getElementById('originalInvoiceNumber').value = invoiceData.invoiceNumber;
+}
+
+function displayProducts() {
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '';
+
+    invoiceData.items.forEach((item, itemIndex) => {
+        const row = document.createElement('tr');
+        row.className = 'product-row';
+        row.dataset.productId = item.productId;
+        row.dataset.itemIndex = itemIndex; // معرف فريد لكل صف
+        
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="product-checkbox" 
+                       data-product-id="${item.productId}" 
+                       data-item-index="${itemIndex}" 
+                       onchange="toggleProduct(this)">
+            </td>
+            <td>${item.productName}</td>
+            <td>${item.originalQuantity}</td>
+            <td>${item.returnedQuantity}</td>
+            <td><strong class="text-success">${item.availableForReturn}</strong></td>
+            <td>${item.unitPrice.toFixed(2)} جنيه</td>
+            <td>
+                <input type="number" class="form-control quantity-input" 
+                       data-product-id="${item.productId}"
+                       data-item-index="${itemIndex}"
+                       min="1" max="${item.availableForReturn}" 
+                       value="1" disabled>
+            </td>
+            <td>
+                <input type="text" class="form-control reason-input" 
+                       data-product-id="${item.productId}"
+                       data-item-index="${itemIndex}"
+                       placeholder="سبب الإرجاع..." disabled>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+
+    document.getElementById('productsSection').style.display = 'block';
+    document.getElementById('returnForm').style.display = 'block';
+}
+
+function hideInvoiceDetails() {
+    document.getElementById('invoiceDetails').style.display = 'none';
+    document.getElementById('productsSection').style.display = 'none';
+    document.getElementById('returnForm').style.display = 'none';
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+        toggleProduct(checkbox);
+    });
+}
+
+function toggleProduct(checkbox) {
+    const productId = parseInt(checkbox.dataset.productId);
+    const itemIndex = parseInt(checkbox.dataset.itemIndex);
+    const itemKey = `${productId}_${itemIndex}`; // معرف فريد
+    const row = checkbox.closest('tr');
+    const quantityInput = row.querySelector('.quantity-input');
+    const reasonInput = row.querySelector('.reason-input');
+    
+    if (checkbox.checked) {
+        row.classList.add('selected');
+        quantityInput.disabled = false;
+        reasonInput.disabled = false;
+        
+        // استخدام معرف فريد بدلاً من productId فقط
+        if (!selectedProducts.some(p => p.key === itemKey)) {
+            selectedProducts.push({
+                key: itemKey,
+                productId: productId,
+                itemIndex: itemIndex
+            });
+        }
+    } else {
+        row.classList.remove('selected');
+        quantityInput.disabled = true;
+        reasonInput.disabled = true;
+        
+        selectedProducts = selectedProducts.filter(p => p.key !== itemKey);
+    }
+    
+    updateReturnItems();
+}
+
+function updateReturnItems() {
+    const container = document.getElementById('returnItemsContainer');
+    container.innerHTML = '';
+    
+    selectedProducts.forEach((product, index) => {
+        const quantityInput = document.querySelector(`.quantity-input[data-item-index="${product.itemIndex}"]`);
+        const reasonInput = document.querySelector(`.reason-input[data-item-index="${product.itemIndex}"]`);
+        
+        // Get the actual values from inputs
+        const quantity = quantityInput ? quantityInput.value : 1;
+        const reason = reasonInput ? reasonInput.value : '';
+        
+        const itemHtml = `
+            <input type="hidden" name="Items[${index}].ProductId" value="${product.productId}">
+            <input type="hidden" name="Items[${index}].ReturnedQuantity" value="${quantity}">
+            <input type="hidden" name="Items[${index}].ReturnReason" value="${reason}">
+        `;
+        
+        container.innerHTML += itemHtml;
+    });
+    
+    // Update submit button with total quantity
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = selectedProducts.length === 0;
+    
+    // Calculate total items
+    let totalItems = 0;
+    selectedProducts.forEach(product => {
+        const quantityInput = document.querySelector(`.quantity-input[data-item-index="${product.itemIndex}"]`);
+        totalItems += parseInt(quantityInput.value) || 0;
+    });
+    
+    submitBtn.innerHTML = selectedProducts.length > 0 
+        ? `<i class="fas fa-check"></i> تأكيد إرجاع ${selectedProducts.length} صف (${totalItems} قطعة)` 
+        : '<i class="fas fa-exclamation-triangle"></i> يرجى اختيار منتج واحد على الأقل';
+}
+
+// Update hidden inputs when quantity or reason changes
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('quantity-input') || e.target.classList.contains('reason-input')) {
+        // Validate quantity
+        if (e.target.classList.contains('quantity-input')) {
+            const max = parseInt(e.target.getAttribute('max'));
+            const min = parseInt(e.target.getAttribute('min'));
+            let value = parseInt(e.target.value);
+            
+            if (value > max) {
+                e.target.value = max;
+            } else if (value < min) {
+                e.target.value = min;
+            }
+        }
+        updateReturnItems();
+    }
+});
+
+// Prevent form submission if Enter is pressed on quantity input
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.classList.contains('quantity-input')) {
+        e.preventDefault();
+        updateReturnItems();
+    }
+});
+
+// Enter key to search
+document.getElementById('invoiceNumber').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchInvoice();
+    }
+});
+
+// Check if there's an invoice number from sessionStorage (from Create page)
+document.addEventListener('DOMContentLoaded', function() {
+    const storedInvoiceNumber = sessionStorage.getItem('multiReturnInvoiceNumber');
+    
+    if (storedInvoiceNumber) {
+        // Clear from sessionStorage
+        sessionStorage.removeItem('multiReturnInvoiceNumber');
+        
+        // Fill the invoice number and search automatically
+        document.getElementById('invoiceNumber').value = storedInvoiceNumber;
+        searchInvoice();
+    }
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

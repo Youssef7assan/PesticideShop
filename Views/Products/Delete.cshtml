@@ -1,0 +1,82 @@
+@model PesticideShop.Models.Product
+
+@{
+    ViewData["Title"] = "حذف منتج";
+}
+
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🗑️ حذف منتج</h1>
+        <a asp-action="Index" class="btn btn-secondary">
+            ← الرجوع إلى القائمة
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">⚠️ تأكيد الحذف</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger" role="alert">
+                <strong>🚨 تحذير خطير:</strong> 
+                <ul class="mb-0 mt-2">
+                    <li>سيتم حذف المنتج وجميع البيانات المرتبطة به نهائياً</li>
+                    <li>سيتم حذف جميع المعاملات والفواتير المرتبطة بالمنتج</li>
+                    <li>سيتم حذف جميع سجلات الاستبدال المرتبطة بالمنتج</li>
+                    <li>سيتم حذف جميع السجلات في التقارير اليومية</li>
+                    <li>لا يمكن التراجع عن هذا الإجراء!</li>
+                </ul>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>تفاصيل المنتج:</h6>
+                    <dl class="row">
+                        <dt class="col-sm-4">الاسم:</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
+                        
+                        <dt class="col-sm-4">الفئة:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.Category?.Name?.Contains("مبيد") == true ? "badge-success" : "badge-warning")">
+                                @(Model.Category?.Name ?? "غير محدد")
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">الكمية:</dt>
+                        <dd class="col-sm-8">@Model.Quantity قطعة</dd>
+                        
+                        <dt class="col-sm-4">السعر:</dt>
+                        <dd class="col-sm-8">@Model.Price.ToString("N2") ج.م</dd>
+                        
+                        <dt class="col-sm-4">القيمة الإجمالية:</dt>
+                        <dd class="col-sm-8">
+                            <span class="fw-bold text-success">
+                                @((Model.Price * Model.Quantity).ToString("N2")) ج.م
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">سعر الجملة:</dt>
+                        <dd class="col-sm-8">@(Model.CartonPrice?.ToString("N2") ?? "غير محدد") ج.م</dd>
+                        
+                        <dt class="col-sm-4">رمز QR:</dt>
+                        <dd class="col-sm-8">
+                            <code>@Model.QRCode</code>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ← إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        🗑️ حذف المنتج
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

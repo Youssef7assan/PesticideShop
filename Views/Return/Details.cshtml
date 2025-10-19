@@ -1,0 +1,288 @@
+@model PesticideShop.Models.ReturnTracking
+
+@{
+    ViewData["Title"] = "تفاصيل المرتجع";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                               
+                                تفاصيل المرتجع
+                            </h2>
+                            <p class="mb-0 opacity-75">عرض تفاصيل المرتجع رقم @Model.ReturnInvoiceNumber</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Index", "Return")" class="btn btn-light">
+                                ⬅️ العودة للمرتجعات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Return Details -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                       
+                        معلومات المرتجع
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">رقم فاتورة الإرجاع:</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-danger fs-6">@Model.ReturnInvoiceNumber</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">الفاتورة الأصلية:</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-secondary fs-6">@Model.OriginalInvoiceNumber</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">المنتج:</label>
+                                <p class="form-control-plaintext">
+                                    <strong>@Model.Product?.Name</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">الكمية المرتجعة:</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-warning text-dark fs-6">@Model.ReturnedQuantity</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">سبب الإرجاع:</label>
+                                <p class="form-control-plaintext">
+                                    @if (!string.IsNullOrEmpty(Model.ReturnReason))
+                                    {
+                                        <span class="text-muted">@Model.ReturnReason</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">تاريخ الإرجاع:</label>
+                                <p class="form-control-plaintext">
+                                    
+                                    @Model.ReturnDate.ToString("yyyy-MM-dd HH:mm")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">أنشأ بواسطة:</label>
+                                <p class="form-control-plaintext">
+                                   
+                                    @Model.CreatedBy
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">الملاحظات:</label>
+                                <p class="form-control-plaintext">
+                                    @if (!string.IsNullOrEmpty(Model.Notes))
+                                    {
+                                        <span class="text-muted">@Model.Notes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">لا توجد ملاحظات</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        
+                        الإجراءات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Return")" class="btn btn-outline-primary">
+                            
+                            عرض جميع المرتجعات
+                        </a>
+                        <a href="@Url.Action("Create", "Return")" class="btn btn-outline-success">
+                          
+                            إرجاع جديد
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteReturn(@Model.Id)">
+                           
+                            حذف هذا المرتجع
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Information -->
+            @if (Model.Product != null)
+            {
+                <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                          
+                            معلومات المنتج
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>الاسم:</strong>
+                            <span class="text-muted">@Model.Product.Name</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>السعر:</strong>
+                            <span class="text-muted">@Model.Product.Price.ToString("N2") ج.م</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>الكمية الحالية:</strong>
+                            <span class="text-muted">@Model.Product.Quantity</span>
+                        </div>
+                        @if (Model.Product.Category != null)
+                        {
+                            <div class="mb-0">
+                                <strong>الفئة:</strong>
+                                <span class="text-muted">@Model.Product.Category.Name</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Return Summary -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                      
+                        ملخص الإرجاع
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>الكمية المرتجعة:</strong>
+                        <span class="text-danger">@Model.ReturnedQuantity</span>
+                    </div>
+                    @if (Model.Product != null)
+                    {
+                        <div class="mb-2">
+                            <strong>قيمة الإرجاع:</strong>
+                            <span class="text-danger">@((Model.Product.Price * Model.ReturnedQuantity).ToString("N2")) ج.م</span>
+                        </div>
+                    }
+                    <div class="mb-0">
+                        <strong>الحالة:</strong>
+                        <span class="badge bg-success">مكتمل</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<style>
+.bg-gradient-danger {
+    background: linear-gradient(45deg, #dc3545, #c82333) !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+</style>
+
+<script>
+function deleteReturn(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا المرتجع؟')) {
+        return;
+    }
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    fetch(`/Return/Delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '/Return';
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في حذف المرتجع');
+    });
+}
+</script>

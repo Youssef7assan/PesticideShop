@@ -1,0 +1,223 @@
+@model IEnumerable<PesticideShop.Models.Customer>
+
+@{
+    ViewData["Title"] = "العملاء";
+}
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>👥 إدارة العملاء - Pharaonic</h1>
+                <p>عرض وإدارة جميع العملاء والمعاملات</p>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Create" class="action-button success">
+                    ➕ إضافة عميل جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="search-card">
+            <div class="card-header">
+                <h3>🔍 البحث في العملاء</h3>
+            </div>
+            <div class="card-content">
+                <form asp-action="Index" method="get" class="search-form">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <input type="text" name="searchTerm" value="@ViewData["SearchTerm"]" 
+                                   placeholder="ابحث بالاسم أو رقم الهاتف..." class="search-input" />
+                        </div>
+                        <div class="search-actions">
+                            <button type="submit" class="action-button primary">🔍 بحث</button>
+                            <a asp-action="Index" class="action-button secondary">🔄 إعادة تعيين</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customers Table -->
+    @if (Model.Any())
+    {
+        <div class="table-section">
+            <div class="section-header">
+                <h3>📋 قائمة العملاء</h3>
+                @if (!string.IsNullOrEmpty(ViewData["SearchTerm"]?.ToString()))
+                {
+                    <span class="search-badge">
+                        🔍 نتائج البحث: @Model.Count() عميل
+                    </span>
+                }
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>👤 اسم العميل</th>
+                            <th>📞 رقم الهاتف</th>
+                            <th>📊 عدد المعاملات</th>
+                            <th>💰 الرصيد المتبقي</th>
+                            <th>🔧 الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var balance = ViewData[$"Balance_{item.Id}"] as decimal? ?? 0;
+                            var transactionCount = item.Transactions?.Count ?? 0;
+                            
+                            <tr>
+                                <td class="customer-name">@item.Name</td>
+                                <td class="phone-number">@item.PhoneNumber</td>
+                                <td class="transaction-count">
+                                    <span class="count-badge">@transactionCount معاملة</span>
+                                </td>
+                                <td class="balance-cell">
+                                    <span class="balance @(balance > 0 ? "debt" : "paid")">
+                                        @balance.ToString("N2") جنيه
+                                    </span>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="action-btn view" title="عرض التفاصيل">
+                                            👁️
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="action-btn edit" title="تعديل العميل">
+                                            ✏️
+                                        </a>
+                                        <a asp-action="AddTransaction" asp-route-id="@item.Id" 
+                                           class="action-btn success" title="إضافة معاملة">
+                                            💰
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" 
+                                           class="action-btn delete" title="حذف العميل">
+                                            🗑️
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info" id="customersPaginationInfo"></div>
+                <div class="pagination-controls" id="customersPaginationControls"></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h4>لا يوجد عملاء</h4>
+            <p>لم يتم إضافة أي عملاء بعد.</p>
+            <a asp-action="Create" class="action-button primary">
+                ➕ إضافة أول عميل
+            </a>
+        </div>
+    }
+</div>
+
+<script>
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Initialize pagination on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCustomersPagination();
+});
+
+// Client-side pagination for customers table
+function initializeCustomersPagination() {
+    const rowsPerPage = 10;
+    const table = document.querySelector('.data-table');
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const info = document.getElementById('customersPaginationInfo');
+    const controls = document.getElementById('customersPaginationControls');
+    if (!info || !controls) return;
+
+    function render(pageIndex) {
+        const total = rows.length;
+        const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+        const page = Math.min(Math.max(1, pageIndex), totalPages);
+        const start = (page - 1) * rowsPerPage;
+        const end = Math.min(start + rowsPerPage, total);
+
+        rows.forEach((row, idx) => {
+            row.style.display = idx >= start && idx < end ? '' : 'none';
+        });
+
+        info.textContent = `عرض ${start + 1} إلى ${end} من ${total} عميل`;
+
+        // build controls
+        controls.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        
+        function btn(label, cls, disabled, targetPage) {
+            const b = document.createElement('button');
+            b.className = `pagination-btn ${cls || ''}`.trim();
+            b.textContent = label;
+            if (disabled) b.disabled = true;
+            b.addEventListener('click', () => render(targetPage));
+            frag.appendChild(b);
+        }
+
+        // Add page number buttons (show only 5 buttons max around current page)
+        const maxVisible = 5;
+        let startPage, endPage;
+        
+        if (totalPages <= maxVisible) {
+            // Show all pages if total is less than max
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // Calculate range around current page
+            const halfVisible = Math.floor(maxVisible / 2);
+            startPage = Math.max(1, page - halfVisible);
+            endPage = Math.min(totalPages, page + halfVisible);
+            
+            // Adjust if we're near the start or end
+            if (page <= halfVisible) {
+                endPage = maxVisible;
+            } else if (page >= totalPages - halfVisible) {
+                startPage = totalPages - maxVisible + 1;
+            }
+        }
+        
+        for (let p = startPage; p <= endPage; p++) {
+            const b = document.createElement('button');
+            b.className = 'pagination-btn' + (p === page ? ' active' : '');
+            b.textContent = p.toString();
+            b.addEventListener('click', () => render(p));
+            frag.appendChild(b);
+        }
+        
+        // Add "التالية" (Next) button
+        btn('التالية', 'next', page === totalPages, page + 1);
+        
+        // Add "الأخيرة" (Last) button
+        btn('الأخيرة', 'last', page === totalPages, totalPages);
+        
+        controls.appendChild(frag);
+    }
+
+    render(1);
+}
+</script>

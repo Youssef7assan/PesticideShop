@@ -1,0 +1,213 @@
+@{
+    ViewData["Title"] = "اختيار اللون والمقاس";
+}
+
+<style>
+/* Custom styles for color/size selection modal */
+#colorSizeSelectionModal {
+    z-index: 1060 !important;
+}
+
+#colorSizeSelectionModal .modal-backdrop {
+    z-index: 1055 !important;
+}
+
+#colorSizeSelectionModal .modal-dialog {
+    z-index: 1060 !important;
+}
+
+/* Ensure modal is above other elements */
+.modal-backdrop {
+    z-index: 1055 !important;
+}
+
+/* Fix for modal backdrop issues */
+body.modal-open {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* Ensure form controls are clickable */
+#colorSizeSelectionModal .form-select {
+    pointer-events: auto !important;
+    z-index: 1061 !important;
+}
+
+#colorSizeSelectionModal .btn {
+    pointer-events: auto !important;
+    z-index: 1061 !important;
+}
+
+/* Glass styling for this specific modal */
+#colorSizeSelectionModal .modal-content {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    color: white !important;
+}
+
+#colorSizeSelectionModal .modal-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px 20px 0 0 !important;
+    color: white !important;
+}
+
+#colorSizeSelectionModal .modal-title {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+#colorSizeSelectionModal .modal-body {
+    background: transparent !important;
+    color: white !important;
+    padding: 30px !important;
+}
+
+#colorSizeSelectionModal .modal-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+#colorSizeSelectionModal .form-label {
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+#colorSizeSelectionModal .form-select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+#colorSizeSelectionModal .form-select:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+#colorSizeSelectionModal .form-select option {
+    background: rgba(30, 41, 59, 0.95) !important;
+    color: white !important;
+}
+
+#colorSizeSelectionModal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 12px !important;
+}
+
+#colorSizeSelectionModal .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+#colorSizeSelectionModal .btn-secondary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 12px !important;
+}
+
+#colorSizeSelectionModal .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+#colorSizeSelectionModal .btn-close {
+    filter: invert(1) !important;
+    opacity: 0.8 !important;
+}
+
+#colorSizeSelectionModal .btn-close:hover {
+    opacity: 1 !important;
+}
+</style>
+
+<!-- Modal for Color and Size Selection -->
+<div class="modal fade" id="colorSizeSelectionModal" tabindex="-1" aria-labelledby="colorSizeSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="colorSizeSelectionModalLabel">
+                    <i class="fas fa-palette me-2"></i>
+                    اختيار اللون والمقاس
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectedColor" class="form-label">
+                        <i class="fas fa-palette me-1"></i>
+                        اللون:
+                    </label>
+                    <select class="form-select" id="selectedColor" required>
+                        <option value="">اختر اللون</option>
+                        <option value="أحمر">أحمر</option>
+                        <option value="أزرق">أزرق</option>
+                        <option value="أخضر">أخضر</option>
+                        <option value="أصفر">أصفر</option>
+                        <option value="برتقالي">برتقالي</option>
+                        <option value="بنفسجي">بنفسجي</option>
+                        <option value="وردي">وردي</option>
+                        <option value="بني">بني</option>
+                        <option value="أسود">أسود</option>
+                        <option value="أبيض">أبيض</option>
+                        <option value="رمادي">رمادي</option>
+                        <option value="ذهبي">ذهبي</option>
+                        <option value="فضي">فضي</option>
+                        <option value="نيون">نيون</option>
+                        <option value="متعدد الألوان">متعدد الألوان</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectedSize" class="form-label">
+                        <i class="fas fa-ruler me-1"></i>
+                        المقاس:
+                    </label>
+                    <select class="form-select" id="selectedSize" required>
+                        <option value="">اختر المقاس</option>
+                        <option value="32">32</option>
+                        <option value="33">33</option>
+                        <option value="34">34</option>
+                        <option value="35">35</option>
+                        <option value="36">36</option>
+                        <option value="37">37</option>
+                        <option value="38">38</option>
+                        <option value="39">39</option>
+                        <option value="40">40</option>
+                        <option value="41">41</option>
+                        <option value="42">42</option>
+                        <option value="43">43</option>
+                        <option value="44">44</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                        <option value="XXXL">XXXL</option>
+                        <option value="واحد">واحد</option>
+                        <option value="متعدد المقاسات">متعدد المقاسات</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmColorSize" onclick="handleColorSizeConfirm()">
+                    <i class="fas fa-check me-1"></i>
+                    تأكيد
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,925 @@
+@model List<PesticideShop.Controllers.InvoiceListViewModelEnhanced>
+
+@{
+    ViewData["Title"] = "الفواتير";
+    var totalInvoices = ViewBag.TotalInvoices ?? Model.Count;
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    
+    // إحصائيات للصفحة الحالية فقط
+    var salesInvoices = Model.Count(i => i.Type == PesticideShop.Models.InvoiceType.Sale);
+    var returnInvoices = Model.Count(i => i.Type == PesticideShop.Models.InvoiceType.Return);
+    var exchangeInvoices = Model.Count(i => i.Type == PesticideShop.Models.InvoiceType.Exchange);
+    var totalSalesAmount = Model.Where(i => i.Type == PesticideShop.Models.InvoiceType.Sale).Sum(i => i.GrandTotal);
+    var totalReturnsAmount = Model.Where(i => i.Type == PesticideShop.Models.InvoiceType.Return).Sum(i => i.GrandTotal);
+    var totalPaidAmount = Model.Sum(i => i.AmountPaid);
+    var totalRemainingAmount = Model.Sum(i => i.RemainingAmount);
+}
+
+@{
+    // إضافة token للحماية من CSRF
+    var token = Html.AntiForgeryToken();
+}
+
+<div class="container-fluid">
+    @Html.AntiForgeryToken()
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0 text-primary">
+                                📄 إدارة الفواتير - Pharaonic
+                            </h2>
+                            <p class="text-muted mb-0">عرض وإدارة جميع الفواتير والمعاملات</p>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger me-2" onclick="deleteAllInvoices()" title="مسح جميع الفواتير">
+                                🗑️ مسح جميع الفواتير
+                            </button>
+                            <a href="@Url.Action("Create", "Return")" class="btn btn-warning me-2">
+                                ↩️ إرجاع جديد
+                            </a>
+                            <a href="@Url.Action("Create", "Exchange")" class="btn btn-info me-2">
+                                🔄 استبدال جديد
+                            </a>
+                            <a href="@Url.Action("Index", "Return")" class="btn btn-outline-warning me-2">
+                                📋 سجل المرتجعات
+                            </a>
+                            <a href="@Url.Action("Index", "Exchange")" class="btn btn-outline-info">
+                                📋 سجل الاستبدالات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">إجمالي الفواتير</h5>
+                            <h3 class="mb-0">@totalInvoices</h3>
+                        </div>
+                        <div class="align-self-center">
+                            📄
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">المبيعات</h5>
+                            <h3 class="mb-0">@salesInvoices</h3>
+                            <small>@totalSalesAmount.ToString("N0") ج.م</small>
+                        </div>
+                        <div class="align-self-center">
+                            🛍️
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">المرتجعات</h5>
+                            <h3 class="mb-0">@returnInvoices</h3>
+                            <small>@totalReturnsAmount.ToString("N0") ج.م</small>
+                        </div>
+                        <div class="align-self-center">
+                            ↩️
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">الاستبدالات</h5>
+                            <h3 class="mb-0">@exchangeInvoices</h3>
+                        </div>
+                        <div class="align-self-center">
+                            🔄
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-gradient-success text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">إجمالي المدفوع</h5>
+                            <h3 class="mb-0">@totalPaidAmount.ToString("N2") ج.م</h3>
+                        </div>
+                        <div class="align-self-center">
+                            💰
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" asp-action="Index" id="filterForm">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="searchTerm">🔍 البحث:</label>
+                                    <input type="text" name="searchTerm" id="searchTerm" class="form-control" 
+                                           value="@ViewBag.SearchTerm" 
+                                           placeholder="رقم الفاتورة، الأوردر، اسم العميل، رقم الهاتف...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dateFrom">📅 من تاريخ:</label>
+                                    <input type="date" name="dateFrom" id="dateFrom" class="form-control" 
+                                           value="@ViewBag.DateFrom">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dateTo">📅 إلى تاريخ:</label>
+                                    <input type="date" name="dateTo" id="dateTo" class="form-control" 
+                                           value="@ViewBag.DateTo">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="statusFilter">📊 الحالة:</label>
+                                    <select name="statusFilter" id="statusFilter" class="form-select">
+                                        <option value="">جميع الحالات</option>
+                                        <option value="Draft" selected="@(ViewBag.StatusFilter == "Draft" ? "selected" : null)">🏢 في المكتب</option>
+                                        <option value="Sent" selected="@(ViewBag.StatusFilter == "Sent" ? "selected" : null)">📤 مرسل</option>
+                                        <option value="Paid" selected="@(ViewBag.StatusFilter == "Paid" ? "selected" : null)">✅ مدفوع</option>
+                                        <option value="Overdue" selected="@(ViewBag.StatusFilter == "Overdue" ? "selected" : null)">⏰ متأخر</option>
+                                        <option value="Cancelled" selected="@(ViewBag.StatusFilter == "Cancelled" ? "selected" : null)">❌ ملغي</option>
+                                        <option value="PartiallyPaid" selected="@(ViewBag.StatusFilter == "PartiallyPaid" ? "selected" : null)">💰 مدفوع جزئياً</option>
+                                        <option value="Postponed" selected="@(ViewBag.StatusFilter == "Postponed" ? "selected" : null)">⏳ مؤجل</option>
+                                        <option value="UnderDelivery" selected="@(ViewBag.StatusFilter == "UnderDelivery" ? "selected" : null)">🚚 تحت التسليم</option>
+                                        <option value="NotDelivered" selected="@(ViewBag.StatusFilter == "NotDelivered" ? "selected" : null)">❌ لم يسلم</option>
+                                        <option value="Delivered" selected="@(ViewBag.StatusFilter == "Delivered" ? "selected" : null)">✅ تم التسليم</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="typeFilter">📋 النوع:</label>
+                                    <select name="typeFilter" id="typeFilter" class="form-select">
+                                        <option value="">جميع الأنواع</option>
+                                        <option value="Sale" selected="@(ViewBag.TypeFilter == "Sale" ? "selected" : null)">🛒 بيع</option>
+                                        <option value="Return" selected="@(ViewBag.TypeFilter == "Return" ? "selected" : null)">↩️ إرجاع</option>
+                                        <option value="Exchange" selected="@(ViewBag.TypeFilter == "Exchange" ? "selected" : null)">🔄 استبدال</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="originFilter">🌐 المصدر:</label>
+                                    <select name="originFilter" id="originFilter" class="form-select">
+                                        <option value="">جميع المصادر</option>
+                                        <option value="InStore" selected="@(ViewBag.OriginFilter == "InStore" ? "selected" : null)">🏢 في المحل</option>
+                                        <option value="Instagram" selected="@(ViewBag.OriginFilter == "Instagram" ? "selected" : null)">📸 انستجرام</option>
+                                        <option value="Facebook" selected="@(ViewBag.OriginFilter == "Facebook" ? "selected" : null)">📘 فيسبوك</option>
+                                        <option value="Website" selected="@(ViewBag.OriginFilter == "Website" ? "selected" : null)">🌐 الموقع</option>
+                                        <option value="Phone" selected="@(ViewBag.OriginFilter == "Phone" ? "selected" : null)">📞 هاتف</option>
+                                        <option value="WhatsApp" selected="@(ViewBag.OriginFilter == "WhatsApp" ? "selected" : null)">💬 واتساب</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary flex-fill">
+                                            <i class="fas fa-search"></i> بحث وتصفية
+                                        </button>
+                                        <a href="@Url.Action("Index")" class="btn btn-secondary flex-fill">
+                                            <i class="fas fa-redo"></i> إعادة تعيين
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Info -->
+    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm) || !string.IsNullOrEmpty(ViewBag.StatusFilter) || !string.IsNullOrEmpty(ViewBag.TypeFilter) || !string.IsNullOrEmpty(ViewBag.OriginFilter) || !string.IsNullOrEmpty(ViewBag.DateFrom) || !string.IsNullOrEmpty(ViewBag.DateTo))
+    {
+        <div class="row mb-2">
+            <div class="col-12">
+                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>نتائج البحث:</strong> تم العثور على <strong>@Model.Count()</strong> فاتورة
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                        {
+                            <span class="badge bg-primary">البحث: @ViewBag.SearchTerm</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.StatusFilter))
+                        {
+                            <span class="badge bg-secondary">الحالة: @ViewBag.StatusFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.TypeFilter))
+                        {
+                            <span class="badge bg-success">النوع: @ViewBag.TypeFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.OriginFilter))
+                        {
+                            <span class="badge bg-warning">المصدر: @ViewBag.OriginFilter</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.DateFrom))
+                        {
+                            <span class="badge bg-info">من: @ViewBag.DateFrom</span>
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.DateTo))
+                        {
+                            <span class="badge bg-info">إلى: @ViewBag.DateTo</span>
+                        }
+                    </div>
+                    <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times"></i> مسح الفلاتر
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Invoices Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="invoicesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>العميل</th>
+                                    <th>التاريخ</th>
+                                    <th>النوع</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>المدفوع</th>
+                                    <th>المتبقي</th>
+                                    <th>الحالة</th>
+                                    <th>العناصر</th>
+                                    <th>العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var invoice in Model)
+                                {
+                                    <tr class="invoice-row" 
+                                        data-status="@invoice.Status.ToString().ToLower()" 
+                                        data-type="@invoice.Type.ToString().ToLower()"
+                                        data-search="@invoice.InvoiceNumber @invoice.CustomerName @invoice.CustomerPhone">
+                                        <td>
+                                            <strong class="text-primary">@invoice.InvoiceNumber</strong>
+                                            @if (!string.IsNullOrEmpty(invoice.OriginalInvoiceNumber))
+                                            {
+                                                <br><small class="text-muted">أصل: @invoice.OriginalInvoiceNumber</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>@invoice.CustomerName</strong>
+                                                @if (!string.IsNullOrEmpty(invoice.CustomerPhone))
+                                                {
+                                                    <br><small class="text-muted">@invoice.CustomerPhone</small>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                @invoice.InvoiceDate.ToString("dd/MM/yyyy")
+                                                <br><small class="text-muted">@invoice.InvoiceDate.ToString("HH:mm")</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@invoice.TypeColor">
+                                                @invoice.TypeDisplayText
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong class="@(invoice.GrandTotal >= 0 ? "text-success" : "text-danger")">
+                                                @invoice.GrandTotal.ToString("N2") ج.م
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <span class="text-success">
+                                                @invoice.AmountPaid.ToString("N2") ج.م
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="@(invoice.RemainingAmount > 0 ? "text-danger" : "text-success")">
+                                                @invoice.RemainingAmount.ToString("N2") ج.م
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@invoice.StatusColor">
+                                                @invoice.StatusDisplayText
+                                            </span>
+                                            @if (invoice.IsFullyPaid)
+                                            {
+                                                <span class="text-success ms-1" title="مدفوع بالكامل">✅</span>
+                                            }
+                                            else if (invoice.IsPartiallyPaid)
+                                            {
+                                                <span class="text-warning ms-1" title="مدفوع جزئياً">⚠️</span>
+                                            }
+                                            else if (invoice.IsUnpaid)
+                                            {
+                                                <span class="text-danger ms-1" title="غير مدفوع">❌</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="text-center">
+                                                <div class="mb-1">
+                                                    <small class="text-muted">المجموع: @invoice.ItemsCount</small>
+                                                </div>
+                                                @if (invoice.SalesItemsCount > 0)
+                                                {
+                                                    <div>
+                                                        <span class="badge bg-success">
+                                                            مبيعات: @invoice.SalesItemsCount
+                                                        </span>
+                                                    </div>
+                                                }
+                                                @if (invoice.ReturnsItemsCount > 0)
+                                                {
+                                                    <div>
+                                                        <span class="badge bg-warning">
+                                                            مرتجعات: @invoice.ReturnsItemsCount
+                                                        </span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group-vertical" role="group">
+                                                <a href="@Url.Action("ModernInvoice", "Invoice", new { id = invoice.Id })" 
+                                                   class="btn btn-sm btn-outline-primary mb-1" title="عرض الفاتورة">
+                                                    👁️ عرض الفاتورة
+                                                </a>
+                                                @if (invoice.Type == PesticideShop.Models.InvoiceType.Sale && invoice.SalesItemsCount > 0)
+                                                {
+                                                    <a href="@Url.Action("Create", "Return", new { originalInvoiceNumber = invoice.InvoiceNumber })" 
+                                                       class="btn btn-sm btn-outline-warning mb-1" title="إرجاع">
+                                                        ↩️ إرجاع
+                                                    </a>
+                                                    <a href="@Url.Action("Create", "Exchange", new { originalInvoiceNumber = invoice.InvoiceNumber })" 
+                                                       class="btn btn-sm btn-outline-info mb-1" title="استبدال">
+                                                        🔄 استبدال
+                                                    </a>
+                                                }
+                                                <a href="@Url.Action("Details", "Invoice", new { id = invoice.Id })" 
+                                                   class="btn btn-sm btn-outline-secondary" title="التفاصيل">
+                                                    ℹ️ التفاصيل
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                                        onclick="showStatusModal(@invoice.Id, @((int)invoice.Status), '@invoice.InvoiceNumber')" title="تعديل الحالة">
+                                                    🔄 تعديل الحالة
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteInvoice(@invoice.Id, '@invoice.InvoiceNumber')" title="مسح الفاتورة">
+                                                    🗑️ مسح
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    @if (totalPages > 1)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="pagination-info">
+                                <span class="text-muted">
+                                    عرض @((currentPage - 1) * pageSize + 1) إلى @(Math.Min(currentPage * pageSize, totalInvoices)) من @totalInvoices فاتورة
+                                </span>
+                            </div>
+                            
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination mb-0">
+                                    <!-- Previous Button -->
+                                    @if (currentPage > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, pageSize = pageSize })" aria-label="السابق">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-label="السابق">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </span>
+                                        </li>
+                                    }
+                                    
+                                    <!-- Page Numbers -->
+                                    @{
+                                        int startPage = Math.Max(1, currentPage - 2);
+                                        int endPage = Math.Min(totalPages, currentPage + 2);
+                                    }
+                                    
+                                    @if (startPage > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize = pageSize })">1</a>
+                                        </li>
+                                        @if (startPage > 2)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                    }
+                                    
+                                    @for (int i = startPage; i <= endPage; i++)
+                                    {
+                                        <li class="page-item @(i == currentPage ? "active" : "")">
+                                            <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = pageSize })">@i</a>
+                                        </li>
+                                    }
+                                    
+                                    @if (endPage < totalPages)
+                                    {
+                                        @if (endPage < totalPages - 1)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Action("Index", new { page = totalPages, pageSize = pageSize })">@totalPages</a>
+                                        </li>
+                                    }
+                                    
+                                    <!-- Next Button -->
+                                    @if (currentPage < totalPages)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, pageSize = pageSize })" aria-label="التالي">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-label="التالي">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                            
+                            <!-- Page Size Selector -->
+                            <div class="page-size-selector">
+                                <label for="pageSizeSelect" class="form-label me-2">عدد الفواتير في الصفحة:</label>
+                                <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                                    @if (pageSize == 5)
+                                    {
+                                        <option value="5" selected>5</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="5">5</option>
+                                    }
+                                    
+                                    @if (pageSize == 10)
+                                    {
+                                        <option value="10" selected>10</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="10">10</option>
+                                    }
+                                    
+                                    @if (pageSize == 20)
+                                    {
+                                        <option value="20" selected>20</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="20">20</option>
+                                    }
+                                    
+                                    @if (pageSize == 50)
+                                    {
+                                        <option value="50" selected>50</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="50">50</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">تعديل حالة الفاتورة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">رقم الفاتورة:</label>
+                    <input type="text" id="statusInvoiceNumber" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">الحالة الحالية:</label>
+                    <input type="text" id="currentStatus" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="newStatus" class="form-label">الحالة الجديدة:</label>
+                    <select id="newStatus" class="form-select">
+                        <option value="1">🏢 في المكتب</option>
+                        <option value="2">📤 مرسل</option>
+                        <option value="3">✅ مدفوع</option>
+                        <option value="4">⏰ متأخر</option>
+                        <option value="5">❌ ملغي</option>
+                        <option value="6">💰 مدفوع جزئياً</option>
+                        <option value="7">⏳ مؤجل</option>
+                        <option value="8">🚚 تحت التسليم</option>
+                        <option value="9">❌ لم يسلم</option>
+                        <option value="10">✅ تم التسليم</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="updateInvoiceStatus()">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal fixes */
+.modal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1050;
+}
+
+.modal-dialog {
+    z-index: 1060;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(45deg, #dc3545, #fd7e14) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,.075);
+}
+
+.invoice-row {
+    transition: all 0.2s ease;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,.15) !important;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-vertical .btn {
+    border-radius: 0.25rem !important;
+    margin-bottom: 2px;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+@@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+}
+
+.invoice-row {
+    transition: all 0.3s ease;
+}
+
+.invoice-row:hover {
+    background-color: rgba(0,123,255,.075);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit on filter change for better UX
+    const filterForm = document.getElementById('filterForm');
+    const selectFilters = filterForm.querySelectorAll('select');
+    
+    selectFilters.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+    
+    // إضافة event listeners للـ modal
+    const statusModal = document.getElementById('statusModal');
+    if (statusModal) {
+        statusModal.addEventListener('shown.bs.modal', function () {
+            // التركيز على الـ select عند فتح الـ modal
+            document.getElementById('newStatus').focus();
+        });
+        
+        statusModal.addEventListener('hidden.bs.modal', function () {
+            // تنظيف البيانات عند إغلاق الـ modal
+            currentInvoiceId = null;
+        });
+    }
+});
+
+
+// متغيرات عامة لتعديل الحالة
+let currentInvoiceId = null;
+
+// إظهار modal تعديل الحالة
+function showStatusModal(invoiceId, currentStatus, invoiceNumber) {
+    currentInvoiceId = invoiceId;
+    
+    // تعبئة البيانات
+    document.getElementById('statusInvoiceNumber').value = invoiceNumber;
+    document.getElementById('currentStatus').value = getStatusText(currentStatus);
+    document.getElementById('newStatus').value = currentStatus;
+    
+    // إظهار الـ modal
+    const modalElement = document.getElementById('statusModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    modal.show();
+}
+
+// الحصول على نص الحالة
+function getStatusText(status) {
+    const statusTexts = {
+        1: '🏢 في المكتب',
+        2: '📤 مرسل',
+        3: '✅ مدفوع',
+        4: '⏰ متأخر',
+        5: '❌ ملغي',
+        6: '💰 مدفوع جزئياً',
+        7: '⏳ مؤجل',
+        8: '🚚 تحت التسليم',
+        9: '❌ لم يسلم',
+        10: '✅ تم التسليم'
+    };
+    return statusTexts[status] || 'غير محدد';
+}
+
+// تحديث حالة الفاتورة
+async function updateInvoiceStatus() {
+    if (!currentInvoiceId) {
+        alert('خطأ: لم يتم تحديد الفاتورة');
+        return;
+    }
+    
+    const newStatus = document.getElementById('newStatus').value;
+    
+    try {
+        const response = await fetch(`/Invoices/UpdateInvoiceStatus/${currentInvoiceId}?status=${newStatus}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // إخفاء الـ modal
+            const modalElement = document.getElementById('statusModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+            
+            // إظهار رسالة نجاح
+            alert('✅ ' + result.message);
+            
+            // إعادة تحميل الصفحة لتحديث البيانات
+            location.reload();
+        } else {
+            alert('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث الحالة:', error);
+        alert('❌ حدث خطأ في تحديث حالة الفاتورة');
+    }
+}
+
+// مسح فاتورة واحدة
+function deleteInvoice(invoiceId, invoiceNumber) {
+    if (confirm(`هل أنت متأكد من حذف الفاتورة رقم: ${invoiceNumber}؟\n\n⚠️ تحذير: هذا الإجراء لا يمكن التراجع عنه!`)) {
+        // إظهار مؤشر التحميل
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '🔄 جاري الحذف...';
+        button.disabled = true;
+        
+        // إرسال طلب حذف الفاتورة
+        fetch(`/Invoices/Delete/${invoiceId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إخفاء الصف من الجدول
+                const row = button.closest('tr');
+                row.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => {
+                    row.remove();
+                    showNotification('✅ ' + data.message, 'success');
+                }, 500);
+            } else {
+                throw new Error(data.message || 'فشل في حذف الفاتورة');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ فشل في حذف الفاتورة', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// مسح جميع الفواتير
+function deleteAllInvoices() {
+    const totalInvoices = document.querySelectorAll('.invoice-row').length;
+    
+    if (totalInvoices === 0) {
+        showNotification('📋 لا توجد فواتير للحذف', 'info');
+        return;
+    }
+    
+    if (confirm(`⚠️ تحذير خطير!\n\nهل أنت متأكد من حذف جميع الفواتير (${totalInvoices} فاتورة)؟\n\n🚨 هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى حذف جميع البيانات المرتبطة بالفواتير!`)) {
+        // إظهار مؤشر التحميل
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '🔄 جاري حذف جميع الفواتير...';
+        button.disabled = true;
+        
+        // إرسال طلب حذف جميع الفواتير
+        fetch('/Invoices/DeleteAll', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('فشل في حذف الفواتير');
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // إخفاء جميع الصفوف من الجدول
+                const rows = document.querySelectorAll('.invoice-row');
+                rows.forEach((row, index) => {
+                    setTimeout(() => {
+                        row.style.animation = 'fadeOut 0.5s ease-out';
+                        setTimeout(() => row.remove(), 500);
+                    }, index * 100);
+                });
+                
+                setTimeout(() => {
+                    showNotification(`✅ ${data.message}`, 'success');
+                    // إعادة تحميل الصفحة بعد ثانيتين
+                    setTimeout(() => location.reload(), 2000);
+                }, rows.length * 100 + 500);
+            } else {
+                throw new Error(data.message || 'فشل في حذف الفواتير');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ فشل في حذف الفواتير', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// إظهار الإشعارات
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // إزالة الإشعار تلقائياً بعد 5 ثوان
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// تغيير حجم الصفحة
+function changePageSize(newPageSize) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('pageSize', newPageSize);
+    currentUrl.searchParams.set('page', '1'); // العودة للصفحة الأولى
+    window.location.href = currentUrl.toString();
+}
+</script>

@@ -1,0 +1,407 @@
+@model PesticideShop.Models.Invoice
+
+@{
+    ViewData["Title"] = "تفاصيل الأوردر";
+    // الإجمالي = قيمة المنتجات فقط (بدون الشحن)
+    var remaining = Model.TotalAmount - Model.AmountPaid;
+    
+    // دالة لتحويل طريقة الدفع إلى نص عربي
+    string GetPaymentMethodDisplayName(string paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            "cash" => "<i class='fas fa-money-bill'></i> نقداً",
+            "visa" => "<i class='fas fa-credit-card'></i> فيزا",
+            "instapay" => "<i class='fas fa-mobile-alt'></i> انستاباي",
+            "wallet" => "<i class='fas fa-wallet'></i> محفظة إلكترونية",
+            "delivery" => "<i class='fas fa-truck'></i> دفع عند الاستلام",
+            _ => paymentMethod
+        };
+    }
+
+    // دالة لتحويل نوع الشحن إلى نص عربي
+    string GetShippingTypeDisplayName(PesticideShop.Models.ShippingType? shippingType)
+    {
+        return shippingType switch
+        {
+            PesticideShop.Models.ShippingType.Bosta => "<i class='fas fa-box'></i> بوسطا",
+            PesticideShop.Models.ShippingType.Cairo => "<i class='fas fa-truck'></i> كايرو",
+            PesticideShop.Models.ShippingType.NoShipping => "<i class='fas fa-times-circle'></i> بدون شحن",
+            _ => "غير محدد"
+        };
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-eye"></i>
+        تفاصيل الأوردر #@Model.OrderNumber
+    </h2>
+    <div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> العودة للقائمة
+        </a>
+        <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.CustomerId" class="btn btn-outline-primary">
+            <i class="fas fa-user"></i> ملف العميل
+        </a>
+       
+    </div>
+</div>
+
+<div class="row">
+    <!-- Order Information -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات الأوردر
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">معلومات العميل</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td class="fw-bold">الاسم:</td>
+                                <td>@Model.Customer?.Name</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">الهاتف:</td>
+                                <td>@Model.Customer?.PhoneNumber</td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.Customer?.AdditionalPhone))
+                            {
+                                <tr>
+                                    <td class="fw-bold">هاتف إضافي:</td>
+                                    <td>@Model.Customer?.AdditionalPhone</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="fw-bold">العنوان:</td>
+                                <td>@Model.Customer?.FullAddress</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">معلومات الطلب</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td class="fw-bold">رقم الفاتورة:</td>
+                                <td>
+                                    <span class="badge bg-primary">📄 @Model.InvoiceNumber</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">رقم الطلب:</td>
+                                <td>
+                                    <span class="badge bg-info"><i class="fas fa-clipboard-list"></i> @Model.OrderNumber</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">عدد المنتجات:</td>
+                                <td>
+                                    <span class="badge bg-success">@(Model.Items?.Count ?? 0) منتج</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">إجمالي الكمية:</td>
+                                <td>
+                                    <span class="badge bg-warning">@(Model.Items?.Sum(i => i.Quantity) ?? 0)</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6 class="text-muted">تفاصيل الطلب</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td class="fw-bold">مصدر الطلب:</td>
+                                <td>
+                                    @switch (Model.OrderOrigin)
+                                    {
+                                        case PesticideShop.Models.OrderOrigin.Website:
+                                            <span class="badge bg-success"><i class="fas fa-globe"></i> الموقع الإلكتروني</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.Instagram:
+                                            <span class="badge bg-danger"><i class="fab fa-instagram"></i> انستجرام</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.Facebook:
+                                            <span class="badge bg-primary"><i class="fab fa-facebook"></i> فيسبوك</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.WhatsApp:
+                                            <span class="badge bg-success"><i class="fab fa-whatsapp"></i> واتساب</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.Phone:
+                                            <span class="badge bg-warning"><i class="fas fa-phone"></i> هاتف</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.WalkIn:
+                                            <span class="badge bg-secondary"><i class="fas fa-walking"></i> حضور شخصي</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.PhysicalStore:
+                                            <span class="badge bg-info"><i class="fas fa-store"></i> متجر فعلي</span>
+                                            break;
+                                        case PesticideShop.Models.OrderOrigin.Other:
+                                            <span class="badge bg-dark"><i class="fas fa-link"></i> أخرى</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark"><i class="fas fa-question-circle"></i> غير محدد</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="fw-bold"><i class="fas fa-credit-card"></i> طريقة الدفع:</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(Model.PaymentMethod))
+                                    {
+                                        <span class="badge bg-info">@Html.Raw(GetPaymentMethodDisplayName(Model.PaymentMethod))</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.PolicyNumber))
+                            {
+                                <tr>
+                                    <td class="fw-bold"><i class="fas fa-file-contract"></i> رقم البوليصة:</td>
+                                    <td colspan="3">
+                                        <span class="badge bg-warning">@Model.PolicyNumber</span>
+                                    </td>
+                                </tr>
+                            }
+                            @if (Model.ShippingType.HasValue)
+                            {
+                                <tr>
+                                    <td class="fw-bold"><i class="fas fa-truck"></i> نوع الشحن:</td>
+                                    <td>
+                                        <span class="badge bg-info">@Html.Raw(GetShippingTypeDisplayName(Model.ShippingType))</span>
+                                    </td>
+                                    <td class="fw-bold"><i class="fas fa-money-bill"></i> سعر الشحن:</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@Model.ShippingCost.ToString("N2") ج.م</span>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.CashierName))
+                            {
+                                <tr>
+                                    <td class="fw-bold"><i class="fas fa-user"></i> اسم الكاشير:</td>
+                                    <td colspan="3">
+                                        <span class="badge bg-success">@Model.CashierName</span>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+                
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted">منتجات الأوردر</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>المنتج</th>
+                                            <th class="text-center">الكمية</th>
+                                            <th class="text-center">سعر الوحدة</th>
+                                            <th class="text-center">الخصم</th>
+                                            <th class="text-center">الإجمالي</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.Items)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div>
+                                                        <div class="fw-bold">@item.Product?.Name</div>
+                                                        <small class="text-muted">QR: @item.Product?.QRCode</small>
+                                                        @if (!string.IsNullOrEmpty(item.Color) || !string.IsNullOrEmpty(item.Size))
+                                                        {
+                                                            <div class="mt-1">
+                                                                @if (!string.IsNullOrEmpty(item.Color))
+                                                                {
+                                                                    <span class="badge bg-info badge-sm">🎨 @item.Color</span>
+                                                                }
+                                                                @if (!string.IsNullOrEmpty(item.Size))
+                                                                {
+                                                                    <span class="badge bg-secondary badge-sm">📏 @item.Size</span>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-info">@item.Quantity</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold text-primary">@item.UnitPrice.ToString("N2")</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (item.Discount > 0)
+                                                    {
+                                                        <span class="text-danger">@item.Discount.ToString("N2")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold text-success">@item.TotalPrice.ToString("N2")</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted">ملاحظات</h6>
+                            <div class="alert alert-info">
+                                <i class="fas fa-sticky-note"></i>
+                                @Model.Notes
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <!-- Financial Details -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calculator"></i>
+                    التفاصيل المالية
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="financial-item d-flex justify-content-between mb-3">
+                    <span class="fw-bold">المجموع الفرعي:</span>
+                    <span>@Model.SubTotalBeforeDiscount.ToString("N2") ج.م</span>
+                </div>
+                @if (Model.Discount > 0)
+                {
+                    <div class="financial-item d-flex justify-content-between mb-3">
+                        <span class="fw-bold text-danger">الخصم:</span>
+                        <span class="text-danger">-@Model.Discount.ToString("N2") ج.م</span>
+                    </div>
+                }
+                <div class="financial-item d-flex justify-content-between mb-3">
+                    <span class="fw-bold">الصافي:</span>
+                    <span>@Model.SubTotal.ToString("N2") ج.م</span>
+                </div>
+                @if (Model.ShippingCost > 0)
+                {
+                    <div class="financial-item d-flex justify-content-between mb-3">
+                        <span class="fw-bold">سعر الشحن:</span>
+                        <span>@Model.ShippingCost.ToString("N2") ج.م</span>
+                    </div>
+                }
+                <hr>
+                <div class="financial-item d-flex justify-content-between mb-3">
+                    <span class="fw-bold fs-5">الإجمالي (بدون الشحن):</span>
+                    <span class="fw-bold fs-5 text-primary">@Model.TotalAmount.ToString("N2") ج.م</span>
+                </div>
+                @if (Model.ShippingCost > 0)
+                {
+                    <div class="alert alert-info mb-3">
+                        <small>📦 الشحن (@Model.ShippingCost.ToString("N2") ج.م) للعلم فقط - لا يُحسب في المدفوعات</small>
+                    </div>
+                }
+                <div class="financial-item d-flex justify-content-between mb-3">
+                    <span class="fw-bold">المدفوع:</span>
+                    <span class="text-success">@Model.AmountPaid.ToString("N2") ج.م</span>
+                </div>
+                <div class="financial-item d-flex justify-content-between mb-3">
+                    <span class="fw-bold">المتبقي:</span>
+                    @if (remaining > 0)
+                    {
+                        <span class="text-danger fw-bold">@remaining.ToString("N2") ج.م</span>
+                    }
+                    else
+                    {
+                        <span class="text-success fw-bold">مكتمل</span>
+                    }
+                </div>
+                
+                <!-- Payment Status -->
+                <div class="mt-4">
+                    @if (remaining > 0)
+                    {
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>مدين</strong>
+                            <br>
+                            <small>يوجد مبلغ متبقي للدفع</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success text-center">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>مكتمل</strong>
+                            <br>
+                            <small>تم دفع المبلغ كاملاً</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Timeline -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-clock"></i>
+                    تاريخ الأوردر
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <i class="fas fa-calendar-alt fa-2x text-muted mb-2"></i>
+                    <h6>@Model.InvoiceDate.ToString("dddd، d MMMM yyyy", new System.Globalization.CultureInfo("ar-EG"))</h6>
+                    <p class="text-muted mb-0">@Model.InvoiceDate.ToString("hh:mm tt")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .financial-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .financial-item:last-child {
+            border-bottom: none;
+        }
+        
+        .card {
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+}

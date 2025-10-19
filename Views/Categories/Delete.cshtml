@@ -1,0 +1,453 @@
+@model PesticideShop.Models.Category
+
+@{
+    ViewData["Title"] = "حذف التصنيف";
+}
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>🗑️ حذف التصنيف</h1>
+                <p>تأكيد حذف التصنيف المحدد</p>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="action-button info">
+                    👁️ عرض التصنيف
+                </a>
+                <a asp-action="Index" class="action-button secondary">
+                    ← العودة للتصنيفات
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation -->
+    <div class="delete-container">
+        <div class="delete-card">
+            <div class="delete-header">
+                <div class="warning-icon">⚠️</div>
+                <h2>تأكيد الحذف</h2>
+                <p>هل أنت متأكد من رغبتك في حذف هذا التصنيف؟</p>
+            </div>
+
+            <div class="delete-content">
+                <div class="category-info">
+                    <h3>معلومات التصنيف</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>اسم التصنيف:</label>
+                            <span class="value">@Model.Name</span>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div class="info-item">
+                                <label>الوصف:</label>
+                                <span class="value description">@Model.Description</span>
+                            </div>
+                        }
+                        
+                        <div class="info-item">
+                            <label>تاريخ الإنشاء:</label>
+                            <span class="value">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <label>الحالة:</label>
+                            <span class="value status @(Model.IsActive ? "active" : "inactive")">
+                                @(Model.IsActive ? "نشط" : "غير نشط")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Products != null && Model.Products.Any())
+                {
+                    <div class="warning-section">
+                        <div class="warning-message">
+                            <h4>⚠️ تحذير مهم</h4>
+                            <p>لا يمكن حذف هذا التصنيف لأنه يحتوي على <strong>@Model.Products.Count منتج</strong>.</p>
+                            <p>يجب نقل جميع المنتجات إلى تصنيف آخر قبل حذف هذا التصنيف.</p>
+                        </div>
+                        
+                        <div class="products-preview">
+                            <h5>المنتجات الموجودة:</h5>
+                            <div class="products-list">
+                                @foreach (var product in Model.Products.Take(5))
+                                {
+                                    <div class="product-item">
+                                        <span class="product-name">@product.Name</span>
+                                        <span class="product-price">@product.Price.ToString("N2") جنيه</span>
+                                    </div>
+                                }
+                                @if (Model.Products.Count > 5)
+                                {
+                                    <div class="more-products">
+                                        و @(Model.Products.Count - 5) منتج آخر...
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="warning-actions">
+                            <a asp-controller="Products" asp-action="Index" class="action-button info">
+                                📦 إدارة المنتجات
+                            </a>
+                            <a asp-action="Index" class="action-button secondary">
+                                العودة للتصنيفات
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="confirmation-section">
+                        <div class="confirmation-message">
+                            <h4>✅ يمكن الحذف</h4>
+                            <p>هذا التصنيف لا يحتوي على أي منتجات ويمكن حذفه بأمان.</p>
+                        </div>
+                        
+                        <form asp-action="Delete" method="post" class="delete-form">
+                            <input type="hidden" asp-for="Id" />
+                            <div class="delete-actions">
+                                <button type="submit" class="action-button danger">
+                                    🗑️ تأكيد الحذف
+                                </button>
+                                <a asp-action="Index" class="action-button secondary">
+                                    إلغاء
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Delete Container Styles */
+.delete-container {
+    max-width: 700px;
+    margin: 2rem auto;
+}
+
+.delete-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.warning-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.delete-header h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--dark-gray);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.delete-header p {
+    margin: 0;
+    color: var(--gray);
+    font-size: 1rem;
+}
+
+.delete-content {
+    padding: 2rem;
+}
+
+.category-info {
+    margin-bottom: 2rem;
+}
+
+.category-info h3 {
+    color: var(--dark-gray);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-green);
+}
+
+.info-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(222, 226, 230, 0.3);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item label {
+    color: var(--gray);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.info-item .value {
+    color: var(--dark-gray);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.info-item .value.description {
+    max-width: 300px;
+    text-align: right;
+    font-style: italic;
+}
+
+.info-item .value.status.active {
+    color: var(--success-green);
+}
+
+.info-item .value.status.inactive {
+    color: var(--gray);
+}
+
+/* Warning Section */
+.warning-section {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.warning-message h4 {
+    color: #856404;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.warning-message p {
+    margin: 0 0 0.5rem 0;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
+.warning-message p:last-child {
+    margin-bottom: 0;
+}
+
+.products-preview {
+    margin: 1rem 0;
+}
+
+.products-preview h5 {
+    color: var(--dark-gray);
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.products-list {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(222, 226, 230, 0.3);
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+.product-name {
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+.product-price {
+    color: var(--primary-green);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.more-products {
+    text-align: center;
+    padding: 0.5rem;
+    color: var(--gray);
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.warning-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* Confirmation Section */
+.confirmation-section {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.confirmation-message h4 {
+    color: var(--success-green);
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.confirmation-message p {
+    margin: 0;
+    color: var(--success-green);
+    font-size: 0.9rem;
+}
+
+.delete-form {
+    margin-top: 1rem;
+}
+
+.delete-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Action Buttons */
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    cursor: pointer;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.action-button.danger {
+    background: var(--danger-red);
+    color: var(--white);
+    border-color: var(--danger-red);
+}
+
+.action-button.danger:hover {
+    background: #c0392b;
+    border-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.action-button.info {
+    background: var(--info-blue);
+    color: var(--white);
+    border-color: var(--info-blue);
+}
+
+.action-button.info:hover {
+    background: var(--info-blue-dark);
+    border-color: var(--info-blue-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.action-button.secondary {
+    background: transparent;
+    color: var(--gray);
+    border-color: var(--border-color);
+}
+
+.action-button.secondary:hover {
+    background: var(--light-gray);
+    color: var(--dark-gray);
+    border-color: var(--gray);
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+media (max-width: 768px) {
+    .delete-container {
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .delete-header {
+        padding: 1.5rem;
+    }
+    
+    .delete-content {
+        padding: 1.5rem;
+    }
+    
+    .warning-actions,
+    .delete-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .action-button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+media (max-width: 576px) {
+    .delete-header {
+        padding: 1rem;
+    }
+    
+    .delete-content {
+        padding: 1rem;
+    }
+    
+    .warning-section,
+    .confirmation-section {
+        padding: 1rem;
+    }
+    
+    .delete-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .category-info h3 {
+        font-size: 1.1rem;
+    }
+}
+</style>

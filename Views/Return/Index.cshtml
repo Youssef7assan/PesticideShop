@@ -1,0 +1,295 @@
+@model IEnumerable<PesticideShop.Models.ReturnTracking>
+
+@{
+    ViewData["Title"] = "المرتجعات";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="fas fa-undo"></i>
+                                إدارة المرتجعات
+                            </h2>
+                            <p class="mb-0 opacity-75">عرض وإدارة جميع المرتجعات في النظام</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Create", "Return")" class="btn btn-light me-2">
+                                <i class="fas fa-plus"></i>
+                                إرجاع جديد
+                            </a>
+                            <a href="@Url.Action("MultiReturn", "Return")" class="btn btn-success me-2" title="إرجاع متعدد من فاتورة واحدة">
+                                <i class="fas fa-undo-alt"></i> إرجاع متعدد
+                            </a>
+                            <a href="@Url.Action("MultiDelete", "Return")" class="btn btn-danger me-2" title="حذف متعدد للمرتجعات">
+                                🗑️ حذف متعدد
+                            </a>
+                            <button type="button" class="btn btn-warning" onclick="deleteAllReturns()">
+                                <i class="fas fa-trash"></i>
+                                مسح جميع المرتجعات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Count()</h4>
+                            <p class="mb-0">إجمالي المرتجعات</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-undo fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Sum(r => r.ReturnedQuantity)</h4>
+                            <p class="mb-0">إجمالي الكميات المرتجعة</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Where(r => r.ReturnDate.Date == DateTime.Today).Count()</h4>
+                            <p class="mb-0">مرتجعات اليوم</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-day fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Where(r => r.ReturnDate >= DateTime.Today.AddDays(-7)).Count()</h4>
+                            <p class="mb-0">مرتجعات الأسبوع</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-week fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Returns Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-danger"></i>
+                        قائمة المرتجعات
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>رقم فاتورة الإرجاع</th>
+                                        <th>الفاتورة الأصلية</th>
+                                        <th>المنتج</th>
+                                        <th>الكمية المرتجعة</th>
+                                        <th>سبب الإرجاع</th>
+                                        <th>تاريخ الإرجاع</th>
+                                        <th>أنشأ بواسطة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var returnItem in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-danger">@returnItem.ReturnInvoiceNumber</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@returnItem.OriginalInvoiceNumber</span>
+                                            </td>
+                                            <td>
+                                                <strong>@returnItem.Product?.Name</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark">@returnItem.ReturnedQuantity</span>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(returnItem.ReturnReason))
+                                                {
+                                                    <span class="text-muted">@returnItem.ReturnReason</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">غير محدد</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@returnItem.ReturnDate.ToString("yyyy-MM-dd HH:mm")</small>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@returnItem.CreatedBy</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("Details", "Return", new { id = returnItem.Id })" 
+                                                       class="btn btn-sm btn-outline-info" title="عرض التفاصيل">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteReturn(@returnItem.Id)" title="حذف">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-undo fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد مرتجعات</h5>
+                            <p class="text-muted">لم يتم تسجيل أي مرتجعات بعد</p>
+                            <a href="@Url.Action("Create", "Return")" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                إرجاع جديد
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<style>
+.bg-gradient-danger {
+    background: linear-gradient(45deg, #dc3545, #c82333) !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+}
+</style>
+
+<script>
+function deleteAllReturns() {
+    if (!confirm('هل أنت متأكد من حذف جميع المرتجعات؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
+    }
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    fetch('/Return/DeleteAll', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في حذف المرتجعات');
+    });
+}
+
+function deleteReturn(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا المرتجع؟')) {
+        return;
+    }
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    fetch(`/Return/Delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في حذف المرتجع');
+    });
+}
+</script>

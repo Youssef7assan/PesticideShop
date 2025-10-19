@@ -1,0 +1,218 @@
+@model PesticideShop.Models.Product
+@using PesticideShop.Extensions
+
+@{
+    ViewData["Title"] = "تفاصيل المنتج";
+}
+
+<div class="page-container">
+    <!-- Enhanced Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>👕 تفاصيل المنتج</h1>
+                <p>معلومات شاملة عن المنتج والمخزون والحسابات</p>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="action-button warning">
+                    ✏️ تعديل المنتج
+                </a>
+                <a asp-action="Index" class="action-button secondary">
+                    ← العودة للقائمة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Product Information Section -->
+    <div class="info-section">
+        <div class="info-card">
+            <div class="card-header">
+                <h3>👕 معلومات المنتج</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>رمز QR:</label>
+                        <span class="value qr-code">@Model.QRCode</span>
+                    </div>
+                    <div class="info-item">
+                        <label>اسم المنتج:</label>
+                        <span class="value">@Model.Name</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>الصنف:</label>
+                        <span class="value">
+                            <span class="category-tag clothing">
+                                @(Model.Category?.Name ?? "غير محدد")
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>اللون:</label>
+                        <span class="value color-value">@Model.Color</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>المقاس:</label>
+                        <span class="value size-value">@Model.Size.GetDisplayName()</span>
+                    </div>
+                    <div class="info-item">
+                        <label>رمز المنتج:</label>
+                        <span class="value product-code">@Model.ProductCode</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>الكمية المتوفرة:</label>
+                        <span class="value @(Model.Quantity <= 5 ? "low-stock" : "")">
+                            @Model.Quantity قطعة
+                            @if (Model.Quantity <= 5)
+                            {
+                                <span class="low-stock-indicator">⚠️</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>معلومات المخزون:</label>
+                        <span class="value">
+                            <span class="category-tag @(Model.Quantity <= 0 ? "danger" : Model.Quantity <= 5 ? "warning" : "success")">
+                                @Model.StockInfo
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="card-header">
+                <h3>💰 معلومات الأسعار</h3>
+            </div>
+            <div class="card-content">
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <label>سعر البيع:</label>
+                        <span class="amount @(Model.Price > 0 ? "success" : "warning")">
+                            @if (Model.Price > 0)
+                            {
+                                @Model.Price.ToString("N2")
+                            }
+                            else
+                            {
+                                <span>⚠️ يحتاج تحديث</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <label>سعر الجملة</label>
+                        <span class="amount">@(Model.CartonPrice?.ToString("N2") ?? "غير محدد") جنيه</span>
+                    </div>
+
+                    @if (Model.Price > 0)
+                    {
+                        <div class="summary-item">
+                            <label>هامش الربح:</label>
+                            <span class="amount success">@Model.ProfitMargin.ToString("N2") جنيه</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>نسبة الربح:</label>
+                            <span class="amount success">@Model.ProfitPercentage.ToString("N1")%</span>
+                        </div>
+                    }
+                    <div class="summary-item">
+                        <label>القيمة الإجمالية:</label>
+                        <span class="amount total">@Model.TotalValue.ToString("N2") جنيه</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.HasMultipleColors || Model.HasMultipleSizes)
+        {
+            <div class="info-card">
+                <div class="card-header">
+                    <h3>🎨 الألوان والمقاسات المتوفرة</h3>
+                </div>
+                <div class="card-content">
+                    <div class="summary-grid">
+                        @if (Model.HasMultipleColors)
+                        {
+                            <div class="summary-item">
+                                <label>🎨 الألوان المتوفرة:</label>
+                                <span class="amount">
+                                    @if (!string.IsNullOrEmpty(Model.AvailableColors))
+                                    {
+                                        @Model.AvailableColors
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                        
+                        @if (Model.HasMultipleSizes)
+                        {
+                            <div class="summary-item">
+                                <label>📏 المقاسات المتوفرة:</label>
+                                <span class="amount">
+                                    @if (!string.IsNullOrEmpty(Model.AvailableSizes))
+                                    {
+                                        @Model.AvailableSizes
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="table-section">
+        <div class="section-header">
+            <h3>🔧 الإجراءات السريعة</h3>
+        </div>
+        <div class="table-container">
+            <div class="quick-actions-grid">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="quick-action-card">
+                    <div class="action-icon">✏️</div>
+                    <div class="action-title">تعديل المنتج</div>
+                    <div class="action-description">تحديث معلومات المنتج والأسعار</div>
+                </a>
+
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="quick-action-card danger">
+                    <div class="action-icon">🗑️</div>
+                    <div class="action-title">حذف المنتج</div>
+                    <div class="action-description">حذف المنتج من النظام نهائياً</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

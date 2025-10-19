@@ -1,0 +1,221 @@
+@model PesticideShop.Models.Customer
+
+@{
+    ViewData["Title"] = "تعديل عميل";
+}
+
+<div class="fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم بنجاح:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ حدث خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>✏️ تعديل بيانات عميل</h1>
+        <a asp-action="Index" class="btn btn-secondary">
+            ← الرجوع للقائمة
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">معلومات العميل</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Name" class="form-label">اسم العميل *</label>
+                        <input asp-for="Name" class="form-control" placeholder="اكتب اسم العميل" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">رقم الهاتف *</label>
+                        <input asp-for="PhoneNumber" class="form-control phone-input" placeholder="مثال: 01012345678 أو 201012345678" 
+                               pattern="^(01|201|2)?[0-9]{9,11}$" 
+                               title="يرجى إدخال رقم هاتف مصري صحيح (مثال: 01012345678)" required />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        <small class="text-muted">يمكن إدخال الرقم بأي صيغة: 01012345678 أو 201012345678</small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="AdditionalPhone" class="form-label">رقم إضافي</label>
+                        <input asp-for="AdditionalPhone" class="form-control phone-input" placeholder="مثال: 01012345678 أو 201012345678" 
+                               pattern="^(01|201|2)?[0-9]{9,11}$" 
+                               title="يرجى إدخال رقم هاتف مصري صحيح (مثال: 01012345678)" />
+                        <span asp-validation-for="AdditionalPhone" class="text-danger"></span>
+                        <small class="text-muted">رقم هاتف إضافي (اختياري)</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label">البريد الإلكتروني</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <small class="text-muted">البريد الإلكتروني (اختياري)</small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Governorate" class="form-label">المحافظة</label>
+                        <select asp-for="Governorate" id="governorateSelect" class="form-select">
+                            <option value="">اختر المحافظة</option>
+                        </select>
+                        <span asp-validation-for="Governorate" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="District" class="form-label">المنطقة/المدينة</label>
+                        <select asp-for="District" id="citySelect" class="form-select" disabled>
+                            <option value="">اختر المنطقة أولاً</option>
+                        </select>
+                        <span asp-validation-for="District" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="DetailedAddress" class="form-label">العنوان التفصيلي</label>
+                        <input asp-for="DetailedAddress" class="form-control" placeholder="مثال: شارع النيل، عمارة 15، شقة 8" />
+                        <span asp-validation-for="DetailedAddress" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between flex-row-reverse">
+                    <button type="submit" class="btn btn-warning ms-2">
+                        ✏️ تحديث البيانات
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ← إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // بيانات المحافظات والمدن مباشرة في JavaScript
+        const governoratesData = {
+            'القاهرة': ['المعادي', 'مصر الجديدة', 'الزمالك', 'مدينة نصر', 'المرج', 'شبرا', 'روض الفرج', 'العباسية', 'الزيتون', 'عين شمس', 'الوايلي', 'باب الشعرية', 'بولاق', 'الخليفة', 'المقطم', 'الدراسة', 'السيدة زينب', 'الفسطاط', 'الخانكة', 'القصر العيني', 'المنيل', 'الزاوية الحمراء', 'شرق', 'غرب', 'وسط', 'شمال', 'جنوب'],
+            'الجيزة': ['6 أكتوبر', 'الشيخ زايد', 'الهرم', 'البدرشين', 'الصف', 'أطفيح', 'العياط', 'منشأة القناطر', 'أوسيم', 'كرداسة', 'أبو النمرس', 'كفر غطاطي', 'منشأة البكاري', 'سقارة', 'أبو رواش', 'الحرانية', 'المنيب', 'الوراق', 'إمبابة', 'بولاق الدكرور', 'الواحات البحرية', 'الواحات الداخلة', 'الواحات الخارجة', 'الفرافرة', 'سيوة'],
+            'الإسكندرية': ['العجمي', 'الأزاريطة', 'باكوس', 'برج العرب', 'برج العرب الجديدة', 'بورسعيد', 'كامب شيزار', 'كليوباترا', 'الدخيلة', 'فلمنج', 'جناكليس', 'جليم', 'المنتزه', 'المعمورة', 'المكس', 'ميامي', 'محرم بك', 'المنتزه', 'المنتزه الجديدة', 'مونتازة', 'الرمل', 'سابا باشا', 'سان ستيفانو', 'سموحة', 'سيدي بشر', 'سيدي جابر', 'سيدي كرير', 'سموحة', 'ستانلي', 'سوتير', 'ترعة السويس', 'فيكتوريا', 'الورديان'],
+            'الشرقية': ['الزقازيق', 'العاشر من رمضان', 'أبو حماد', 'أبو كبير', 'الإبراهيمية', 'بلبيس', 'ديرب نجم', 'فاقوس', 'ههيا', 'كفر صقر', 'مشتول السوق', 'منيا القمح', 'أولاد صقر', 'القرين', 'الصالحية الجديدة', 'التل الكبير', 'القنايات'],
+            'الغربية': ['طنطا', 'المحلة الكبرى', 'زفتى', 'سمنود', 'كفر الزيات', 'بسيون', 'قطور', 'ساحل سليم'],
+            'المنوفية': ['شبين الكوم', 'قويسنا', 'بركة السبع', 'تلا', 'الشهداء', 'أجا', 'السنبلاوين'],
+            'الدقهلية': ['المنصورة', 'ميت غمر', 'أجا', 'السنبلاوين', 'بلبيس', 'ديرب نجم', 'فاقوس', 'ههيا', 'كفر صقر', 'مشتول السوق', 'منيا القمح', 'أولاد صقر', 'القرين', 'الصالحية الجديدة', 'التل الكبير', 'القنايات'],
+            'كفر الشيخ': ['كفر الشيخ', 'دسوق', 'فوه', 'مطوبس', 'البرلس', 'الحامول', 'بيلا', 'الرياض', 'سيدي سالم', 'قلين'],
+            'دمياط': ['دمياط', 'فارسكور', 'الزرقا', 'كفر البطيخ', 'رأس البر', 'الروضة', 'السرو', 'السنانية', 'شطا', 'الطويلة', 'كفر سعد', 'ميت أبو غالب', 'نبروه'],
+            'بورسعيد': ['بورسعيد', 'بورفؤاد', 'العرب', 'المناخ', 'الضواحي', 'الشرق', 'الغرب', 'الشمال', 'الجنوب', 'الوسط'],
+            'الإسماعيلية': ['الإسماعيلية', 'فايد', 'القنطرة شرق', 'القنطرة غرب', 'التل الكبير', 'أبو صوير', 'القصاصين الجديدة'],
+            'السويس': ['السويس', 'الأربعين', 'فايد', 'الجناين', 'عتاقة', 'أبو رديس', 'أبو زنيمة'],
+            'بني سويف': ['بني سويف', 'الواسطي', 'ناصر', 'إهناسيا', 'ببا', 'سمسطا', 'الفيوم', 'سنورس', 'طامية', 'إطسا', 'يوسف الصديق', 'الجامعة'],
+            'الفيوم': ['الفيوم', 'سنورس', 'طامية', 'إطسا', 'يوسف الصديق', 'الجامعة', 'الواسطي', 'ناصر', 'إهناسيا', 'ببا', 'سمسطا'],
+            'المنيا': ['المنيا', 'العدوة', 'مغاغة', 'بني مزار', 'مطاي', 'سمالوط', 'أبو قرقاص', 'دير مواس', 'ملوي', 'المنيا الجديدة'],
+            'أسيوط': ['أسيوط', 'ديروط', 'منفلوط', 'القوصية', 'أبنوب', 'البداري', 'صدفا', 'غرب أسيوط', 'ساحل سليم', 'الفتح', 'أبو تيج', 'الغنايم'],
+            'سوهاج': ['سوهاج', 'أخميم', 'البلينا', 'المراغة', 'المنشأة', 'دار السلام', 'جرجا', 'طهطا', 'ساقلتة', 'طما', 'جهينة', 'الغنايم'],
+            'قنا': ['قنا', 'قوص', 'نقادة', 'دشنا', 'الوقف', 'قفط', 'أبو تشت', 'فرشوط', 'نجع حمادي'],
+            'الأقصر': ['الأقصر', 'إسنا', 'الطود', 'البياضية', 'القرنة', 'أرمنت', 'الزينية'],
+            'أسوان': ['أسوان', 'كوم أمبو', 'دراو', 'نصر النوبة', 'كلابشة', 'إدفو', 'الرديسية', 'السباعية', 'البصيلية', 'العلاقي', 'أبو سمبل'],
+            'البحر الأحمر': ['الغردقة', 'رأس غارب', 'سفاجا', 'القصير', 'مرسى علم', 'الشلاتين', 'حلايب', 'أبو رماد'],
+            'الوادي الجديد': ['الخارجة', 'الداخلة', 'الفرافرة', 'باريس', 'بلاط'],
+            'مطروح': ['مرسى مطروح', 'الحمام', 'العلمين', 'الضبعة', 'النجيلة', 'سيدي براني', 'سلوم'],
+            'شمال سيناء': ['العريش', 'الشيخ زويد', 'رفح', 'بئر العبد', 'الحسنة', 'نخل'],
+            'جنوب سيناء': ['الطور', 'سانت كاترين', 'نويبع', 'دهب', 'شرم الشيخ', 'طابا', 'رأس محمد', 'نبق', 'تيران', 'صنافير'],
+            'القليوبية': ['بنها', 'قليوب', 'شبرا الخيمة', 'الخانكة', 'كفر شكر', 'طوخ', 'القناطر الخيرية', 'العبور', 'الخصوص', 'ميت غمر', 'أبو زعبل', 'السنبلاوين', 'بركة السبع', 'تلا', 'الشهداء', 'أجا']
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGovernorateDropdown();
+            checkExistingValues();
+        });
+
+        function checkExistingValues() {
+            const currentGovernorate = @Html.Raw(Json.Serialize(Model.Governorate ?? ""));
+            const currentCity = @Html.Raw(Json.Serialize(Model.District ?? ""));
+            
+            const governorateSelect = document.getElementById('governorateSelect');
+            const citySelect = document.getElementById('citySelect');
+            
+            if (currentGovernorate) {
+                // تعيين المحافظة المختارة
+                governorateSelect.value = currentGovernorate;
+                // تحميل المدن للمحافظة المختارة
+                loadCitiesForGovernorate(currentGovernorate, currentCity);
+            }
+        }
+
+        function initializeGovernorateDropdown() {
+            const governorateSelect = document.getElementById('governorateSelect');
+            const citySelect = document.getElementById('citySelect');
+            const currentGovernorate = @Html.Raw(Json.Serialize(Model.Governorate ?? ""));
+
+            if (!governorateSelect || !citySelect) {
+                console.error('❌ لم يتم العثور على عناصر المحافظات أو المدن');
+                return;
+            }
+
+            // تحميل المحافظات مباشرة
+            governorateSelect.innerHTML = '<option value="">اختر المحافظة</option>';
+            
+            Object.keys(governoratesData).forEach(governorate => {
+                const option = document.createElement('option');
+                option.value = governorate;
+                option.textContent = governorate;
+                if (governorate === currentGovernorate) {
+                    option.selected = true;
+                }
+                governorateSelect.appendChild(option);
+            });
+
+            // عند تغيير المحافظة
+            governorateSelect.addEventListener('change', function() {
+                const selectedGovernorate = this.value;
+                loadCitiesForGovernorate(selectedGovernorate);
+            });
+        }
+
+        function loadCitiesForGovernorate(governorate, selectedCity = '') {
+            const citySelect = document.getElementById('citySelect');
+            
+            // إعادة تعيين قائمة المدن
+            citySelect.innerHTML = '<option value="">اختر المنطقة</option>';
+            citySelect.disabled = true;
+
+            if (governorate && governoratesData[governorate]) {
+                const cities = governoratesData[governorate];
+                
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    if (city === selectedCity) {
+                        option.selected = true;
+                    }
+                    citySelect.appendChild(option);
+                });
+                
+                citySelect.disabled = false;
+                console.log(`✅ تم تحميل ${cities.length} مدينة للمحافظة ${governorate}`);
+            }
+        }
+    </script>
+} 

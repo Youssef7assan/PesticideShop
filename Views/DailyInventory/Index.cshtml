@@ -1,0 +1,328 @@
+@model PesticideShop.Models.DailyInventory
+@{
+    ViewData["Title"] = "الجرد اليومي - Pharaonic";
+    var selectedDate = (DateTime)(ViewData["SelectedDate"] ?? DateTime.Today);
+    var isToday = (bool)(ViewData["IsToday"] ?? false);
+    var isClosed = (bool)(ViewData["IsClosed"] ?? false);
+    var transactionsCount = (int)(ViewData["TransactionsCount"] ?? 0);
+}
+
+<style>
+    .daily-inventory-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    .header-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        border-left: 5px solid;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card.sales { border-left-color: #28a745; }
+    .stat-card.profit { border-left-color: #007bff; }
+    .stat-card.transactions { border-left-color: #ffc107; }
+    .stat-card.customers { border-left-color: #17a2b8; }
+    .stat-card.payments { border-left-color: #6f42c1; }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .status-banner {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .status-active {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+    }
+
+    .status-closed {
+        background: linear-gradient(45deg, #dc3545, #fd7e14);
+        color: white;
+    }
+
+    /* Force button styles on this page */
+    .btn, button, a.btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-family: 'Cairo', sans-serif !important;
+    }
+
+    .btn:hover, button:hover, a.btn:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5) !important;
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+    }
+
+    .btn-success, .btn-success:hover {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+
+    .btn-info, .btn-info:hover {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+    }
+
+    .btn-secondary, .btn-secondary:hover {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    }
+
+    .btn-warning, .btn-warning:hover {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        color: #212529 !important;
+    }
+
+    .btn-danger, .btn-danger:hover {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+</style>
+
+<div class="daily-inventory-container">
+    <div class="container">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h1 class="mb-0">📊 الجرد اليومي - Pharaonic</h1>
+                <div>
+                    <input type="date" class="form-control" 
+                           value="@selectedDate.ToString("yyyy-MM-dd")" 
+                           onchange="location.href='?date='+this.value" />
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="status-banner @(isClosed ? "status-closed" : "status-active")">
+                @if (isClosed)
+                {
+                    <span>🔒 الجرد مغلق - @selectedDate.ToString("yyyy/MM/dd")</span>
+                }
+                else
+                {
+                    <span>🟢 الجرد مفتوح - @selectedDate.ToString("yyyy/MM/dd")</span>
+                }
+            </div>
+        </div>
+
+        @if (Model != null)
+        {
+            <div class="stats-container">
+                <div class="stat-card sales">
+                    <div class="stat-value">@Model.TotalSales.ToString("F2") ج.م</div>
+                    <div class="stat-label">💰 إجمالي المبيعات</div>
+                    @if (Model.TotalDiscounts > 0)
+                    {
+                        <small class="text-muted">إجمالي الخصومات: @Model.TotalDiscounts.ToString("F2") ج.م</small>
+                    }
+                </div>
+
+                <div class="stat-card profit">
+                    <div class="stat-value">@Model.NetProfit.ToString("F2") ج.م</div>
+                    <div class="stat-label">📈 صافي الربح</div>
+                    <small class="text-muted">التكلفة: @Model.TotalCost.ToString("F2") ج.م</small>
+                    @if (ViewData["DebugProfit"] != null)
+                    {
+                        <small class="text-info d-block mt-2">@ViewData["DebugProfit"]</small>
+                    }
+                </div>
+
+                <div class="stat-card transactions">
+                    <div class="stat-value">@Model.TransactionsCount</div>
+                    <div class="stat-label">🧾 عدد المعاملات</div>
+                    <small class="text-muted">@Model.TotalQuantitySold قطعة</small>
+                </div>
+
+                <div class="stat-card customers">
+                    <div class="stat-value">@Model.CustomersCount</div>
+                    <div class="stat-label">👥 عدد العملاء</div>
+                    <small class="text-muted">@Model.ProductsSoldCount منتج مختلف</small>
+                </div>
+
+                <div class="stat-card payments" style="border-left-color: #6f42c1;">
+                    <div class="stat-value">@(ViewData["TotalPaymentsToday"] != null ? ((decimal)ViewData["TotalPaymentsToday"]).ToString("F2") : "0.00") ج.م</div>
+                    <div class="stat-label">💳 مجموع مدفوعات اليوم</div>
+                    <small class="text-muted">جميع المدفوعات في @selectedDate.ToString("yyyy/MM/dd")</small>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <h5>💳 المدفوعات</h5>
+                        <div class="stat-value text-success">@Model.TotalPayments.ToString("F2") ج.م</div>
+                        @if (Model.TotalDebts > 0)
+                        {
+                            <div class="text-danger">مديونية: @Model.TotalDebts.ToString("F2") ج.م</div>
+                        }
+                    </div>
+                </div>
+
+
+                                 <div class="col-md-4">
+                     <div class="stat-card">
+                         <h5>🛍️ المبيعات</h5>
+                         <div class="stat-value text-primary">@(ViewData["SalesValue"] != null ? ((decimal)ViewData["SalesValue"]).ToString("F2") : "0.00") ج.م</div>
+                         <small class="text-muted">@(ViewData["SalesTransactionsCount"] ?? 0) معاملة بيع</small>
+                     </div>
+                 </div>
+
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <h5>📊 ملخص اليوم</h5>
+                        <p><strong>وقت آخر تحديث:</strong> @(Model.UpdatedAt?.ToShortTimeString() ?? "غير محدد")</p>
+                        @if (isToday)
+                        {
+                            <small class="text-muted">البيانات محدثة لحظياً</small>
+                        }
+                    </div>
+                </div>
+            </div>
+
+                         @if ((ViewData["ReturnValue"] != null && (decimal)ViewData["ReturnValue"] > 0) || 
+                  (ViewData["ExchangeValue"] != null && (decimal)ViewData["ExchangeValue"] > 0))
+             {
+                 <div class="row mt-3">
+                     <div class="col-md-6">
+                         <div class="stat-card" style="border-left: 4px solid #dc3545;">
+                             <h5>↩️ المرتجعات</h5>
+                             <div class="stat-value text-danger">@(ViewData["ReturnValue"] != null ? ((decimal)ViewData["ReturnValue"]).ToString("F2") : "0.00") ج.م</div>
+                             <small class="text-muted">@(ViewData["ReturnTransactionsCount"] ?? 0) معاملة إرجاع</small>
+                         </div>
+                     </div>
+
+                     <div class="col-md-6">
+                         <div class="stat-card" style="border-left: 4px solid #ffc107;">
+                             <h5>🔄 الاستبدالات</h5>
+                             <div class="stat-value text-warning">@(ViewData["ExchangeValue"] != null ? ((decimal)ViewData["ExchangeValue"]).ToString("F2") : "0.00") ج.م</div>
+                             <small class="text-muted">@(ViewData["ExchangeTransactionsCount"] ?? 0) معاملة استبدال</small>
+                         </div>
+                     </div>
+                 </div>
+             }
+
+            <div class="text-center mt-4">
+                @if (!isClosed && transactionsCount > 0)
+                {
+                    <form asp-action="SimpleRecalculate" method="post" style="display: inline;" class="me-2">
+                        <input type="hidden" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="btn btn-primary">
+                            🔄 تحديث البيانات
+                        </button>
+                    </form>
+                }
+
+                @if (Model != null && transactionsCount > 0)
+                {
+                    <a href="@Url.Action("ExportToExcel", new { date = selectedDate.ToString("yyyy-MM-dd") })" class="btn btn-success me-2">
+                        📊 تصدير Excel
+                    </a>
+                    
+                    <a href="@Url.Action("ExportDetailedExcel", new { date = selectedDate.ToString("yyyy-MM-dd") })" class="btn btn-warning me-2">
+                        📋 تصدير مفصل
+                    </a>
+                }
+
+                <a href="@Url.Action("Calendar")" class="btn btn-info me-2">
+                    📅 عرض التقويم
+                </a>
+                
+                <a href="@Url.Action("Index", "Orders")" class="btn btn-secondary">
+                    📋 عرض الطلبات
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center">
+                <h4>📋 لا توجد بيانات لهذا التاريخ</h4>
+                <p>لم يتم العثور على معاملات لتاريخ @selectedDate.ToString("yyyy-MM-dd")</p>
+                
+                @if (transactionsCount == 0)
+                {
+                    <p>لم تحدث أي معاملات في هذا التاريخ.</p>
+                }
+                else
+                {
+                    <form asp-action="SimpleRecalculate" method="post" style="display: inline;">
+                        <input type="hidden" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> إنشاء البيانات
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // Auto refresh every 30 seconds if it's today and not closed
+    @if (isToday && !isClosed)
+    {
+        <text>
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+        </text>
+    }
+</script>

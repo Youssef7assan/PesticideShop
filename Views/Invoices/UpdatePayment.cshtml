@@ -1,0 +1,256 @@
+@model PesticideShop.Models.Invoice
+
+@{
+    ViewData["Title"] = "تحديث المبلغ المدفوع";
+    // الإجمالي = قيمة المنتجات فقط (بدون الشحن)
+    var remaining = Model.TotalAmount - Model.AmountPaid;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                       
+                        تحديث المبلغ المدفوع - الفاتورة #@Model.InvoiceNumber
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- معلومات الفاتورة -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">معلومات العميل</h6>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">الاسم:</td>
+                                    <td>@Model.Customer?.Name</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">الهاتف:</td>
+                                    <td>@Model.Customer?.PhoneNumber</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">معلومات الفاتورة</h6>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">رقم الفاتورة:</td>
+                                    <td>@Model.InvoiceNumber</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">رقم الطلب:</td>
+                                    <td>@Model.OrderNumber</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">التاريخ:</td>
+                                    <td>@Model.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ملخص مالي -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-3">الملخص المالي</h6>
+                                    <div class="row">
+                                        <div class="col-md-3 text-center">
+                                            <div class="border rounded p-3">
+                                                <h5 class="text-primary">@Model.TotalAmount.ToString("N2")</h5>
+                                                <small class="text-muted">الإجمالي (بدون الشحن)</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="border rounded p-3">
+                                                <h5 class="text-success">@Model.AmountPaid.ToString("N2")</h5>
+                                                <small class="text-muted">المدفوع</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="border rounded p-3">
+                                                <h5 class="text-danger">@remaining.ToString("N2")</h5>
+                                                <small class="text-muted">المتبقي</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="border rounded p-3">
+                                                <h5 class="text-info">@Model.Status</h5>
+                                                <small class="text-muted">الحالة</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if (Model.ShippingCost > 0)
+                                    {
+                                        <div class="alert alert-info mt-3 mb-0">
+                                            📦 <strong>تكلفة الشحن:</strong> @Model.ShippingCost.ToString("N2") ج.م (للعلم فقط - لا تُحسب في المدفوعات)
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نموذج إضافة مبلغ -->
+                    <form asp-action="UpdatePayment" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="additionalAmount" class="form-label">
+                                        
+                                        المبلغ الإضافي المدفوع
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control form-control-lg" 
+                                               id="additionalAmount" 
+                                               name="additionalAmount" 
+                                               step="0.01" 
+                                               min="0" 
+                                               max="@remaining"
+                                               placeholder="أدخل المبلغ الإضافي (اختياري)">
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                    <div class="form-text">
+                                        الحد الأقصى: @remaining.ToString("N2") ج.م (اختياري - يمكن تركها فارغة لتحديث نوع الشحن فقط)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="shippingType" class="form-label">
+                                       
+                                        نوع الشحن
+                                    </label>
+                                    <select class="form-select form-select-lg" id="shippingType" name="shippingType">
+                                        <option value="">اختر نوع الشحن</option>
+                                        @if (Model.ShippingType == PesticideShop.Models.ShippingType.Bosta)
+                                        {
+                                            <option value="1" selected>📦 بوسطا</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="1">📦 بوسطا</option>
+                                        }
+                                        
+                                        @if (Model.ShippingType == PesticideShop.Models.ShippingType.Cairo)
+                                        {
+                                            <option value="2" selected>🚛 كايرو</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="2">🚛 كايرو</option>
+                                        }
+                                        
+                                        @if (Model.ShippingType == PesticideShop.Models.ShippingType.NoShipping)
+                                        {
+                                            <option value="3" selected>❌ بدون شحن</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="3">❌ بدون شحن</option>
+                                        }
+                                    </select>
+                                    <div class="form-text">
+                                        نوع خدمة الشحن المستخدمة
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">المبلغ الجديد بعد الإضافة</label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control form-control-lg bg-light" 
+                                               id="newTotal" 
+                                               readonly>
+                                        <span class="input-group-text">ج.م</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                                      
+                                        العودة للتفاصيل
+                                    </a>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                    
+                                        تأكيد الدفع
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // حساب المبلغ الجديد عند تغيير المبلغ الإضافي
+            $('#additionalAmount').on('input', function() {
+                var additionalAmount = parseFloat($(this).val()) || 0;
+                var currentPaid = @Model.AmountPaid;
+                var newTotal = currentPaid + additionalAmount;
+                $('#newTotal').val(newTotal.toFixed(2));
+            });
+
+            // منع إدخال مبلغ أكبر من المتبقي
+            $('#additionalAmount').on('change', function() {
+                var maxAmount = @remaining;
+                var enteredAmount = parseFloat($(this).val());
+                
+                if (enteredAmount > maxAmount) {
+                    $(this).val(maxAmount);
+                    $('#newTotal').val((@Model.AmountPaid + maxAmount).toFixed(2));
+                    alert('لا يمكن إدخال مبلغ أكبر من المتبقي: ' + maxAmount.toFixed(2) + ' ج.م');
+                }
+            });
+
+            // تأكيد قبل الإرسال
+            $('form').on('submit', function(e) {
+                var additionalAmount = parseFloat($('#additionalAmount').val()) || 0;
+                var shippingType = $('#shippingType').val();
+                
+                // إذا لم يتم إدخال مبلغ ولم يتم تغيير نوع الشحن
+                var currentShippingType = '@(Model.ShippingType?.ToString("D") ?? "")';
+                var isShippingTypeChanged = shippingType !== currentShippingType;
+                
+                if (additionalAmount <= 0 && !isShippingTypeChanged) {
+                    e.preventDefault();
+                    alert('يرجى إدخال مبلغ إضافي أو تغيير نوع الشحن');
+                    return false;
+                }
+                
+                var confirmMessage = '';
+                if (additionalAmount > 0 && isShippingTypeChanged) {
+                    confirmMessage = 'هل أنت متأكد من إضافة ' + additionalAmount.toFixed(2) + ' ج.م وتحديث نوع الشحن؟';
+                } else if (additionalAmount > 0) {
+                    confirmMessage = 'هل أنت متأكد من إضافة ' + additionalAmount.toFixed(2) + ' ج.م للمبلغ المدفوع؟';
+                } else if (isShippingTypeChanged) {
+                    confirmMessage = 'هل أنت متأكد من تحديث نوع الشحن؟';
+                }
+                
+                if (confirmMessage && !confirm(confirmMessage)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
+}

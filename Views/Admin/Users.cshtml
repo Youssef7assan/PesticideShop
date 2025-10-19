@@ -1,0 +1,121 @@
+@model IEnumerable<PesticideShop.Models.UserViewModel>
+
+@{
+    ViewData["Title"] = "إدارة المستخدمين";
+}
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>👥 إدارة المستخدمين</h1>
+                <p>إدارة حسابات المستخدمين والمشرفين</p>
+                <div class="current-user-info">
+                    <span class="user-badge">👤 المستخدم الحالي: <strong>@User.Identity?.Name</strong></span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Register" class="action-button warning">
+                    👑 إنشاء حساب مشرف
+                </a>
+                <a asp-action="AddUser" class="action-button success">
+                    ➕ إضافة مستخدم جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    @if (Model.Any())
+    {
+        <div class="table-section">
+            <div class="section-header">
+                <h3>📋 قائمة المستخدمين</h3>
+                <span class="total-count">إجمالي المستخدمين: @Model.Count()</span>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>👤 اسم المستخدم</th>
+                            <th>📧 البريد الإلكتروني</th>
+                            <th>🔧 الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td class="user-name">@user.Username</td>
+                                <td class="user-email">@user.Email</td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        <form asp-action="DeleteUser" asp-route-id="@user.Id" method="post" style="display: inline;">
+                                            <button type="submit" class="action-btn delete" title="حذف المستخدم"
+                                                    onclick="return confirm('هل أنت متأكد من حذف المستخدم @user.Username؟')">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h4>لا يوجد مستخدمين</h4>
+            <p>لم يتم إنشاء أي حسابات حتى الآن.</p>
+            <div class="empty-actions">
+                <a asp-action="Register" class="action-button warning">
+                    👑 إنشاء أول مشرف
+                </a>
+                <a asp-action="AddUser" class="action-button primary">
+                    ➕ إضافة مستخدم جديد
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.current-user-info {
+    margin-top: 10px;
+}
+
+.user-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-badge strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.user-name {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 16px;
+}
+</style>
+
+<script>
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>

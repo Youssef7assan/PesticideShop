@@ -1,0 +1,800 @@
+@model PesticideShop.Models.Product
+
+@{
+    ViewData["Title"] = "إضافة منتج";
+}
+
+<div class="fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم بنجاح:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2">➕ إضافة منتج جديد - Pharaonic</h1>
+                    <p class="mb-0 opacity-75">أدخل بيانات المنتج الجديد في النظام</p>
+                </div>
+                <a asp-action="Index" class="action-button secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    العودة للقائمة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-container">
+            <div class="form-card">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            المعلومات الأساسية
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="QRCode" class="form-label">رمز QR *</label>
+                                    <input asp-for="QRCode" class="form-control" placeholder="مثال: QR001234" required />
+                                    <span asp-validation-for="QRCode" class="text-danger"></span>
+                                    <small class="form-text">رمز QR فريد للمنتج</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Name" class="form-label">اسم المنتج *</label>
+                                    <input asp-for="Name" class="form-control" placeholder="مثال: قميص قطني" required />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="CategoryId" class="form-label">الصنف *</label>
+                                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select" required>
+                                        <option value="">اختر الصنف</option>
+                                    </select>
+                                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                    <small class="form-text">اختر التصنيف المناسب للمنتج</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Color" class="form-label">اللون *</label>
+                                    <input asp-for="Color" class="form-control" placeholder="مثال: أزرق، أحمر، أسود" required />
+                                    <span asp-validation-for="Color" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Size" class="form-label">المقاس *</label>
+                                    <select asp-for="Size" class="form-select" required>
+                                        <option value="">اختر المقاس</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size32">32</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size33">33</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size34">34</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size35">35</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size36">36</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size37">37</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size38">38</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size39">39</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size40">40</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size41">41</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size42">42</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size43">43</option>
+                                        <option value="@PesticideShop.Models.ProductSize.Size44">44</option>
+                                        <option value="@PesticideShop.Models.ProductSize.XS">XS</option>
+                                        <option value="@PesticideShop.Models.ProductSize.S">S</option>
+                                        <option value="@PesticideShop.Models.ProductSize.M">M</option>
+                                        <option value="@PesticideShop.Models.ProductSize.L">L</option>
+                                        <option value="@PesticideShop.Models.ProductSize.XL">XL</option>
+                                        <option value="@PesticideShop.Models.ProductSize.XXL">XXL</option>
+                                        <option value="@PesticideShop.Models.ProductSize.XXXL">XXXL</option>
+                                        <option value="@PesticideShop.Models.ProductSize.OneSize">موحد</option>
+                                    </select>
+                                    <span asp-validation-for="Size" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Quantity Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-dollar-sign text-success"></i>
+                            الأسعار والكمية
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Quantity" class="form-label">الكمية المتوفرة *</label>
+                                    <input asp-for="Quantity" class="form-control" type="number" min="0" placeholder="مثال: 50 أو 0" required />
+                                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                                    <small class="form-text">عدد القطع المتوفرة في المخزون (يمكن أن تكون 0)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="CartonPrice" class="form-label">سعر الجمله (اختياري)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="CartonPrice" class="form-control" type="number" step="0.01" min="0" placeholder="مثال: 1000.00" />
+                                    </div>
+                                    <span asp-validation-for="CartonPrice" class="text-danger"></span>
+                                    <small class="form-text">سعر شراء الكرتونة من المورد (اختياري)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Price" class="form-label">سعر البيع *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="Price" class="form-control" type="number" step="0.01" min="0.01" placeholder="مثال: 150.00" required />
+                                    </div>
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                    <small class="form-text">سعر بيع المنتج للقطعة</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Colors & Sizes Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            🎨 الألوان والمقاسات المتوفرة
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        <input asp-for="HasMultipleColors" class="form-check-input" type="checkbox" id="hasMultipleColors" />
+                                        <label class="form-check-label" for="hasMultipleColors">
+                                            🎨 متوفر بألوان أخرى
+                                        </label>
+                                    </div>
+                                    <small class="form-text">حدد إذا كان هذا المنتج متوفر بألوان مختلفة</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        <input asp-for="HasMultipleSizes" class="form-check-input" type="checkbox" id="hasMultipleSizes" />
+                                        <label class="form-check-label" for="hasMultipleSizes">
+                                            📏 متوفر بمقاسات أخرى
+                                        </label>
+                                    </div>
+                                    <small class="form-text">حدد إذا كان هذا المنتج متوفر بمقاسات مختلفة</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3" id="availableColorsSection" style="display: none;">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label asp-for="AvailableColors" class="form-label">🎨 الألوان المتوفرة</label>
+                                    <textarea asp-for="AvailableColors" class="form-control" rows="3" 
+                                              placeholder="مثال: أحمر، أزرق، أخضر، أسود، أبيض" 
+                                              maxlength="200"></textarea>
+                                    <span asp-validation-for="AvailableColors" class="text-danger"></span>
+                                    <small class="form-text">اكتب الألوان المتوفرة مفصولة بفواصل (اختياري)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3" id="availableSizesSection" style="display: none;">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label asp-for="AvailableSizes" class="form-label">📏 المقاسات المتوفرة</label>
+                                    <textarea asp-for="AvailableSizes" class="form-control" rows="3" 
+                                              placeholder="مثال: 32، 34، 36، 38، 40، 42، 44، S، M، L، XL" 
+                                              maxlength="200"></textarea>
+                                    <span asp-validation-for="AvailableSizes" class="text-danger"></span>
+                                    <small class="form-text">اكتب المقاسات المتوفرة مفصولة بفواصل (اختياري)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Values Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-calculator text-info"></i>
+                            القيم المحسوبة
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">القيمة الإجمالية (محسوبة)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" id="totalValue" class="form-control" readonly />
+                                    </div>
+                                    <small class="form-text">الكمية × سعر البيع</small>
+                                </div>
+                            </div>
+                            
+
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>ملاحظة:</strong> سيتم حساب القيم تلقائياً بناءً على البيانات المدخلة.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>تأكد من:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>الكمية أكبر من أو تساوي صفر (يمكن أن تكون 0)</li>
+                                        <li>سعر البيع أكبر من صفر</li>
+                                        <li>سعر الجمله اختياري (إذا تم إدخاله يجب أن يكون أكبر من صفر)</li>
+                                        <li>سعر البيع أكبر من سعر القطعة من الجمله (إذا تم إدخال سعر الجمله)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-sticky-note text-warning"></i>
+                            ملاحظات إضافية
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label asp-for="Notes" class="form-label">ملاحظات</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="أي ملاحظات إضافية حول المنتج..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a asp-action="Index" class="action-button secondary">
+                            <i class="fas fa-times"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="action-button success">
+                            <i class="fas fa-plus"></i>
+                            إضافة المنتج
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Form Container Styles */
+.form-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.form-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    position: relative;
+}
+
+.form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.section-title {
+    color: var(--primary-green);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(40, 167, 69, 0.1);
+}
+
+.section-title i {
+    font-size: 1.1rem;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--dark-gray);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition);
+    background: var(--white);
+    color: var(--dark-gray);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-control::placeholder {
+    color: var(--gray);
+    opacity: 0.7;
+}
+
+.form-control[readonly] {
+    background-color: var(--light-gray);
+    border-color: var(--gray);
+    color: var(--dark-gray);
+    cursor: not-allowed;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition);
+    background: var(--white);
+    color: var(--dark-gray);
+    cursor: pointer;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--gray);
+    font-style: italic;
+}
+
+/* Input Groups */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group-text {
+    background: var(--light-gray);
+    border: 2px solid var(--border-color);
+    border-right: none;
+    color: var(--gray);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+
+.input-group .form-control {
+    border-left: none;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.input-group .form-control:focus {
+    border-left-color: var(--primary-green);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    cursor: pointer;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.action-button.success {
+    background: var(--primary-green);
+    color: var(--white);
+    border-color: var(--primary-green);
+}
+
+.action-button.success:hover {
+    background: var(--primary-green-dark);
+    border-color: var(--primary-green-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.action-button.secondary {
+    background: transparent;
+    color: var(--gray);
+    border-color: var(--border-color);
+}
+
+.action-button.secondary:hover {
+    background: var(--light-gray);
+    color: var(--dark-gray);
+    border-color: var(--gray);
+    transform: translateY(-2px);
+}
+
+/* Validation Styles */
+.text-danger {
+    color: var(--danger-red) !important;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .form-container {
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .form-card {
+        padding: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .action-button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+    }
+}
+
+@@media (max-width: 576px) {
+    .form-card {
+        padding: 1rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-control {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.95rem;
+    }
+    
+    .page-header {
+        padding: 2rem 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Enhanced Page Header */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+    color: var(--white);
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.querySelector('input[name="Quantity"]');
+    const cartonPriceInput = document.querySelector('input[name="CartonPrice"]');
+    const priceInput = document.querySelector('input[name="Price"]');
+    const totalValueInput = document.getElementById('totalValue');
+    
+    function calculateValues() {
+        const quantity = parseInt(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const cartonPrice = parseFloat(cartonPriceInput.value) || 0;
+        
+        // حساب القيم الأخرى
+        totalValueInput.value = (quantity * price).toFixed(2);
+    }
+    
+    // إضافة مستمعي الأحداث
+    quantityInput.addEventListener('input', calculateValues);
+    cartonPriceInput.addEventListener('input', calculateValues);
+    priceInput.addEventListener('input', calculateValues);
+    
+    // حساب عند تحميل الصفحة
+    calculateValues();
+    
+    // تعيين قيم افتراضية
+    if (quantityInput.value === '') quantityInput.value = '0';
+    if (priceInput.value === '') priceInput.value = '0.01';
+    // سعر الجملة اختياري - لا نضع قيمة افتراضية
+    
+    // حساب القيم الأولية
+    calculateValues();
+    
+    // تعيين القيم الأولية في النموذج
+    quantityInput.dispatchEvent(new Event('input'));
+    cartonPriceInput.dispatchEvent(new Event('input'));
+    priceInput.dispatchEvent(new Event('input'));
+    
+    // إضافة تلميحات تفاعلية
+    quantityInput.addEventListener('focus', function() {
+        this.placeholder = 'مثال: 50 قطعة';
+    });
+    
+    cartonPriceInput.addEventListener('focus', function() {
+        this.placeholder = 'مثال: 1000.00 جنيه';
+    });
+    
+    priceInput.addEventListener('focus', function() {
+        this.placeholder = 'مثال: 150.00 جنيه';
+    });
+    
+    // إضافة تحقق من صحة البيانات
+    quantityInput.addEventListener('blur', function() {
+        const value = parseInt(this.value) || 0;
+        if (value < 0) {
+            this.value = 0;
+            this.setCustomValidity('الكمية يجب أن تكون أكبر من أو تساوي صفر');
+        } else {
+            this.setCustomValidity(''); // السماح بالكمية 0
+        }
+        calculateValues();
+    });
+    
+    cartonPriceInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (this.value !== '' && value < 0) {
+            this.value = '';
+            this.setCustomValidity('سعر الجمله يجب أن يكون أكبر من أو يساوي صفر');
+        } else {
+            this.setCustomValidity('');
+        }
+        calculateValues();
+    });
+    
+    priceInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (value <= 0) {
+            this.value = 0.01;
+            this.setCustomValidity('سعر البيع يجب أن يكون أكبر من صفر');
+        } else {
+            this.setCustomValidity('');
+        }
+        calculateValues();
+    });
+    
+    // إضافة تحقق من صحة النموذج قبل الإرسال
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const quantity = parseInt(quantityInput.value) || 0;
+        const cartonPrice = parseFloat(cartonPriceInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        
+        if (quantity < 0) {
+            e.preventDefault();
+            alert('⚠️ خطأ: الكمية يجب أن تكون أكبر من أو تساوي صفر');
+            quantityInput.focus();
+            return false;
+        }
+        
+        if (cartonPrice < 0) {
+            e.preventDefault();
+            alert('⚠️ خطأ: سعر الجمله يجب أن يكون أكبر من أو يساوي صفر');
+            cartonPriceInput.focus();
+            return false;
+        }
+        
+        if (price < 0) {
+            e.preventDefault();
+            alert('⚠️ خطأ: سعر البيع يجب أن يكون أكبر من أو يساوي صفر');
+            priceInput.focus();
+            return false;
+        }
+        
+        if (price === 0) {
+            e.preventDefault();
+            alert('⚠️ خطأ: سعر البيع يجب أن يكون أكبر من صفر للبيع');
+            priceInput.focus();
+            return false;
+        }
+        
+        // التحقق من أن سعر البيع أكبر من سعر القطعة من الجمله (إذا تم إدخال سعر الجملة وكمية أكبر من 0)
+        if (cartonPrice > 0 && quantity > 0 && price <= (cartonPrice / quantity)) {
+            e.preventDefault();
+            alert('⚠️ خطأ: سعر البيع يجب أن يكون أكبر من سعر القطعة من الجمله');
+            priceInput.focus();
+            return false;
+        }
+    });
+
+    // التحكم في الألوان والمقاسات المتوفرة
+    const hasMultipleColorsCheckbox = document.getElementById('hasMultipleColors');
+    const hasMultipleSizesCheckbox = document.getElementById('hasMultipleSizes');
+    const availableColorsSection = document.getElementById('availableColorsSection');
+    const availableSizesSection = document.getElementById('availableSizesSection');
+
+    // دالة لإظهار/إخفاء قسم الألوان المتوفرة
+    function toggleAvailableColors() {
+        if (hasMultipleColorsCheckbox.checked) {
+            availableColorsSection.style.display = 'block';
+        } else {
+            availableColorsSection.style.display = 'none';
+            // مسح القيمة عند إلغاء التحديد
+            document.getElementById('AvailableColors').value = '';
+        }
+    }
+
+    // دالة لإظهار/إخفاء قسم المقاسات المتوفرة
+    function toggleAvailableSizes() {
+        if (hasMultipleSizesCheckbox.checked) {
+            availableSizesSection.style.display = 'block';
+        } else {
+            availableSizesSection.style.display = 'none';
+            // مسح القيمة عند إلغاء التحديد
+            document.getElementById('AvailableSizes').value = '';
+        }
+    }
+
+    // إضافة مستمعي الأحداث
+    hasMultipleColorsCheckbox.addEventListener('change', toggleAvailableColors);
+    hasMultipleSizesCheckbox.addEventListener('change', toggleAvailableSizes);
+
+    // تشغيل الدوال عند تحميل الصفحة
+    toggleAvailableColors();
+    toggleAvailableSizes();
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

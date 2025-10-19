@@ -1,0 +1,1214 @@
+@model IEnumerable<PesticideShop.Models.Product>
+@using PesticideShop.Extensions
+
+@{
+    ViewData["Title"] = "المنتجات";
+    var lowStockProducts = Model.Where(p => p.Quantity <= 1).ToList();
+    var totalProducts = Model.Count();
+    var totalValue = Model.Sum(p => p.Quantity * p.Price);
+    
+    // Get top categories dynamically
+    var topCategories = Model
+        .Where(p => p.Category != null)
+        .GroupBy(p => p.Category.Name)
+        .Select(g => new { Name = g.Key, Count = g.Count() })
+        .OrderByDescending(x => x.Count)
+        .Take(4)
+        .ToList();
+}
+
+<div class="page-container">
+    <!-- Enhanced Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>👕 إدارة المنتجات - Pharaonic</h1>
+                <p>عرض وإدارة جميع المنتجات والمخزون مع إحصائيات شاملة</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" id="refreshProductsBtn" class="action-button info" onclick="refreshProductsData()">
+                    🔄 تحديث البيانات
+                </button>
+                <a asp-action="Create" class="action-button success">
+                    ➕ إضافة منتج جديد
+                </a>
+                <form asp-action="RecalculateCostPrices" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="action-button warning" onclick="return confirm('هل تريد إعادة حساب أسعار التكلفة لجميع المنتجات؟')">
+                        🔄 إعادة حساب أسعار التكلفة
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-content">
+                    <h3>إجمالي المنتجات</h3>
+                    <div class="stat-value">@totalProducts</div>
+                    <div class="stat-label">منتج</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h3>القيمة الإجمالية</h3>
+                    <div class="stat-value">@totalValue.ToString("N0")</div>
+                    <div class="stat-label">جنيه</div>
+                </div>
+            </div>
+            @foreach (var category in topCategories)
+            {
+                <div class="stat-card">
+                    <div class="stat-icon">🏷️</div>
+                    <div class="stat-content">
+                        <h3>@category.Name</h3>
+                        <div class="stat-value">@category.Count</div>
+                        <div class="stat-label">منتج</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Enhanced Search and Filter Section -->
+    <div class="search-section">
+        <div class="search-card">
+            <div class="card-header">
+                <h3>🔍 البحث والتصفية</h3>
+            </div>
+            <div class="card-content">
+                <div class="search-controls">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <input type="text" id="productSearch" placeholder="ابحث في المنتجات..." class="search-input" />
+                        </div>
+                        <div class="filter-item">
+                            <select id="categoryFilter" class="form-select">
+                                <option value="">جميع الأصناف</option>
+                                @foreach (var category in Model.Where(p => p.Category != null).Select(p => p.Category.Name).Distinct().OrderBy(n => n))
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <select id="stockFilter" class="form-select">
+                                <option value="">جميع المخزون</option>
+                                <option value="low">مخزون منخفض</option>
+                                <option value="normal">مخزون طبيعي</option>
+                                <option value="out">نفذ المخزون</option>
+                            </select>
+                        </div>
+                        <div class="search-actions">
+                            <button type="button" id="clearFilters" class="action-button secondary">🔄 إعادة تعيين</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    @if (lowStockProducts.Any())
+    {
+        <div class="alert-section">
+            <div class="alert-card warning">
+                <div class="alert-header">
+                    <h3>⚠️ تنبيه المخزون المنخفض</h3>
+                    <span class="alert-count">@lowStockProducts.Count منتج</span>
+                </div>
+                <div class="alert-content">
+                    <p>يوجد @lowStockProducts.Count منتج بكمية منخفضة (1 أو أقل) يحتاج إلى إعادة طلب</p>
+                    <div class="low-stock-list">
+                        @foreach (var product in lowStockProducts.Take(5))
+                        {
+                            <span class="stock-item">@product.Name (@product.Quantity)</span>
+                        }
+                        @if (lowStockProducts.Count > 5)
+                        {
+                            <span class="stock-item">و @(lowStockProducts.Count - 5) منتج آخر</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Enhanced Products Table -->
+    @if (Model.Any())
+    {
+        <div class="table-section">
+            <div class="section-header">
+                <h3>👕 مخزون المنتجات</h3>
+                <div class="table-controls">
+                    <span class="total-count">إجمالي المنتجات: @Model.Count()</span>
+                    <div class="table-actions">
+                        <button type="button" id="exportTable" class="action-button info" title="تصدير الجدول">
+                            📊 تصدير
+                        </button>
+                        <button type="button" id="printTable" class="action-button secondary" title="طباعة الجدول">
+                            🖨️ طباعة
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th data-sortable="true" class="qr-header">📱 رمز QR</th>
+                            <th data-sortable="true" class="name-header">👕 اسم المنتج</th>
+                            <th data-sortable="true" class="category-header">🏷️ الصنف</th>
+                            <th data-sortable="true" class="color-header">🎨 اللون</th>
+                            <th data-sortable="true" class="size-header">📏 المقاس</th>
+                            <th data-sortable="true" class="quantity-header">📊 الكمية</th>
+                            <th data-sortable="true" class="price-header">💰 سعر البيع</th>
+                            <th data-sortable="true" class="cost-header">💵 سعر الجمله</th>
+                            <th data-sortable="true" class="total-header">💵 القيمة الإجمالية</th>
+                            <th class="actions-header">🔧 الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var itemTotalValue = item.Quantity * item.Price;
+                            var isLowStock = item.Quantity <= 1;
+                            var isOutOfStock = item.Quantity <= 0;
+                            
+                            <tr class="@(isLowStock ? "low-stock-row" : "") @(isOutOfStock ? "out-of-stock-row" : "")" 
+                                data-category="@(item.Category?.Name ?? "")" 
+                                data-stock="@(isOutOfStock ? "out" : isLowStock ? "low" : "normal")"
+                                data-qr="@item.QRCode"
+                                data-name="@item.Name"
+                                data-color="@item.Color">
+                                <td class="qr-code-cell">
+                                    <div class="qr-display">
+                                        <span class="qr-text">@item.QRCode</span>
+                                        @if (!string.IsNullOrEmpty(item.QRCode))
+                                        {
+                                            <div class="qr-buttons">
+                                                <button type="button" class="qr-copy-btn" 
+                                                        data-qr="@item.QRCode"
+                                                        data-product-id="@item.Id"
+                                                        data-product-name="@Html.Raw(item.Name.Replace("\"", "&quot;"))"
+                                                        data-product-price="@item.Price"
+                                                        data-product-quantity="@item.Quantity"
+                                                        data-product-category="@Html.Raw(item.Category?.Name?.Replace("\"", "&quot;") ?? "")"
+                                                        data-product-color="@Html.Raw(item.Color?.Replace("\"", "&quot;") ?? "")"
+                                                        data-product-size="@item.Size"
+                                                        onclick="copyProductQR(this)" 
+                                                        title="نسخ رمز QR مع معلومات المنتج (سيتم إضافته للسلة تلقائياً عند اللصق)">
+                                                    📋 نسخ كامل
+                                            </button>
+                                                <button type="button" class="qr-copy-simple-btn" 
+                                                        onclick="copyToClipboard('@item.QRCode')" 
+                                                        title="نسخ رمز QR فقط">
+                                                    📄 QR فقط
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="product-name-cell">
+                                    <div class="product-info">
+                                        <div class="product-name">@item.Name</div>
+                                        @if (!string.IsNullOrEmpty(item.Notes))
+                                        {
+                                            <div class="product-notes">@item.Notes</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="category-cell">
+                                    @if (item.Category != null)
+                                    {
+                                        <span class="category-tag @(item.Category.Name.ToLower().Replace(" ", "-"))">
+                                            @item.Category.Name
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="category-tag undefined">غير محدد</span>
+                                    }
+                                </td>
+                                <td class="color-cell">
+                                    @if (!string.IsNullOrEmpty(item.Color))
+                                    {
+                                        <div class="color-display">
+                                            <span class="color-dot" style="background-color: @item.Color;" title="@item.Color"></span>
+                                            <span class="color-text">@item.Color</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-color">غير محدد</span>
+                                    }
+                                </td>
+                                <td class="size-cell">
+                                    @if (item.Size != 0)
+                                    {
+                                        <span class="size-tag">@item.Size.GetDisplayName()</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="size-tag undefined">غير محدد</span>
+                                    }
+                                </td>
+                                <td class="quantity-cell @(isLowStock ? "low-stock" : "") @(isOutOfStock ? "out-of-stock" : "")">
+                                    <div class="quantity-display">
+                                        <span class="quantity-value">@item.Quantity</span>
+                                        @if (isLowStock)
+                                        {
+                                            <span class="low-stock-indicator" title="مخزون منخفض">⚠️</span>
+                                        }
+                                        @if (isOutOfStock)
+                                        {
+                                            <span class="out-of-stock-indicator" title="نفذ المخزون">❌</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="price-cell">
+                                    <div class="price-display">
+                                        <span class="price-value">@item.Price.ToString("N2")</span>
+                                        <span class="price-currency">جنيه</span>
+                                    </div>
+                                </td>
+                                <td class="cost-price-cell">
+                                    <div class="cost-display">
+                                        <span class="cost-value">@(item.CartonPrice?.ToString("N2") ?? "غير محدد")</span>
+                                        <span class="cost-currency">جنيه</span>
+                                    </div>
+                                </td>
+                                <td class="total-value-cell">
+                                    <div class="total-display">
+                                        <span class="total-value">@itemTotalValue.ToString("N2")</span>
+                                        <span class="total-currency">جنيه</span>
+                                    </div>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="action-btn view" title="عرض التفاصيل">
+                                            👁️
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="action-btn edit" title="تعديل المنتج">
+                                            ✏️
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" 
+                                           class="action-btn delete" title="حذف المنتج">
+                                            🗑️
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info" id="productsPaginationInfo"></div>
+                <div class="pagination-controls" id="productsPaginationControls"></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h4>لا يوجد منتجات</h4>
+            <p>لم يتم إضافة أي منتجات بعد. ابدأ بإضافة أول منتج لتنظيم مخزونك.</p>
+            <a asp-action="Create" class="action-button primary">
+                ➕ إضافة أول منتج
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+/* Enhanced styling for the products table */
+.qr-code-cell {
+    min-width: 120px;
+}
+
+.qr-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qr-text {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #2c3e50;
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.qr-buttons {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.qr-copy-btn, .qr-copy-simple-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.qr-copy-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.qr-copy-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.qr-copy-simple-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.qr-copy-simple-btn:hover {
+    background-color: #545b62;
+    transform: translateY(-1px);
+}
+
+.product-name-cell {
+    min-width: 200px;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.product-notes {
+    font-size: 0.85em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.category-cell {
+    min-width: 120px;
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-align: center;
+    min-width: 80px;
+}
+
+.category-tag.clothing { background-color: #e3f2fd; color: #1976d2; }
+.category-tag.electronics { background-color: #f3e5f5; color: #7b1fa2; }
+.category-tag.food { background-color: #e8f5e8; color: #388e3c; }
+.category-tag.undefined { background-color: #f5f5f5; color: #757575; }
+
+.color-cell {
+    min-width: 100px;
+}
+
+.color-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #dee2e6;
+}
+
+.color-text {
+    font-size: 0.9em;
+    color: #495057;
+}
+
+.no-color {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.85em;
+}
+
+.size-cell {
+    min-width: 100px;
+}
+
+.size-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+    font-size: 0.85em;
+    color: #495057;
+}
+
+.size-tag.undefined {
+    background-color: #f5f5f5;
+    color: #757575;
+}
+
+.quantity-cell {
+    min-width: 100px;
+}
+
+.quantity-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quantity-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.low-stock-indicator, .out-of-stock-indicator {
+    font-size: 1.2em;
+}
+
+.low-stock-row {
+    background-color: #fff3cd;
+}
+
+.out-of-stock-row {
+    background-color: #f8d7da;
+}
+
+.price-cell, .cost-price-cell, .total-value-cell {
+    min-width: 120px;
+}
+
+.price-display, .cost-display, .total-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.price-value, .cost-value, .total-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.price-currency, .cost-currency, .total-currency {
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+.actions-cell {
+    min-width: 120px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+/* Header Action Buttons */
+.header-actions .action-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.header-actions .action-button.info {
+    background: linear-gradient(135deg, #007bff, #17a2b8);
+    color: white;
+}
+
+.header-actions .action-button.info:hover {
+    background: linear-gradient(135deg, #0056b3, #138496);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.header-actions .action-button.info:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+}
+
+.header-actions .action-button.success {
+    background: linear-gradient(135deg, #28a745, #34ce57);
+    color: white;
+}
+
+.header-actions .action-button.success:hover {
+    background: linear-gradient(135deg, #218838, #28a745);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 1.1em;
+}
+
+.action-btn.view {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.action-btn.edit {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.action-btn.delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Responsive table */
+@@media (max-width: 1200px) {
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .data-table {
+        min-width: 1000px;
+    }
+}
+
+/* Animation for table rows */
+.animate-in {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+// Enhanced JavaScript for Products page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeProductsPage();
+    initializeProductsPagination();
+});
+
+function initializeProductsPage() {
+    // Search functionality
+    const searchInput = document.getElementById('productSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const table = document.getElementById('productsTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const categoryValue = categoryFilter.value;
+        const stockValue = stockFilter.value;
+
+        rows.forEach(row => {
+            const productName = row.querySelector('.product-name').textContent.toLowerCase();
+            const qrCode = row.getAttribute('data-qr') || '';
+            const category = row.getAttribute('data-category');
+            const stock = row.getAttribute('data-stock');
+            const color = row.getAttribute('data-color') || '';
+
+            const matchesSearch = productName.includes(searchTerm) || 
+                                qrCode.toLowerCase().includes(searchTerm) ||
+                                color.toLowerCase().includes(searchTerm);
+            const matchesCategory = !categoryValue || category === categoryValue;
+            const matchesStock = !stockValue || stock === stockValue;
+
+            if (matchesSearch && matchesCategory && matchesStock) {
+                row.style.display = '';
+                row.classList.add('animate-in');
+            } else {
+                row.style.display = 'none';
+                row.classList.remove('animate-in');
+            }
+        });
+
+        updateTableStats();
+    }
+
+    function updateTableStats() {
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const totalCount = document.querySelector('.total-count');
+        if (totalCount) {
+            totalCount.textContent = `إجمالي المنتجات: ${visibleRows.length}`;
+        }
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
+    stockFilter.addEventListener('change', filterTable);
+    
+    clearFiltersBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        stockFilter.value = '';
+        filterTable();
+    });
+
+    // Export functionality
+    document.getElementById('exportTable').addEventListener('click', function() {
+        exportTableToCSV();
+    });
+
+    // Print functionality
+    document.getElementById('printTable').addEventListener('click', function() {
+        window.print();
+    });
+
+    // Initialize table sorting
+    initializeTableSorting();
+}
+
+// Client-side pagination for products table (styled like the new pagination)
+function initializeProductsPagination() {
+    const rowsPerPage = 10;
+    const table = document.getElementById('productsTable');
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const info = document.getElementById('productsPaginationInfo');
+    const controls = document.getElementById('productsPaginationControls');
+    if (!info || !controls) return;
+
+    function render(pageIndex) {
+        const total = rows.length;
+        const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+        const page = Math.min(Math.max(1, pageIndex), totalPages);
+        const start = (page - 1) * rowsPerPage;
+        const end = Math.min(start + rowsPerPage, total);
+
+        rows.forEach((row, idx) => {
+            row.style.display = idx >= start && idx < end ? '' : 'none';
+        });
+
+        info.textContent = `عرض ${start + 1} إلى ${end} من ${total} منتج`;
+
+        // build controls
+        controls.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        
+        function btn(label, cls, disabled, targetPage) {
+            const b = document.createElement('button');
+            b.className = `pagination-btn ${cls || ''}`.trim();
+            b.textContent = label;
+            if (disabled) b.disabled = true;
+            b.addEventListener('click', () => render(targetPage));
+            frag.appendChild(b);
+        }
+
+        // Add page number buttons (show only 5 buttons max around current page)
+        const maxVisible = 5;
+        let startPage, endPage;
+        
+        if (totalPages <= maxVisible) {
+            // Show all pages if total is less than max
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // Calculate range around current page
+            const halfVisible = Math.floor(maxVisible / 2);
+            startPage = Math.max(1, page - halfVisible);
+            endPage = Math.min(totalPages, page + halfVisible);
+            
+            // Adjust if we're near the start or end
+            if (page <= halfVisible) {
+                endPage = maxVisible;
+            } else if (page >= totalPages - halfVisible) {
+                startPage = totalPages - maxVisible + 1;
+            }
+        }
+        
+        for (let p = startPage; p <= endPage; p++) {
+            const b = document.createElement('button');
+            b.className = 'pagination-btn' + (p === page ? ' active' : '');
+            b.textContent = p.toString();
+            b.addEventListener('click', () => render(p));
+            frag.appendChild(b);
+        }
+        
+        // Add "التالية" (Next) button
+        btn('التالية', 'next', page === totalPages, page + 1);
+        
+        // Add "الأخيرة" (Last) button
+        btn('الأخيرة', 'last', page === totalPages, totalPages);
+        
+        controls.appendChild(frag);
+    }
+
+    render(1);
+}
+
+// Copy QR code to clipboard with enhanced data
+function copyProductQR(button) {
+    // استخراج البيانات من attributes الزر
+    const qrCode = button.getAttribute('data-qr');
+    const productData = {
+        id: parseInt(button.getAttribute('data-product-id')),
+        name: button.getAttribute('data-product-name'),
+        price: parseFloat(button.getAttribute('data-product-price')),
+        quantity: parseInt(button.getAttribute('data-product-quantity')),
+        category: button.getAttribute('data-product-category'),
+        color: button.getAttribute('data-product-color'),
+        size: parseInt(button.getAttribute('data-product-size'))
+    };
+    
+    console.log('📋 نسخ QR:', qrCode);
+    console.log('📦 بيانات المنتج:', productData);
+    
+    // إنشاء كائن يحتوي على معلومات المنتج
+    const qrData = {
+        qrCode: qrCode,
+        timestamp: new Date().toISOString(),
+        source: 'products_page',
+        productInfo: productData
+    };
+    
+    // تحويل البيانات إلى JSON
+    const qrDataString = JSON.stringify(qrData);
+    
+    console.log('📄 البيانات المرسلة للحافظة:', qrDataString);
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(qrDataString).then(function() {
+            showCopyNotification('تم نسخ رمز QR مع معلومات المنتج! سيتم إضافته للسلة تلقائياً عند اللصق في الكاشير', 'success');
+            // إضافة تأثير بصري للعنصر المنسوخ
+            highlightCopiedElement(button);
+        }).catch(function(error) {
+            console.error('❌ خطأ في النسخ:', error);
+            // Fallback: نسخ QR فقط
+            navigator.clipboard.writeText(qrCode).then(function() {
+                showCopyNotification('تم نسخ رمز QR!', 'success');
+                highlightCopiedElement(button);
+            }).catch(function(err) {
+                console.error('❌ خطأ في النسخ البديل:', err);
+                showCopyNotification('فشل في نسخ رمز QR', 'error');
+            });
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = qrDataString;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showCopyNotification('تم نسخ رمز QR مع معلومات المنتج! سيتم إضافته للسلة تلقائياً عند اللصق في الكاشير', 'success');
+            highlightCopiedElement(button);
+        } catch (err) {
+            console.error('❌ خطأ في النسخ القديم:', err);
+            // Fallback: نسخ QR فقط
+            textArea.value = qrCode;
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopyNotification('تم نسخ رمز QR!', 'success');
+                highlightCopiedElement(button);
+            } catch (err2) {
+                console.error('❌ خطأ في النسخ البديل القديم:', err2);
+                showCopyNotification('فشل في نسخ رمز QR', 'error');
+            }
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// دالة لإضافة تأثير بصري للعنصر المنسوخ
+function highlightCopiedElement(button) {
+    // حفظ النص الأصلي
+    const originalText = button.innerHTML;
+    
+    // تطبيق التأثير البصري
+    button.style.backgroundColor = '#28a745';
+    button.style.color = 'white';
+    button.style.transform = 'scale(1.1)';
+    button.innerHTML = '✅ تم النسخ';
+    
+    // إعادة النص الأصلي بعد ثانيتين
+    setTimeout(() => {
+        button.style.backgroundColor = '';
+        button.style.color = '';
+        button.style.transform = '';
+        button.innerHTML = originalText;
+    }, 2000);
+}
+
+// دالة النسخ البسيطة (للتوافق مع الكود القديم)
+function copyToClipboard(qrCode) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(qrCode).then(function() {
+            showCopyNotification('تم نسخ رمز QR!', 'success');
+        }).catch(function() {
+            showCopyNotification('فشل في نسخ رمز QR', 'error');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = qrCode;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showCopyNotification('تم نسخ رمز QR!', 'success');
+        } catch (err) {
+            showCopyNotification('فشل في نسخ رمز QR', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show copy notification
+function showCopyNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `copy-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    if (type === 'success') {
+        notification.style.backgroundColor = '#28a745';
+    } else {
+        notification.style.backgroundColor = '#dc3545';
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 2000);
+}
+
+// Add CSS animations for notifications
+const style = document.createElement('style');
+style.textContent = `
+    @@keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @@keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function exportTableToCSV() {
+    const table = document.getElementById('productsTable');
+    const rows = Array.from(table.querySelectorAll('tr'));
+    
+    let csv = [];
+    rows.forEach(row => {
+        const cols = Array.from(row.querySelectorAll('td, th'));
+        const rowData = cols.map(col => {
+            // Remove emojis and get clean text
+            return col.textContent.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+        });
+        csv.push(rowData.join(','));
+    });
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'products.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function initializeTableSorting() {
+    const headers = document.querySelectorAll('th[data-sortable]');
+    headers.forEach(header => {
+        header.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const column = Array.from(header.parentElement.children).indexOf(header);
+            const table = header.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const isAscending = !header.classList.contains('sort-asc');
+            
+            // Remove existing sort classes from all headers in this table
+            const tableHeaders = table.querySelectorAll('th[data-sortable]');
+            tableHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            
+            // Add sort class
+            header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                const aCell = a.children[column];
+                const bCell = b.children[column];
+                
+                if (!aCell || !bCell) return 0;
+                
+                let aValue = aCell.textContent.trim();
+                let bValue = bCell.textContent.trim();
+                
+                // إزالة الرموز التعبيرية والأيقونات
+                aValue = aValue.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+                bValue = bValue.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+                
+                // التحقق من الأرقام
+                const aNum = parseFloat(aValue.replace(/[^\d.-]/g, ''));
+                const bNum = parseFloat(bValue.replace(/[^\d.-]/g, ''));
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    // ترتيب رقمي
+                    if (isAscending) {
+                        return aNum - bNum;
+                    } else {
+                        return bNum - aNum;
+                    }
+                } else {
+                    // ترتيب نصي
+                    if (isAscending) {
+                        return aValue.localeCompare(bValue, 'ar');
+                    } else {
+                        return bValue.localeCompare(aValue, 'ar');
+                    }
+                }
+            });
+            
+            // Reorder rows with animation
+            rows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    tbody.appendChild(row);
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+            
+            // إظهار إشعار بالترتيب
+            const sortDirection = isAscending ? 'تصاعدي' : 'تنازلي';
+            const columnName = header.textContent.trim().replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+
+        });
+    });
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Refresh products data function
+async function refreshProductsData() {
+    const refreshBtn = document.getElementById('refreshProductsBtn');
+    
+    try {
+        // Show loading state
+        refreshBtn.innerHTML = '⏳ جاري التحديث...';
+        refreshBtn.disabled = true;
+        
+        const response = await fetch('/Products/RefreshProductsData');
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update quantities in the table
+            result.products.forEach(product => {
+                updateProductQuantityInTable(product.id, product.quantity);
+            });
+            
+            // Show success message
+            showMessage(result.message || 'تم تحديث البيانات بنجاح', 'success');
+           
+        } else {
+            showMessage(result.message || 'فشل في تحديث البيانات', 'error');
+           
+        }
+    } catch (error) {
+        console.error('❌ Error refreshing products data:', error);
+        showMessage('حدث خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        // Reset button state
+        refreshBtn.innerHTML = '🔄 تحديث البيانات';
+        refreshBtn.disabled = false;
+    }
+}
+
+// Update specific product quantity in table
+function updateProductQuantityInTable(productId, newQuantity) {
+    const table = document.getElementById('productsTable');
+    if (!table) return;
+    
+    // Find the row with this product
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const editLink = row.querySelector('a[href*="Edit/' + productId + '"]');
+        if (editLink) {
+            const quantityCell = row.querySelector('.quantity-cell .quantity-value');
+            if (quantityCell) {
+                const oldQuantity = parseInt(quantityCell.textContent);
+                quantityCell.textContent = newQuantity;
+                
+                // Update stock indicators
+                const quantityDisplay = row.querySelector('.quantity-display');
+                const lowStockIndicator = quantityDisplay.querySelector('.low-stock-indicator');
+                const outOfStockIndicator = quantityDisplay.querySelector('.out-of-stock-indicator');
+                
+                // Remove existing indicators
+                if (lowStockIndicator) lowStockIndicator.remove();
+                if (outOfStockIndicator) outOfStockIndicator.remove();
+                
+                // Add new indicators if needed
+                if (newQuantity <= 0) {
+                    quantityDisplay.innerHTML += '<span class="out-of-stock-indicator" title="نفذ المخزون">❌</span>';
+                    row.classList.add('out-of-stock-row');
+                    row.classList.remove('low-stock-row');
+                } else if (newQuantity <= 1) {
+                    quantityDisplay.innerHTML += '<span class="low-stock-indicator" title="مخزون منخفض">⚠️</span>';
+                    row.classList.add('low-stock-row');
+                    row.classList.remove('out-of-stock-row');
+                } else {
+                    row.classList.remove('low-stock-row', 'out-of-stock-row');
+                }
+                
+                // Highlight changed quantity
+                if (oldQuantity !== newQuantity) {
+                    quantityCell.style.backgroundColor = '#d4edda';
+                    quantityCell.style.color = '#155724';
+                    setTimeout(() => {
+                        quantityCell.style.backgroundColor = '';
+                        quantityCell.style.color = '';
+                    }, 2000);
+                }
+                
+               
+            }
+        }
+    });
+}
+
+// Simple toast notification function
+function showMessage(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <span class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+            <span class="toast-message">${message}</span>
+        </div>
+    `;
+    
+    // Add styles if not exist
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            .toast {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            }
+            .toast-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+            .toast-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+            .toast-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+            .toast-content { display: flex; align-items: center; gap: 10px; }
+            @@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>

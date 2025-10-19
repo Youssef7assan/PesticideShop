@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "لوحة التحكم";
+}
+
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>👑 لوحة التحكم الرئيسية</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">👥 إدارة المستخدمين</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">قم بإدارة مستخدمي النظام والحسابات.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Users" class="btn btn-primary">
+                            👥 عرض المستخدمين
+                        </a>
+                        <a asp-action="AddUser" class="btn btn-success">
+                            ➕ إضافة مستخدم جديد
+                        </a>
+                        <a asp-action="Register" class="btn btn-warning">
+                            👑 إنشاء حساب مشرف
+                        </a>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 نظرة عامة على النظام</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">عرض إحصائيات ومعلومات النظام.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-info">
+                            📊 عرض الإحصائيات
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                            🏠 الذهاب إلى الصفحة الرئيسية
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🔄 إدارة البيانات</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">إدارة بيانات النظام والإحصائيات.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="ResetStatistics" class="btn btn-warning">
+                            🔄 إعادة تعيين الإحصائيات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

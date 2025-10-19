@@ -1,0 +1,1016 @@
+@model PesticideShop.Models.HomeStatsViewModel
+@{
+    ViewData["Title"] = "الرئيسية - Pharaonic";
+}
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-background">
+        <div class="hero-particles"></div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title animate-fade-in-up">
+                    <i class="fas fa-crown"></i>
+                                مرحباً بك في Pharaonic
+                </h1>
+                <p class="hero-subtitle animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <i class="fas fa-store"></i> نظام متكامل لإدارة متجر الملابس والأزياء
+                </p>
+                <div class="hero-stats animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <span class="stat-number">@Model.TotalCustomers</span>
+                        <span class="stat-label">عميل</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-box"></i>
+                        <span class="stat-number">@Model.TotalProducts</span>
+                        <span class="stat-label">منتج</span>
+                        </div>
+                    <div class="stat-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="stat-number">@Model.CustomerSatisfaction%</span>
+                        <span class="stat-label">رضا العملاء</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image animate-fade-in-right" style="animation-delay: 0.6s;">
+                <div class="floating-card">
+                    <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Quick Actions Section -->
+<div class="container">
+    <div class="section-header animate-fade-in-up">
+        <h2 class="section-title">
+            <i class="fas fa-bolt"></i>
+                        الإجراءات السريعة
+        </h2>
+        <p class="section-subtitle">ابدأ عملك بسرعة وكفاءة</p>
+    </div>
+
+    <div class="modules-grid">
+        <!-- Cashier Module -->
+        <div class="module-card animate-slide-in-left" style="animation-delay: 0.1s;">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <h3>الكاشير</h3>
+            </div>
+            <div class="module-content">
+                <p>بدء عملية بيع جديدة وإدارة المعاملات</p>
+                <div class="module-actions">
+                    <a asp-controller="Cashier" asp-action="Index" class="module-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        ابدأ الآن
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Module -->
+        <div class="module-card animate-slide-in-right" style="animation-delay: 0.2s;">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h3>إضافة منتج</h3>
+            </div>
+            <div class="module-content">
+                <p>إضافة منتج جديد للمخزون وإدارة البيانات</p>
+                <div class="module-actions">
+                    <a asp-controller="Products" asp-action="Create" class="module-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        أضف منتج
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Customer Module -->
+        <div class="module-card animate-slide-in-left" style="animation-delay: 0.3s;">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h3>إضافة عميل</h3>
+            </div>
+            <div class="module-content">
+                <p>تسجيل عميل جديد وإدارة بياناته</p>
+                <div class="module-actions">
+                    <a asp-controller="Customers" asp-action="Create" class="module-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        سجل عميل
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoices Module -->
+        <div class="module-card animate-slide-in-right" style="animation-delay: 0.4s;">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h3>الفواتير</h3>
+            </div>
+            <div class="module-content">
+                <p>عرض وإدارة الفواتير والمعاملات</p>
+                <div class="module-actions">
+                    <a asp-controller="Invoices" asp-action="Index" class="module-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        عرض الفواتير
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modules Section -->
+<div class="container">
+    <div class="section-header animate-fade-in-up">
+        <h2 class="section-title">
+            <i class="fas fa-th-large"></i>
+            الوحدات الرئيسية
+        </h2>
+        <p class="section-subtitle">إدارة شاملة لجميع جوانب عملك</p>
+    </div>
+
+    <div class="modules-grid">
+        <!-- Inventory Management -->
+        <div class="module-card animate-slide-in-left">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <h3>إدارة المخزون</h3>
+            </div>
+            <div class="module-content">
+                <p>إدارة مخزون الملابس والأزياء وتنظيمها بسهولة</p>
+                <div class="module-actions">
+                    <a asp-controller="Products" asp-action="Index" class="module-btn">
+                        <i class="fas fa-box"></i>
+                                المنتجات
+                            </a>
+                    <a asp-controller="Categories" asp-action="Index" class="module-btn">
+                        <i class="fas fa-tags"></i>
+                                التصنيفات
+                            </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Management -->
+        <div class="module-card animate-slide-in-right">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>إدارة العملاء</h3>
+            </div>
+            <div class="module-content">
+                <p>إدارة بيانات العملاء وسجل المعاملات</p>
+                <div class="module-actions">
+                    <a asp-controller="Customers" asp-action="Index" class="module-btn">
+                        <i class="fas fa-user-friends"></i>
+                                العملاء
+                            </a>
+                    <a asp-controller="Orders" asp-action="Index" class="module-btn">
+                        <i class="fas fa-shopping-bag"></i>
+                                الأوردرات
+                            </a>
+            </div>
+        </div>
+    </div>
+
+        <!-- Reports & Analytics -->
+        <div class="module-card animate-slide-in-left">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>التقارير والإحصائيات</h3>
+            </div>
+            <div class="module-content">
+                <p>عرض إحصائيات وتحليلات شاملة للنشاط</p>
+                <div class="module-actions">
+                    <a asp-controller="Dashboard" asp-action="Index" class="module-btn">
+                        <i class="fas fa-tachometer-alt"></i>
+                                لوحة التحكم
+                            </a>
+                    <a asp-controller="DailyInventory" asp-action="Index" class="module-btn">
+                        <i class="fas fa-calendar-day"></i>
+                                الجرد اليومي
+                            </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Annual Reports -->
+        <div class="module-card animate-slide-in-right">
+            <div class="module-header">
+                <div class="module-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>التقارير السنوية</h3>
+            </div>
+            <div class="module-content">
+                <p>إنشاء تقارير سنوية شاملة تحتوي على الجرد والمبيعات</p>
+                <div class="module-actions">
+                    <a asp-controller="AnnualInventory" asp-action="Index" class="module-btn">
+                        <i class="fas fa-chart-line"></i>
+                                الجرد السنوي
+                            </a>
+                        </div>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+    <div class="container">
+        <div class="section-header animate-fade-in-up">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                مميزات النظام
+            </h2>
+            <p class="section-subtitle">لماذا تختار SYF PIONEERS?</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-item animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h4>متوافق مع الهواتف</h4>
+                <p>يعمل بشكل مثالي على جميع الأجهزة</p>
+            </div>
+
+            <div class="feature-item animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>آمن ومحمي</h4>
+                <p>حماية كاملة لبياناتك ومعلوماتك</p>
+            </div>
+
+            <div class="feature-item animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="feature-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h4>سريع وفعال</h4>
+                <p>أداء عالي وسرعة في التنفيذ</p>
+            </div>
+
+          
+        </div>
+    </div>
+</div>
+
+<style>
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Hero Section */
+.hero-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hero-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    animation: float 6s ease-in-out infinite;
+}
+
+.hero-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-text {
+    color: white;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero-title i {
+    color: #ffd700;
+    margin-left: 15px;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.hero-subtitle i {
+    margin-left: 10px;
+    color: #ffd700;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+}
+
+.stat-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-item i {
+    font-size: 2rem;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.hero-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.floating-card {
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    animation: float 3s ease-in-out infinite;
+}
+
+.floating-card i {
+    font-size: 4rem;
+    color: #ffd700;
+}
+
+/* Section Headers */
+.section-header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding: 40px 0;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.section-title i {
+    color: #667eea;
+    margin-left: 15px;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 80px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.action-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.action-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.action-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.action-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.action-content p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 18px 35px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn:hover {
+    transform: translateY(-5px) scale(1.08);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.6);
+    color: white;
+    text-decoration: none;
+    background: linear-gradient(135deg, #5a6fd8, #6a4190);
+}
+
+.action-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.action-btn i {
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.action-btn:hover i {
+    transform: translateX(-5px) scale(1.1);
+    color: #ffd700;
+}
+
+/* Ripple Effect */
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Modules Grid */
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 80px;
+}
+
+.module-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.module-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.module-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.module-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.module-content p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.module-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.module-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #667eea;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #667eea;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+}
+
+.module-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    transition: width 0.4s ease;
+    z-index: -1;
+}
+
+.module-btn:hover::before {
+    width: 100%;
+}
+
+.module-btn:hover {
+    color: white;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    border-color: #667eea;
+}
+
+.module-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.module-btn i {
+    transition: transform 0.3s ease;
+}
+
+.module-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Features Section */
+.features-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 80px 0;
+    margin-top: 80px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+}
+
+.feature-item {
+    text-align: center;
+    padding: 30px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.feature-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.feature-item h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.feature-item p {
+    color: #666;
+}
+
+/* Animations */
+@@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-fade-in-right {
+    animation: fadeInRight 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-slide-in-left {
+    animation: slideInLeft 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+/* Button Enhancements */
+.action-btn,
+.module-btn {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.action-btn:focus,
+.module-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* Pulse Animation for Action Buttons */
+@@keyframes pulse {
+    0% {
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.6);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transform: scale(1);
+    }
+}
+
+@@keyframes glow {
+    0% {
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4), 0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    100% {
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+}
+
+.action-btn {
+    animation: pulse 3s infinite, glow 2s infinite;
+}
+
+.action-btn:hover {
+    animation: none;
+}
+
+/* Mobile Responsive */
+@@media (max-width: 768px) {
+    .hero-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .container {
+        padding: 0 15px;
+    }
+}
+
+@@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .action-card,
+    .module-card {
+        padding: 20px;
+    }
+    
+    .action-btn,
+    .module-btn {
+        padding: 15px 25px;
+        font-size: 1rem;
+        min-width: 140px;
+    }
+    
+    .action-btn {
+        animation: none; /* Disable animations on mobile for better performance */
+    }
+    
+    .floating-card {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .floating-card i {
+        font-size: 3rem;
+    }
+}
+
+/* Scroll Animation */
+@@media (prefers-reduced-motion: no-preference) {
+    .animate-on-scroll {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease-out;
+    }
+    
+    .animate-on-scroll.animated {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+// Intersection Observer for scroll animations
+document.addEventListener('DOMContentLoaded', function() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animated');
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all elements with animation classes
+    document.querySelectorAll('.animate-fade-in-up, .animate-scale-in, .animate-slide-in-left, .animate-slide-in-right').forEach(el => {
+        observer.observe(el);
+    });
+    
+    // Add floating animation to hero particles
+    const particles = document.querySelector('.hero-particles');
+    if (particles) {
+        setInterval(() => {
+            particles.style.animationDelay = Math.random() * 2 + 's';
+        }, 3000);
+    }
+});
+</script>

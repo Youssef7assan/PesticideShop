@@ -1,0 +1,172 @@
+@model List<PesticideShop.Models.DailyInventory>
+@{
+    ViewData["Title"] = "تقويم الجرد اليومي";
+    var selectedYear = (int)(ViewData["SelectedYear"] ?? DateTime.Now.Year);
+    var selectedMonth = (int)(ViewData["SelectedMonth"] ?? DateTime.Now.Month);
+    var monthName = (string)(ViewData["MonthName"] ?? "");
+}
+
+<style>
+    .calendar-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    .calendar-header {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .calendar-day:hover {
+        background: #f8f9fa;
+        transform: scale(1.05);
+    }
+
+    .calendar-day.has-data {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        font-weight: bold;
+    }
+
+    .calendar-day.has-data:hover {
+        background: linear-gradient(45deg, #218838, #1ba085);
+    }
+
+    .calendar-day.today {
+        border: 3px solid #007bff;
+        font-weight: bold;
+    }
+
+    .day-header {
+        font-weight: bold;
+        background: #f8f9fa;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .month-navigation {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="calendar-container">
+    <div class="container">
+        <div class="calendar-header">
+            <h1>📅 تقويم الجرد اليومي</h1>
+            
+            <div class="month-navigation">
+                <a href="?year=@selectedYear&month=@(selectedMonth == 1 ? 12 : selectedMonth - 1)@(selectedMonth == 1 ? $"&year={selectedYear - 1}" : "")" 
+                   class="btn btn-outline-primary">← الشهر السابق</a>
+                
+                <h3>@monthName @selectedYear</h3>
+                
+                <a href="?year=@selectedYear&month=@(selectedMonth == 12 ? 1 : selectedMonth + 1)@(selectedMonth == 12 ? $"&year={selectedYear + 1}" : "")" 
+                   class="btn btn-outline-primary">الشهر التالي →</a>
+            </div>
+
+            <div class="text-center">
+                <a href="@Url.Action("Index")" class="btn btn-secondary">🔙 العودة للجرد اليومي</a>
+            </div>
+        </div>
+
+        <div class="calendar-grid">
+            <!-- Day headers -->
+            <div class="day-header">الأحد</div>
+            <div class="day-header">الاثنين</div>
+            <div class="day-header">الثلاثاء</div>
+            <div class="day-header">الأربعاء</div>
+            <div class="day-header">الخميس</div>
+            <div class="day-header">الجمعة</div>
+            <div class="day-header">السبت</div>
+
+            @{
+                var firstDay = new DateTime(selectedYear, selectedMonth, 1);
+                var lastDay = firstDay.AddMonths(1).AddDays(-1);
+                var startDate = firstDay.AddDays(-(int)firstDay.DayOfWeek);
+                var endDate = startDate.AddDays(41); // 6 weeks
+                
+                var inventoryDates = Model?.Select(i => i.InventoryDate.Date).ToHashSet() ?? new HashSet<DateTime>();
+            }
+
+            @for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                var isCurrentMonth = date.Month == selectedMonth;
+                var isToday = date.Date == DateTime.Today;
+                var hasData = inventoryDates.Contains(date.Date);
+                
+                if (isCurrentMonth)
+                {
+                    <a href="@Url.Action("Index", new { date = date.ToString("yyyy-MM-dd") })" 
+                       class="calendar-day @(hasData ? "has-data" : "") @(isToday ? "today" : "")"
+                       title="@(hasData ? "يوجد بيانات" : "لا توجد بيانات") - @date.ToString("yyyy/MM/dd")">
+                        <span>@date.Day</span>
+                        @if (hasData)
+                        {
+                            <small style="position: absolute; bottom: 2px; font-size: 10px;">📊</small>
+                        }
+                    </a>
+                }
+                else
+                {
+                    <div class="calendar-day" style="opacity: 0.3;">
+                        <span>@date.Day</span>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="text-center mt-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="alert alert-info">
+                        📊 الأيام ذات اللون الأخضر: يوجد بيانات جرد
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-warning">
+                        🔵 اليوم المحاط بإطار أزرق: اليوم الحالي
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-secondary">
+                        🖱️ انقر على أي يوم للانتقال لبياناته
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

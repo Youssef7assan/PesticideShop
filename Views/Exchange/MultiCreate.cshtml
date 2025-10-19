@@ -1,0 +1,955 @@
+@model PesticideShop.Models.MultiExchangeRequest
+@using PesticideShop.Extensions
+
+@{
+    ViewData["Title"] = "استبدال متعدد";
+    var products = ViewBag.Products as List<PesticideShop.Models.Product>;
+    var originalInvoiceNumber = ViewBag.OriginalInvoiceNumber as string;
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                              
+                                استبدال متعدد للمنتجات
+                            </h2>
+                            <p class="mb-0 opacity-75">استبدال عدة منتجات من فاتورة سابقة بمنتجات أخرى</p>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Create", new { originalInvoiceNumber = originalInvoiceNumber })" class="btn btn-light me-2" title="استبدال منتج واحد">
+                                ➕ استبدال واحد
+                            </a>
+                            <a href="@Url.Action("Index", "Invoices")" class="btn btn-outline-light">
+                                ⬅️ العودة للفواتير
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+           
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form asp-action="MultiCreate" method="post" id="multiExchangeForm">
+        <div class="row">
+            <!-- Exchange Form -->
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            
+                            بيانات الاستبدال المتعدد
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Original Invoice -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="OriginalInvoiceNumber" class="form-label">
+                                  
+                                    رقم الفاتورة الأصلية *
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="OriginalInvoiceNumber" class="form-control" 
+                                           placeholder="مثال: INV-20241225-001" 
+                                           value="@originalInvoiceNumber" />
+                                    <button type="button" id="loadInvoiceBtn" class="btn btn-outline-primary">
+                                        🔍 تحميل
+                                    </button>
+                                </div>
+                                <span asp-validation-for="OriginalInvoiceNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    رقم فاتورة الاستبدال *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">EXC</span>
+                                    <input type="text" id="exchangeInvoiceNumber" class="form-control" 
+                                           placeholder="أدخل باقي الرقم..." 
+                                           maxlength="20" />
+                                    <input type="hidden" asp-for="ExchangeInvoiceNumber" id="exchangeInvoiceNumberHidden" />
+                                </div>
+                                <small class="form-text text-muted">سيتم إنشاء رقم فاتورة الاستبدال تلقائياً: EXC + الرقم الذي تدخله</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Status -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div id="invoiceStatus">
+                                    <!-- Invoice status will be shown here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Items Section -->
+                        <div class="card mt-4" id="exchangeItemsSection" style="display: none;">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                   
+                                    منتجات الاستبدال
+                                    <button type="button" class="btn btn-success btn-sm float-end" id="addExchangeItem">
+                                        
+                                        إضافة منتج
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="exchangeItemsContainer">
+                                    <!-- Exchange items will be added here dynamically -->
+                                </div>
+                                <div id="noItemsMessage" class="text-center text-muted py-4">
+                                  
+                                    <p>لم يتم إضافة أي منتجات للاستبدال بعد</p>
+                                    <p>اضغط على "إضافة منتج" لبدء الاستبدال</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Section -->
+                        <div class="card mt-4" id="summaryCard" style="display: none;">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    
+                                    ملخص الاستبدال
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <h6 class="text-muted">عدد المنتجات</h6>
+                                            <h4 id="totalItems">0</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <h6 class="text-muted">إجمالي الكمية</h6>
+                                            <h4 id="totalQuantity">0</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <h6 class="text-muted">الفرق في السعر</h6>
+                                            <h4 id="totalPriceDifference" class="text-success">0.00 ج.م</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Reason -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="ExchangeReason" class="form-label">
+                                   
+                                    سبب الاستبدال
+                                </label>
+                                <select asp-for="ExchangeReason" class="form-select">
+                                    <option value="">اختر السبب...</option>
+                                    <option value="عيب في المنتج">عيب في المنتج</option>
+                                    <option value="مقاس غير مناسب">مقاس غير مناسب</option>
+                                    <option value="لون غير مرغوب">لون غير مرغوب</option>
+                                    <option value="تفضيل العميل">تفضيل العميل</option>
+                                    <option value="منتج منتهي الصلاحية">منتج منتهي الصلاحية</option>
+                                    <option value="أخرى">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Notes" class="form-label">
+                                    
+                                    ملاحظات إضافية
+                                </label>
+                                <textarea asp-for="Notes" class="form-control" rows="3" 
+                                          placeholder="أي ملاحظات إضافية حول عملية الاستبدال..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                                        ✅ تنفيذ الاستبدال المتعدد
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        🔄 إعادة تعيين
+                                    </button>
+                                    <a href="@Url.Action("Index", "Invoices")" class="btn btn-outline-danger">
+                                        ❌ إلغاء
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                          
+                            ملخص الاستبدال المتعدد
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="exchangeSummary">
+                            <div class="text-center text-muted">
+                              
+                                <p>قم بملء بيانات الاستبدال لرؤية الملخص</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exchange Rules -->
+                <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                           
+                            قواعد الاستبدال المتعدد
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                              
+                                يمكن استبدال عدة منتجات في عملية واحدة
+                            </li>
+                            <li class="mb-2">
+                              
+                                المنتجات الجديدة يجب أن تكون متوفرة
+                            </li>
+                            <li class="mb-2">
+                              
+                                سيتم حساب الفروق في الأسعار تلقائياً
+                            </li>
+                            <li class="mb-2">
+                              
+                                يمكن إضافة أو حذف منتجات أثناء العملية
+                            </li>
+                            <li class="mb-0">
+                              
+                                سيتم إنشاء فاتورة استبدال واحدة
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Exchange Item Template -->
+<template id="exchangeItemTemplate">
+    <div class="exchange-item card mb-3" data-item-index="">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+               
+                منتج الاستبدال <span class="item-number">1</span>
+            </h6>
+            <button type="button" class="btn btn-danger btn-sm remove-item">
+               
+                حذف
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">المنتج القديم</label>
+                        <select class="form-select old-product-select" name="ExchangeItems[INDEX].OldProductId" required>
+                            <option value="">اختر المنتج القديم</option>
+                            <!-- Options will be loaded from invoice items -->
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label class="form-label">المنتج الجديد</label>
+                        <select class="form-select new-product-select" name="ExchangeItems[INDEX].NewProductId" required>
+                            <option value="">اختر المنتج الجديد</option>
+                            @foreach (var product in ViewBag.Products as List<PesticideShop.Models.Product>)
+                            {
+                                var productDisplayText = $"{product.Name} - {product.Price} ج.م (متوفر: {product.Quantity})";
+                                if (!string.IsNullOrEmpty(product.Color))
+                                {
+                                    productDisplayText += $" - اللون: {product.Color}";
+                                }
+                                if (product.Size != 0)
+                                {
+                                    productDisplayText += $" - المقاس: {product.Size.GetDisplayName()}";
+                                }
+                                <option value="@product.Id" 
+                                        data-price="@product.Price" 
+                                        data-quantity="@product.Quantity"
+                                        data-color="@(product.Color ?? "")"
+                                        data-size="@product.Size.GetDisplayName()">
+                                    @productDisplayText
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group mb-3">
+                        <label class="form-label">الكمية</label>
+                        <input type="number" class="form-control quantity-input" name="ExchangeItems[INDEX].ExchangedQuantity" min="1" max="999" required>
+                        <small class="form-text text-muted quantity-help">الحد الأقصى سيتم تحديثه تلقائياً</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group mb-3">
+                        <label class="form-label">السعر القديم</label>
+                        <input type="text" class="form-control old-price-display" readonly>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group mb-3">
+                        <label class="form-label">السعر الجديد</label>
+                        <input type="text" class="form-control new-price-display" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-info mb-0">
+                        <strong>الفرق في السعر:</strong> <span class="price-difference">0.00 ج.م</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-warning mb-0">
+                        <strong>المنتجات:</strong> <span class="product-names">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-info mb-0">
+                        <strong>تفاصيل المنتج القديم:</strong> <span class="old-product-details">-</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-success mb-0">
+                        <strong>تفاصيل المنتج الجديد:</strong> <span class="new-product-details">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+          
+            let itemIndex = 0;
+            let invoiceItems = [];
+
+            // Load invoice items when invoice number is entered
+            $('#loadInvoiceBtn').click(function() {
+                loadInvoiceItems();
+            });
+
+            // Auto-load if invoice number is already provided
+            @if (!string.IsNullOrEmpty(Model.OriginalInvoiceNumber))
+            {
+                <text>
+                loadInvoiceItems();
+                </text>
+            }
+
+            // Update exchange invoice number automatically
+            $('#exchangeInvoiceNumber').on('input', function() {
+                const userInput = $(this).val();
+                const fullNumber = 'EXC' + userInput;
+                $('#exchangeInvoiceNumberHidden').val(fullNumber);
+            });
+
+            // Initialize exchange invoice number if empty
+            if (!$('#exchangeInvoiceNumberHidden').val()) {
+                const currentDate = new Date();
+                const dateString = currentDate.getFullYear().toString() + 
+                                 (currentDate.getMonth() + 1).toString().padStart(2, '0') + 
+                                 currentDate.getDate().toString().padStart(2, '0');
+                const timeString = currentDate.getHours().toString().padStart(2, '0') + 
+                                 currentDate.getMinutes().toString().padStart(2, '0') + 
+                                 currentDate.getSeconds().toString().padStart(2, '0');
+                const autoNumber = dateString + timeString;
+                $('#exchangeInvoiceNumber').val(autoNumber);
+                $('#exchangeInvoiceNumberHidden').val('EXC' + autoNumber);
+            } else {
+                // If there's already a value, extract the part after EXC
+                const existingValue = $('#exchangeInvoiceNumberHidden').val();
+                if (existingValue && existingValue.startsWith('EXC')) {
+                    $('#exchangeInvoiceNumber').val(existingValue.substring(3));
+                }
+            }
+
+            // Add new exchange item
+            $('#addExchangeItem').click(function(e) {
+                e.preventDefault();
+               
+                addExchangeItem();
+            });
+
+            // Remove exchange item
+            $(document).on('click', '.remove-item', function() {
+               
+                $(this).closest('.exchange-item').remove();
+                updateItemNumbers();
+                updateSummary();
+                updateSubmitButton();
+            });
+
+            // Update prices and calculations when products or quantity change
+            $(document).on('change', '.old-product-select, .new-product-select, .quantity-input', function() {
+               
+                updateItemCalculations($(this).closest('.exchange-item'));
+                updateSummary();
+                updateSubmitButton();
+            });
+
+            // Update quantity max when old product is selected
+            $(document).on('change', '.old-product-select', function() {
+                const $select = $(this);
+                const $item = $select.closest('.exchange-item');
+                const $quantityInput = $item.find('.quantity-input');
+                const $quantityHelp = $item.find('.quantity-help');
+                const selectedOption = $select.find('option:selected');
+                
+                if (selectedOption.length && selectedOption.val()) {
+                    const maxQuantity = parseInt(selectedOption.data('quantity')) || 0;
+                    $quantityInput.attr('max', maxQuantity);
+                    $quantityHelp.text(`الحد الأقصى: ${maxQuantity}`);
+                    
+                    // Clear current quantity if it exceeds the new max
+                    const currentQuantity = parseInt($quantityInput.val()) || 0;
+                    if (currentQuantity > maxQuantity) {
+                        $quantityInput.val('');
+                    }
+                } else {
+                    $quantityInput.attr('max', 999);
+                    $quantityHelp.text('الحد الأقصى سيتم تحديثه تلقائياً');
+                }
+            });
+
+            // Validate quantity input
+            $(document).on('input change', '.quantity-input', function() {
+                const $input = $(this);
+                const $item = $input.closest('.exchange-item');
+                const $oldProductSelect = $item.find('.old-product-select');
+                const $quantityHelp = $item.find('.quantity-help');
+                const selectedOption = $oldProductSelect.find('option:selected');
+                
+                if (selectedOption.length && selectedOption.val()) {
+                    const maxQuantity = parseInt(selectedOption.data('quantity')) || 0;
+                    const enteredQuantity = parseInt($input.val()) || 0;
+                    
+                    // Remove previous validation classes
+                    $input.removeClass('is-valid is-invalid');
+                    $quantityHelp.removeClass('text-success text-danger');
+                    
+                    if (enteredQuantity > maxQuantity) {
+                        $input.val(maxQuantity);
+                        $input.addClass('is-invalid');
+                        $quantityHelp.addClass('text-danger').text(`الحد الأقصى: ${maxQuantity} (تم تعديل الكمية تلقائياً)`);
+                        alert(`الكمية المدخلة (${enteredQuantity}) تتجاوز الكمية المتاحة (${maxQuantity}). تم تعديلها تلقائياً.`);
+                        updateItemCalculations($item);
+                        updateSummary();
+                        updateSubmitButton();
+                    } else if (enteredQuantity > 0 && enteredQuantity <= maxQuantity) {
+                        $input.addClass('is-valid');
+                        $quantityHelp.addClass('text-success').text(`الحد الأقصى: ${maxQuantity} ✓`);
+                    } else if (enteredQuantity === 0) {
+                        $quantityHelp.removeClass('text-success text-danger').text(`الحد الأقصى: ${maxQuantity}`);
+                    }
+                }
+            });
+
+            function loadInvoiceItems() {
+                const invoiceNumber = $('#OriginalInvoiceNumber').val();
+                if (!invoiceNumber) {
+                    alert('يرجى إدخال رقم الفاتورة أولاً');
+                    return;
+                }
+
+                $('#loadInvoiceBtn').prop('disabled', true).html('🔄 جاري التحميل...');
+
+                $.get('@Url.Action("GetInvoiceItems", "Exchange")', { invoiceNumber: invoiceNumber })
+                    .done(function(response) {
+                       
+                        if (response.success) {
+                            invoiceItems = response.items;
+                        
+                            displayInvoiceStatus(response.items);
+                            $('#exchangeItemsSection').show();
+                            updateExchangeSummary();
+                        } else {
+                            alert('خطأ: ' + response.message);
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                     
+                        alert('فشل في تحميل بيانات الفاتورة: ' + error);
+                    })
+                    .always(function() {
+                        $('#loadInvoiceBtn').prop('disabled', false).html('🔍 تحميل');
+                    });
+            }
+
+            function displayInvoiceStatus(items) {
+                const exchangeableItems = items.filter(item => item.canExchange);
+                const statusHtml = `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-file-invoice"></i> معلومات الفاتورة</h6>
+                        <p class="mb-1"><strong>عدد المنتجات:</strong> ${items.length}</p>
+                        <p class="mb-1"><strong>قابلة للاستبدال:</strong> ${exchangeableItems.length}</p>
+                        <p class="mb-0"><strong>المنتجات المتاحة للاستبدال:</strong></p>
+                        <ul class="mb-0 mt-2">
+                            ${exchangeableItems.length > 0 ? 
+                                exchangeableItems.map(item => 
+                                    `<li><strong>${item.productName}</strong> - الكمية: ${item.quantity} - السعر: ${item.unitPrice} ج.م</li>`
+                                ).join('') : 
+                                '<li class="text-muted">لا توجد منتجات قابلة للاستبدال</li>'
+                            }
+                        </ul>
+                    </div>
+                `;
+                $('#invoiceStatus').html(statusHtml);
+            }
+
+            function addExchangeItem() {
+                console.log('addExchangeItem called, invoiceItems length:', invoiceItems.length); // Debug log
+                
+                if (invoiceItems.length === 0) {
+                    alert('يرجى تحميل الفاتورة أولاً');
+                    return;
+                }
+
+                const template = document.getElementById('exchangeItemTemplate');
+                if (!template) {
+                    console.error('Template not found!'); // Debug log
+                    alert('خطأ في تحميل القالب');
+                    return;
+                }
+
+                const clone = template.content.cloneNode(true);
+                
+                // Update index placeholders
+                const html = clone.querySelector('.exchange-item').outerHTML;
+                const updatedHtml = html.replace(/INDEX/g, itemIndex);
+                
+                $('#exchangeItemsContainer').append(updatedHtml);
+                $('#noItemsMessage').hide();
+                $('#summaryCard').show();
+                
+               
+                
+                // Populate old product options with invoice items
+                const $newItem = $('#exchangeItemsContainer .exchange-item').last();
+                const $oldProductSelect = $newItem.find('.old-product-select');
+                
+                // Clear existing options except the first one
+                $oldProductSelect.find('option:not(:first)').remove();
+               
+                
+                // Add invoice items as options
+                const exchangeableItems = invoiceItems.filter(item => item.canExchange);
+               
+                
+                if (exchangeableItems.length === 0) {
+                    $oldProductSelect.append('<option value="" disabled>لا توجد منتجات قابلة للاستبدال</option>');
+                } else {
+                    exchangeableItems.forEach(item => {
+                        const optionText = `${item.productName} - ${item.unitPrice} ج.م (متوفر: ${item.quantity})${item.color ? ` - اللون: ${item.color}` : ''}${item.size ? ` - المقاس: ${item.size}` : ''}`;
+                        $oldProductSelect.append(`
+                            <option value="${item.productId}" 
+                                    data-price="${item.unitPrice}" 
+                                    data-quantity="${item.quantity}"
+                                    data-color="${item.color || ''}"
+                                    data-size="${item.size || ''}">
+                                ${optionText}
+                            </option>
+                        `);
+                    });
+                }
+                
+                itemIndex++;
+               
+                
+                updateItemNumbers();
+                updateSummary();
+                updateSubmitButton();
+                
+             
+            }
+
+            function updateItemNumbers() {
+                $('.exchange-item').each(function(index) {
+                    $(this).find('.item-number').text(index + 1);
+                    $(this).attr('data-item-index', index);
+                    
+                    // Update form field names
+                    $(this).find('select, input').each(function() {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            $(this).attr('name', name.replace(/\[\d+\]/, '[' + index + ']'));
+                        }
+                    });
+                });
+            }
+
+            function updateItemCalculations(item) {
+                const oldProductSelect = item.find('.old-product-select');
+                const newProductSelect = item.find('.new-product-select');
+                const quantityInput = item.find('.quantity-input');
+                
+                const oldPrice = parseFloat(oldProductSelect.find('option:selected').data('price')) || 0;
+                const newPrice = parseFloat(newProductSelect.find('option:selected').data('price')) || 0;
+                const quantity = parseInt(quantityInput.val()) || 0;
+                
+                const priceDifference = (newPrice - oldPrice) * quantity;
+                
+                item.find('.old-price-display').val(oldPrice.toFixed(2) + ' ج.م');
+                item.find('.new-price-display').val(newPrice.toFixed(2) + ' ج.م');
+                item.find('.price-difference').text(priceDifference.toFixed(2) + ' ج.م');
+                
+                const oldProductName = oldProductSelect.find('option:selected').text();
+                const newProductName = newProductSelect.find('option:selected').text();
+                item.find('.product-names').text(`${oldProductName} → ${newProductName}`);
+                
+                // Update product details
+                const oldSelectedOption = oldProductSelect.find('option:selected');
+                const newSelectedOption = newProductSelect.find('option:selected');
+                
+                let oldDetails = '-';
+                let newDetails = '-';
+                
+                if (oldSelectedOption.length && oldSelectedOption.val()) {
+                    const oldColor = oldSelectedOption.data('color') || '';
+                    const oldSize = oldSelectedOption.data('size') || '';
+                    oldDetails = `السعر: ${oldPrice.toFixed(2)} ج.م`;
+                    if (oldColor) oldDetails += ` | اللون: ${oldColor}`;
+                    if (oldSize) oldDetails += ` | المقاس: ${oldSize}`;
+                }
+                
+                if (newSelectedOption.length && newSelectedOption.val()) {
+                    const newColor = newSelectedOption.data('color') || '';
+                    const newSize = newSelectedOption.data('size') || '';
+                    const newQuantity = newSelectedOption.data('quantity') || 0;
+                    newDetails = `السعر: ${newPrice.toFixed(2)} ج.م | متوفر: ${newQuantity}`;
+                    if (newColor) newDetails += ` | اللون: ${newColor}`;
+                    if (newSize) newDetails += ` | المقاس: ${newSize}`;
+                }
+                
+                item.find('.old-product-details').text(oldDetails);
+                item.find('.new-product-details').text(newDetails);
+                
+                // Color coding for price difference
+                const priceDiffElement = item.find('.price-difference');
+                if (priceDifference > 0) {
+                    priceDiffElement.removeClass('text-success text-danger').addClass('text-danger');
+                } else if (priceDifference < 0) {
+                    priceDiffElement.removeClass('text-success text-danger').addClass('text-success');
+                } else {
+                    priceDiffElement.removeClass('text-success text-danger');
+                }
+            }
+
+            function updateSummary() {
+                const items = $('.exchange-item');
+                const totalItems = items.length;
+                let totalQuantity = 0;
+                let totalPriceDifference = 0;
+                
+                console.log('updateSummary called, total items:', totalItems); // Debug log
+                
+                items.each(function() {
+                    const quantity = parseInt($(this).find('.quantity-input').val()) || 0;
+                    const priceDiffText = $(this).find('.price-difference').text();
+                    const priceDiff = parseFloat(priceDiffText.replace(' ج.م', '')) || 0;
+                    
+                    totalQuantity += quantity;
+                    totalPriceDifference += priceDiff;
+                });
+                
+                console.log('Summary calculated - Items:', totalItems, 'Quantity:', totalQuantity, 'Price Diff:', totalPriceDifference); // Debug log
+                
+                $('#totalItems').text(totalItems);
+                $('#totalQuantity').text(totalQuantity);
+                $('#totalPriceDifference').text(totalPriceDifference.toFixed(2) + ' ج.م');
+                
+                // Update sidebar summary
+                $('#summaryTotalItems').text(totalItems);
+                $('#summaryTotalQuantity').text(totalQuantity);
+                $('#summaryTotalPrice').text(totalPriceDifference.toFixed(2) + ' ج.م');
+                
+                // Color coding for total price difference
+                const totalPriceElement = $('#totalPriceDifference');
+                const summaryPriceElement = $('#summaryTotalPrice');
+                if (totalPriceDifference > 0) {
+                    totalPriceElement.removeClass('text-success text-danger').addClass('text-danger');
+                    summaryPriceElement.removeClass('text-success text-danger').addClass('text-danger');
+                } else if (totalPriceDifference < 0) {
+                    totalPriceElement.removeClass('text-success text-danger').addClass('text-success');
+                    summaryPriceElement.removeClass('text-success text-danger').addClass('text-success');
+                } else {
+                    totalPriceElement.removeClass('text-success text-danger');
+                    summaryPriceElement.removeClass('text-success text-danger');
+                }
+            }
+
+            function updateExchangeSummary() {
+                if (invoiceItems.length === 0) {
+                    $('#exchangeSummary').html(`
+                        <div class="text-center text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <p>قم بتحميل الفاتورة أولاً</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                const exchangeableItems = invoiceItems.filter(item => item.canExchange);
+                const summaryHtml = `
+                    <div class="mb-3">
+                        <h6><i class="fas fa-file-invoice"></i> الفاتورة الأصلية</h6>
+                        <p class="mb-1"><strong>رقم الفاتورة:</strong> ${$('#OriginalInvoiceNumber').val()}</p>
+                        <p class="mb-1"><strong>عدد المنتجات:</strong> ${invoiceItems.length}</p>
+                        <p class="mb-0"><strong>قابلة للاستبدال:</strong> ${exchangeableItems.length}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="fas fa-exchange-alt"></i> الاستبدال المتعدد</h6>
+                        <p class="mb-1"><strong>عدد المنتجات المضافة:</strong> <span id="summaryTotalItems">0</span></p>
+                        <p class="mb-1"><strong>إجمالي الكمية:</strong> <span id="summaryTotalQuantity">0</span></p>
+                        <p class="mb-0"><strong>الفرق في السعر:</strong> <span id="summaryTotalPrice">0.00 ج.م</span></p>
+                    </div>
+                `;
+                $('#exchangeSummary').html(summaryHtml);
+            }
+
+            function updateSubmitButton() {
+                const hasItems = $('.exchange-item').length > 0;
+                const allValid = $('.exchange-item').length > 0 && 
+                    $('.exchange-item').toArray().every(item => {
+                        const $item = $(item);
+                        return $item.find('.old-product-select').val() && 
+                               $item.find('.new-product-select').val() && 
+                               $item.find('.quantity-input').val();
+                    });
+                
+                console.log('updateSubmitButton - hasItems:', hasItems, 'allValid:', allValid); // Debug log
+                
+                $('#submitBtn').prop('disabled', !allValid);
+                
+                if (allValid) {
+                    console.log('Submit button enabled'); // Debug log
+                } else {
+                    console.log('Submit button disabled'); // Debug log
+                }
+            }
+
+            // Form submission
+            $('#multiExchangeForm').on('submit', function(e) {
+                const items = $('.exchange-item');
+                if (items.length === 0) {
+                    e.preventDefault();
+                    alert('يرجى إضافة منتج واحد على الأقل للاستبدال');
+                    return false;
+                }
+                
+                // Validate all items have required fields and quantities
+                let isValid = true;
+                let validationMessage = '';
+                
+                items.each(function() {
+                    const $item = $(this);
+                    const oldProduct = $item.find('.old-product-select').val();
+                    const newProduct = $item.find('.new-product-select').val();
+                    const quantity = parseInt($item.find('.quantity-input').val()) || 0;
+                    const selectedOption = $item.find('.old-product-select option:selected');
+                    const maxQuantity = parseInt(selectedOption.data('quantity')) || 0;
+                    
+                    if (!oldProduct || !newProduct || !quantity) {
+                        isValid = false;
+                        validationMessage = 'يرجى ملء جميع الحقول المطلوبة';
+                        return false;
+                    }
+                    
+                    if (quantity <= 0) {
+                        isValid = false;
+                        validationMessage = 'الكمية يجب أن تكون أكبر من صفر';
+                        return false;
+                    }
+                    
+                    if (quantity > maxQuantity) {
+                        isValid = false;
+                        validationMessage = `الكمية المدخلة (${quantity}) تتجاوز الكمية المتاحة (${maxQuantity})`;
+                        return false;
+                    }
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert(validationMessage);
+                    return false;
+                }
+                
+                const confirmMessage = `هل أنت متأكد من تنفيذ الاستبدال المتعدد لـ ${items.length} منتج؟`;
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Initialize with one item if original invoice number is provided
+            @if (!string.IsNullOrEmpty(Model.OriginalInvoiceNumber))
+            {
+                <text>
+                addExchangeItem();
+                </text>
+            }
+        });
+    </script>
+
+    <style>
+        .bg-gradient-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3) !important;
+        }
+
+        .opacity-75 {
+            opacity: 0.75;
+        }
+
+        .exchange-item {
+            transition: all 0.2s ease;
+        }
+
+        .exchange-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,.1);
+        }
+
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,.15) !important;
+        }
+
+        .btn-group-vertical .btn {
+            border-radius: 0.25rem !important;
+            margin-bottom: 2px;
+        }
+
+        .badge {
+            font-size: 0.75em;
+        }
+
+        .fw-bold {
+            font-weight: 600 !important;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        /* Enhanced product details styling */
+        .old-product-details, .new-product-details {
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .alert-info .old-product-details {
+            color: #0c5460;
+        }
+
+        .alert-success .new-product-details {
+            color: #155724;
+        }
+
+        /* Product select styling */
+        .form-select option {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-select option:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Enhanced product display */
+        .product-display-text {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .product-price {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .product-quantity {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .product-color {
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .product-size {
+            color: #fd7e14;
+            font-weight: 500;
+        }
+    </style>
+}

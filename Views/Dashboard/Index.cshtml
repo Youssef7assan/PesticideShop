@@ -1,0 +1,325 @@
+@{
+    ViewData["Title"] = "لوحة التحكم - Pharaonic";
+}
+
+<div class="fade-in">
+            <h1 class="text-center mb-4">📊 لوحة التحكم - Pharaonic</h1>
+
+    @if (ViewData["DebugInfo"] != null)
+    {
+        <div class="alert alert-info">
+            <strong>معلومات تصحيح:</strong> @ViewData["DebugInfo"]
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>💰 إجمالي المبيعات</h3>
+                <div class="amount text-success">$@(ViewData["TotalSales"] != null ? ((decimal)ViewData["TotalSales"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">إجمالي المبيعات منذ البداية</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>💵 إجمالي الأرباح</h3>
+                <div class="amount text-success">$@(ViewData["TotalProfit"] != null ? ((decimal)ViewData["TotalProfit"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">صافي الربح</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>📊 هامش الربح</h3>
+                <div class="amount text-info">@(ViewData["ProfitMargin"] != null ? ((decimal)ViewData["ProfitMargin"]).ToString("N1") : "0.0")%</div>
+                <small class="text-muted">نسبة الربح</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>📦 قيمة المخزون</h3>
+                <div class="amount text-primary">$@(ViewData["TotalInventoryValue"] != null ? ((decimal)ViewData["TotalInventoryValue"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">قيمة المخزون الحالية</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>👥 مديونية العملاء</h3>
+                <div class="amount text-warning">$@(ViewData["CustomerOutstanding"] != null ? ((decimal)ViewData["CustomerOutstanding"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">المدفوعات المعلقة</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2 mb-3">
+            <div class="dashboard-card">
+                <h3>📊 إجمالي المعاملات</h3>
+                <div class="amount text-info">@(ViewData["TotalTransactions"] != null ? ViewData["TotalTransactions"].ToString() : "0")</div>
+                <small class="text-muted">عدد المعاملات</small>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="dashboard-card">
+                <h3>📦 المنتجات</h3>
+                <div class="amount text-primary">@(ViewData["TotalProducts"] != null ? ViewData["TotalProducts"].ToString() : "0")</div>
+                <small class="text-muted">إجمالي المنتجات</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-3">
+            <div class="dashboard-card">
+                <h3>👥 العملاء</h3>
+                <div class="amount text-warning">@(ViewData["TotalCustomers"] != null ? ViewData["TotalCustomers"].ToString() : "0")</div>
+                <small class="text-muted">إجمالي العملاء</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-3">
+            <div class="dashboard-card">
+                <h3>📈 متوسط البيع</h3>
+                <div class="amount text-info">$@(ViewData["AverageSellingPrice"] != null ? ((decimal)ViewData["AverageSellingPrice"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">متوسط المعاملة</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-3">
+            <div class="dashboard-card">
+                <h3>📊 إجمالي التكلفة</h3>
+                <div class="amount text-danger">$@(ViewData["TotalCost"] != null ? ((decimal)ViewData["TotalCost"]).ToString("N2") : "0.00")</div>
+                <small class="text-muted">تكلفة المنتجات المباعة</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📈 إجراءات سريعة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Products" asp-action="Create" class="btn btn-primary">
+                            ➕ إضافة منتج جديد
+                        </a>
+                        <a asp-controller="Categories" asp-action="Create" class="btn btn-success">
+                            ➕ إضافة تصنيف جديد
+                        </a>
+                        <a asp-controller="Customers" asp-action="Create" class="btn btn-warning">
+                            ➕ إضافة عميل جديد
+                        </a>
+                        <a asp-controller="Invoices" asp-action="Index" class="btn btn-info">
+                            📄 إصدار فاتورة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 النشاط الأخير</h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var activities = ViewData["RecentActivities"] as List<PesticideShop.Models.ActivityLog>;
+                    }
+                    
+                    @if (activities != null && activities.Any())
+                    {
+                        <div class="activity-list">
+                            @foreach (var activity in activities)
+                            {
+                                <div class="activity-item mb-2 p-2 border-start border-3 @GetActivityBorderColor(activity.Action)">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <strong class="@GetActivityTextColor(activity.Action)">@GetActivityIcon(activity.Action) @GetActivityText(activity.Action)</strong>
+                                            @if (!string.IsNullOrEmpty(activity.EntityName))
+                                            {
+                                                <span class="text-muted">: @activity.EntityName</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(activity.Details) && !IsTechnicalError(activity.Details))
+                                            {
+                                                <div class="small text-muted">@GetCleanDetails(activity.Details)</div>
+                                            }
+                                            @if (IsTechnicalError(activity.Details))
+                                            {
+                                                <div class="small text-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                    حدث خطأ تقني - تم تسجيله في النظام
+                                                </div>
+                                            }
+                                        </div>
+                                        <small class="text-muted">@activity.Timestamp.ToString("HH:mm")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">لا يوجد نشاط حديث لعرضه.</p>
+                        <small class="text-muted">سيظهر النشاط هنا مع استخدام النظام.</small>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🔗 التنقل السريع</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 col-md-3 mb-2">
+                            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary w-100">
+                                📦 المنتجات
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <a asp-controller="Categories" asp-action="Index" class="btn btn-outline-success w-100">
+                                🏷️ التصنيفات
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <a asp-controller="Customers" asp-action="Index" class="btn btn-outline-warning w-100">
+                                👥 العملاء
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <a asp-controller="AnnualInventory" asp-action="Index" class="btn btn-outline-info w-100">
+                                🧾 التقرير السنوي
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetActivityIcon(string action)
+    {
+        return action.ToLower() switch
+        {
+            "create" => "➕",
+            "update" => "✏️",
+            "delete" => "🗑️",
+            "login" => "🔑",
+            "transaction" => "💰",
+            "invoice" => "📄",
+            "search" => "🔍",
+            "processtransaction" => "⚠️",
+            "customervalidationerror" => "❌",
+            "product_search_error" => "🔍❌",
+            "qr_scan_error" => "📱❌",
+            "customer_search_error" => "👥❌",
+            "error" => "❌",
+            _ => "📝"
+        };
+    }
+
+    private string GetActivityText(string action)
+    {
+        return action.ToLower() switch
+        {
+            "create" => "تم إنشاء",
+            "update" => "تم تحديث",
+            "delete" => "تم حذف",
+            "login" => "تسجيل دخول",
+            "transaction" => "معاملة جديدة",
+            "invoice" => "فاتورة جديدة",
+            "search" => "بحث",
+            "processtransaction" => "معالجة معاملة",
+            "customervalidationerror" => "خطأ في بيانات العميل",
+            "product_search_error" => "خطأ في البحث عن المنتجات",
+            "qr_scan_error" => "خطأ في قراءة رمز QR",
+            "customer_search_error" => "خطأ في البحث عن العميل",
+            _ => action
+        };
+    }
+
+    private string GetActivityBorderColor(string action)
+    {
+        return action.ToLower() switch
+        {
+            "error" or "processtransaction" or "customervalidationerror" or "product_search_error" or "qr_scan_error" or "customer_search_error" => "border-danger",
+            "create" or "transaction" or "invoice" => "border-success",
+            "update" => "border-warning",
+            "delete" => "border-danger",
+            "login" => "border-info",
+            "search" => "border-primary",
+            _ => "border-primary"
+        };
+    }
+
+    private string GetActivityTextColor(string action)
+    {
+        return action.ToLower() switch
+        {
+            "error" or "processtransaction" or "customervalidationerror" or "product_search_error" or "qr_scan_error" or "customer_search_error" => "text-danger",
+            "create" or "transaction" or "invoice" => "text-success",
+            "update" => "text-warning",
+            "delete" => "text-danger",
+            "login" => "text-info",
+            "search" => "text-primary",
+            _ => "text-primary"
+        };
+    }
+
+    private bool IsTechnicalError(string details)
+    {
+        if (string.IsNullOrEmpty(details))
+            return false;
+            
+        return details.Contains("StackTrace:") || 
+               details.Contains("at PesticideShop") ||
+               details.Contains("System.Exception") ||
+               details.Contains("ERROR:");
+    }
+
+    private string GetCleanDetails(string details)
+    {
+        if (string.IsNullOrEmpty(details))
+            return "";
+            
+        // إزالة التفاصيل التقنية
+        if (details.Contains("ERROR:"))
+        {
+            var errorIndex = details.IndexOf("ERROR:");
+            if (errorIndex >= 0)
+            {
+                var errorMessage = details.Substring(errorIndex + 6).Trim();
+                // إزالة StackTrace إذا كان موجود
+                var stackTraceIndex = errorMessage.IndexOf("StackTrace:");
+                if (stackTraceIndex >= 0)
+                {
+                    errorMessage = errorMessage.Substring(0, stackTraceIndex).Trim();
+                }
+                return errorMessage;
+            }
+        }
+        
+        // إزالة StackTrace من أي تفاصيل أخرى
+        var cleanDetails = details;
+        var stackIndex = cleanDetails.IndexOf("StackTrace:");
+        if (stackIndex >= 0)
+        {
+            cleanDetails = cleanDetails.Substring(0, stackIndex).Trim();
+        }
+        
+        return cleanDetails;
+    }
+}

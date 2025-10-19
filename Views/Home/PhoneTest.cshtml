@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "اختبار validation الهاتف - Pharaonic";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">📱 اختبار validation أرقام الهواتف العربية</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        هذه الصفحة لاختبار نظام validation أرقام الهواتف العربية المستخدم في النظام
+                    </p>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phoneInput" class="form-label">رقم الهاتف</label>
+                                <input type="text" id="phoneInput" class="form-control" 
+                                       placeholder="مثال: 01012345678 أو +966501234567" />
+                                <div id="phoneError" class="text-danger mt-1" style="display: none;"></div>
+                                <small class="text-muted">أدخل رقم هاتف من أي دولة عربية</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="countrySelect" class="form-label">الدولة</label>
+                                <select id="countrySelect" class="form-select">
+                                    <option value="">سيتم التحديد تلقائياً</option>
+                                </select>
+                            </div>
+
+                            <button onclick="testPhoneValidation()" class="btn btn-primary">
+                                🔍 اختبار الرقم
+                            </button>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">📊 نتيجة الاختبار</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="validationResult">
+                                        <p class="text-muted">أدخل رقم هاتف واضغط على "اختبار الرقم"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5>📋 أمثلة على الأرقام المدعومة:</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>🇪🇬 مصر</h6>
+                            <ul class="list-unstyled">
+                                <li>• 01012345678</li>
+                                <li>• 201012345678</li>
+                                <li>• +201012345678</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>🇸🇦 السعودية</h6>
+                            <ul class="list-unstyled">
+                                <li>• 0501234567</li>
+                                <li>• 966501234567</li>
+                                <li>• +966501234567</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>🇦🇪 الإمارات</h6>
+                            <ul class="list-unstyled">
+                                <li>• 0501234567</li>
+                                <li>• 971501234567</li>
+                                <li>• +971501234567</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <h6>🇰🇼 الكويت</h6>
+                            <ul class="list-unstyled">
+                                <li>• 50123456</li>
+                                <li>• 96550123456</li>
+                                <li>• +96550123456</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>🇶🇦 قطر</h6>
+                            <ul class="list-unstyled">
+                                <li>• 30123456</li>
+                                <li>• 97430123456</li>
+                                <li>• +97430123456</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>🇯🇴 الأردن</h6>
+                            <ul class="list-unstyled">
+                                <li>• 0791234567</li>
+                                <li>• 962791234567</li>
+                                <li>• +962791234567</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/phoneValidation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // تهيئة قائمة الدول
+            populateCountrySelect(document.getElementById('countrySelect'));
+            
+            // إضافة event listeners للتحقق في الوقت الفعلي
+            const phoneInput = document.getElementById('phoneInput');
+            const phoneError = document.getElementById('phoneError');
+            const countrySelect = document.getElementById('countrySelect');
+            
+            phoneInput.addEventListener('input', function() {
+                validatePhoneInRealTime(this, phoneError, countrySelect);
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                formatPhoneNumber(this);
+            });
+        });
+
+        function testPhoneValidation() {
+            const phoneInput = document.getElementById('phoneInput');
+            const phone = phoneInput.value.trim();
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!phone) {
+                resultDiv.innerHTML = '<p class="text-danger">❌ رجاء إدخال رقم هاتف</p>';
+                return;
+            }
+
+            try {
+                const validation = PhoneValidator.validatePhone(phone);
+                
+                if (validation.isValid) {
+                    const whatsappNumber = PhoneValidator.formatPhoneForWhatsApp(phone, validation.country);
+                    const displayNumber = PhoneValidator.formatPhoneForDisplay(phone, validation.country);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="text-success">
+                            <h6>✅ الرقم صحيح!</h6>
+                            <p><strong>الدولة:</strong> ${validation.country.name}</p>
+                            <p><strong>كود الدولة:</strong> +${validation.country.code}</p>
+                            <p><strong>الرقم المنسق:</strong> ${displayNumber}</p>
+                            <p><strong>رقم الواتساب:</strong> ${whatsappNumber}</p>
+                            <p><strong>الرقم النظيف:</strong> ${validation.cleanedNumber}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="text-danger">
+                            <h6>❌ الرقم غير صحيح</h6>
+                            <p><strong>الخطأ:</strong> ${validation.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-danger">
+                        <h6>❌ حدث خطأ</h6>
+                        <p><strong>الخطأ:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+}

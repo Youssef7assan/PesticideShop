@@ -1,0 +1,214 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "تسجيل الدخول";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>✅ نجح:</strong> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        <div class="card shadow-lg border-0 login-card">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <h2 class="mb-2">🔑 تسجيل الدخول</h2>
+                <p class="mb-0">نظام إدارة متجر Pharaonic</p>
+            </div>
+            <div class="card-body">
+                <form id="account" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.UserNameOrEmail" class="form-control" autocomplete="username" aria-required="true" placeholder="اسم المستخدم أو البريد الإلكتروني" />
+                        <label asp-for="Input.UserNameOrEmail" class="form-label">اسم المستخدم أو البريد الإلكتروني</label>
+                        <span asp-validation-for="Input.UserNameOrEmail" class="text-danger"></span>
+                        <small class="text-muted">يمكنك استخدام اسم المستخدم أو البريد الإلكتروني</small>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                        <label asp-for="Input.Password" class="form-label">كلمة المرور</label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" asp-for="Input.RememberMe" id="rememberMe" />
+                        <label class="form-check-label" for="rememberMe">
+                           
+                            تذكرني لمدة 30 يوم
+                        </label>
+                        <small class="form-text text-muted d-block mt-1">
+                           
+                            لن يتم تسجيل خروجك تلقائياً حتى لو أغلقت المتصفح
+                        </small>
+                    </div>
+                    <div>
+                        <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">🔑 تسجيل الدخول</button>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);">
+                           
+                            <strong>تسجيل دخول آمن</strong>
+                            <br>
+                            <small>حماية الحساب مع تشفير البيانات</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .login-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-check-label {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .form-check-label:hover {
+            color: #667eea;
+        }
+        
+        .alert-info {
+            border-radius: 15px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .form-floating > label {
+            color: #6c757d;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #667eea;
+        }
+        
+        .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .form-check-input:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .form-check-input:checked:focus {
+            background-color: #28a745;
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user has "Remember Me" cookie
+            const rememberMeCookie = getCookie('RememberMe');
+            if (rememberMeCookie) {
+                console.log('✅ Remember Me cookie found, user should stay logged in');
+            }
+            
+            // Add visual feedback for Remember Me checkbox
+            const rememberMeCheckbox = document.getElementById('rememberMe');
+            const rememberMeLabel = document.querySelector('label[for="rememberMe"]');
+            
+            if (rememberMeCheckbox && rememberMeLabel) {
+                rememberMeCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        rememberMeLabel.style.color = '#28a745';
+                        rememberMeLabel.innerHTML = '<i class="fas fa-clock me-1"></i> تذكرني لمدة 30 يوم <i class="fas fa-check-circle ms-1 text-success"></i>';
+                    } else {
+                        rememberMeLabel.style.color = '';
+                        rememberMeLabel.innerHTML = '<i class="fas fa-clock me-1"></i> تذكرني لمدة 30 يوم';
+                    }
+                });
+            }
+            
+            // Auto-focus on username field
+            const usernameField = document.querySelector('input[asp-for="Input.UserNameOrEmail"]');
+            if (usernameField) {
+                usernameField.focus();
+            }
+            
+            // Add loading state to login button
+            const loginForm = document.getElementById('account');
+            const loginButton = document.getElementById('login-submit');
+            
+            if (loginForm && loginButton) {
+                loginForm.addEventListener('submit', function() {
+                    loginButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري تسجيل الدخول...';
+                    loginButton.disabled = true;
+                });
+            }
+        });
+        
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+    </script>
+} 

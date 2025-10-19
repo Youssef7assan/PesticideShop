@@ -1,0 +1,138 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "خطأ";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-8 col-lg-6">
+            <div class="text-center">
+                <div class="error-page">
+                    <div class="error-code">
+                        <h1 class="display-1 text-danger">@(Model?.StatusCode ?? 500)</h1>
+                    </div>
+                    
+                    <div class="error-message">
+                        <h2 class="h3 mb-4">
+                            @if (Model?.StatusCode == 404)
+                            {
+                                <span>🔍 الصفحة غير موجودة</span>
+                            }
+                            else if (Model?.StatusCode == 403)
+                            {
+                                <span>🚫 غير مصرح بالوصول</span>
+                            }
+                            else if (Model?.StatusCode == 401)
+                            {
+                                <span>🔐 يجب تسجيل الدخول</span>
+                            }
+                            else
+                            {
+                                <span>⚠️ حدث خطأ غير متوقع</span>
+                            }
+                        </h2>
+                        
+                        <p class="lead text-muted mb-4">
+                            @if (Model?.StatusCode == 404)
+                            {
+                                <span>عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.</span>
+                            }
+                            else if (Model?.StatusCode == 403)
+                            {
+                                <span>عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة.</span>
+                            }
+                            else if (Model?.StatusCode == 401)
+                            {
+                                <span>يجب عليك تسجيل الدخول للوصول إلى هذه الصفحة.</span>
+                            }
+                            else
+                            {
+                                <span>حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.</span>
+                            }
+                        </p>
+                        
+                        @if (!string.IsNullOrEmpty(Model?.Message))
+                        {
+                            <div class="alert alert-info">
+                                <strong>تفاصيل الخطأ:</strong> @Model.Message
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="error-actions mt-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <a href="javascript:history.back()" class="btn btn-primary btn-lg me-3">
+                                    ← العودة للصفحة السابقة
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-success btn-lg">
+                                    🏠 الصفحة الرئيسية
+                                </a>
+                            </div>
+                        </div>
+                        
+                        @if (Model?.StatusCode == 401)
+                        {
+                            <div class="mt-3">
+                                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-warning">
+                                    🔑 تسجيل الدخول
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="error-help mt-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">💡 نصائح للمساعدة:</h5>
+                                <ul class="list-unstyled">
+                                    <li>✅ تأكد من صحة الرابط</li>
+                                    <li>✅ تحقق من تسجيل دخولك</li>
+                                    <li>✅ تأكد من صلاحياتك</li>
+                                    <li>✅ جرب تحديث الصفحة</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 2rem;
+}
+
+.error-code h1 {
+    font-size: 8rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    margin: 2rem 0;
+}
+
+.error-actions {
+    margin-top: 3rem;
+}
+
+.error-help {
+    margin-top: 3rem;
+}
+
+media (max-width: 768px) {
+    .error-code h1 {
+        font-size: 4rem;
+    }
+    
+    .error-actions .btn {
+        margin-bottom: 1rem;
+    }
+}
+</style> 

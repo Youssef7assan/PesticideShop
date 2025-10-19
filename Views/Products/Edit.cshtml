@@ -1,0 +1,487 @@
+@model PesticideShop.Models.Product
+
+@{
+    ViewData["Title"] = "تعديل المنتج";
+}
+
+<div class="fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم بنجاح:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <h1>✏️ تعديل منتج</h1>
+            <span class="badge bg-info">المنتج @ViewBag.CurrentPosition من @ViewBag.TotalProducts</span>
+        </div>
+        <div class="d-flex gap-2">
+            @if (ViewBag.PreviousProductId != null)
+            {
+                <a asp-action="Edit" asp-route-id="@ViewBag.PreviousProductId" 
+                   class="btn btn-outline-primary" 
+                   title="المنتج السابق">
+                    ← السابق
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-outline-secondary" disabled title="لا توجد منتجات سابقة">
+                    ← السابق
+                </button>
+            }
+            
+            @if (ViewBag.NextProductId != null)
+            {
+                <a asp-action="Edit" asp-route-id="@ViewBag.NextProductId" 
+                   class="btn btn-outline-primary" 
+                   title="المنتج التالي">
+                    التالي →
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-outline-secondary" disabled title="لا توجد منتجات تالية">
+                    التالي →
+                </button>
+            }
+            
+            <a asp-action="Index" class="btn btn-secondary">
+                📋 الرجوع للقائمة
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📦 معلومات المنتج: @Model.Name</h5>
+            <span class="badge bg-light text-dark">ID: @Model.Id</span>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="QRCode" class="form-label">رمز QR *</label>
+                        <input asp-for="QRCode" class="form-control" placeholder="مثال: QR001234" required />
+                        <span asp-validation-for="QRCode" class="text-danger"></span>
+                        <small class="text-muted">رمز QR فريد للمنتج</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Name" class="form-label">اسم المنتج *</label>
+                        <input asp-for="Name" class="form-control" placeholder="مثال: قميص قطني" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="CategoryId" class="form-label">الصنف *</label>
+                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select" required>
+                            <option value="">اختر الصنف</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        <small class="text-muted">اختر التصنيف المناسب للمنتج</small>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Color" class="form-label">اللون *</label>
+                        <input asp-for="Color" class="form-control" placeholder="مثال: أزرق، أحمر، أسود" required />
+                        <span asp-validation-for="Color" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Size" class="form-label">المقاس *</label>
+                        <select asp-for="Size" class="form-select" required>
+                            <option value="">اختر المقاس</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size32">32</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size33">33</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size34">34</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size35">35</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size36">36</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size37">37</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size38">38</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size39">39</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size40">40</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size41">41</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size42">42</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size43">43</option>
+                            <option value="@PesticideShop.Models.ProductSize.Size44">44</option>
+                            <option value="@PesticideShop.Models.ProductSize.XS">XS</option>
+                            <option value="@PesticideShop.Models.ProductSize.S">S</option>
+                            <option value="@PesticideShop.Models.ProductSize.M">M</option>
+                            <option value="@PesticideShop.Models.ProductSize.L">L</option>
+                            <option value="@PesticideShop.Models.ProductSize.XL">XL</option>
+                            <option value="@PesticideShop.Models.ProductSize.XXL">XXL</option>
+                            <option value="@PesticideShop.Models.ProductSize.XXXL">XXXL</option>
+                            <option value="@PesticideShop.Models.ProductSize.OneSize">موحد</option>
+                        </select>
+                        <span asp-validation-for="Size" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <!-- الكمية والأسعار -->
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Quantity" class="form-label">الكمية المتوفرة *</label>
+                        <input asp-for="Quantity" class="form-control" type="number" min="0" placeholder="مثال: 50 أو 0" required />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                        <small class="text-muted">عدد القطع المتوفرة (يمكن أن تكون 0)</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Price" class="form-label">سعر البيع *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" placeholder="150.00" required />
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                        <small class="text-muted">سعر القطعة</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="CartonPrice" class="form-label">سعر الجملة (اختياري)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="CartonPrice" class="form-control" type="number" step="0.01" min="0" placeholder="1200.00" />
+                        </div>
+                        <span asp-validation-for="CartonPrice" class="text-danger"></span>
+                        <small class="text-muted">سعر الكرتونة (اختياري)</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">القيمة الإجمالية</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="text" id="totalValue" class="form-control" readonly />
+                        </div>
+                        <small class="text-muted">الكمية × سعر البيع</small>
+                    </div>
+                </div>
+                
+                <!-- Available Colors & Sizes Section -->
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <h5>🎨 الألوان والمقاسات المتوفرة</h5>
+                        <hr>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input asp-for="HasMultipleColors" class="form-check-input" type="checkbox" id="hasMultipleColors" />
+                            <label class="form-check-label" for="hasMultipleColors">
+                                🎨 متوفر بألوان أخرى
+                            </label>
+                        </div>
+                        <small class="text-muted">حدد إذا كان هذا المنتج متوفر بألوان مختلفة</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input asp-for="HasMultipleSizes" class="form-check-input" type="checkbox" id="hasMultipleSizes" />
+                            <label class="form-check-label" for="hasMultipleSizes">
+                                📏 متوفر بمقاسات أخرى
+                            </label>
+                        </div>
+                        <small class="text-muted">حدد إذا كان هذا المنتج متوفر بمقاسات مختلفة</small>
+                    </div>
+                </div>
+                
+                <div class="row" id="availableColorsSection" style="display: none;">
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="AvailableColors" class="form-label">🎨 الألوان المتوفرة</label>
+                        <textarea asp-for="AvailableColors" class="form-control" rows="3" 
+                                  placeholder="مثال: أحمر، أزرق، أخضر، أسود، أبيض" 
+                                  maxlength="200"></textarea>
+                        <span asp-validation-for="AvailableColors" class="text-danger"></span>
+                        <small class="text-muted">اكتب الألوان المتوفرة مفصولة بفواصل (اختياري)</small>
+                    </div>
+                </div>
+                
+                <div class="row" id="availableSizesSection" style="display: none;">
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="AvailableSizes" class="form-label">📏 المقاسات المتوفرة</label>
+                        <textarea asp-for="AvailableSizes" class="form-control" rows="3" 
+                                  placeholder="مثال: 32، 34، 36، 38، 40، 42، 44، S، M، L، XL" 
+                                  maxlength="200"></textarea>
+                        <span asp-validation-for="AvailableSizes" class="text-danger"></span>
+                        <small class="text-muted">اكتب المقاسات المتوفرة مفصولة بفواصل (اختياري)</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label asp-for="Notes" class="form-label">ملاحظات</label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="ملاحظات إضافية حول المنتج (اختياري)"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between flex-row-reverse">
+                    <button type="submit" class="btn btn-warning ms-2">
+                        ✏️ تحديث المنتج
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ← إلغاء
+                    </a>
+                </div>
+                
+                <!-- أزرار التنقل السفلية -->
+                <hr class="my-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    @if (ViewBag.PreviousProductId != null)
+                    {
+                        <a asp-action="Edit" asp-route-id="@ViewBag.PreviousProductId" 
+                           class="btn btn-outline-primary" 
+                           id="prevProductBtn"
+                           title="المنتج السابق (Alt + ←)">
+                            ⬅️ المنتج السابق
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-secondary" disabled>
+                            ⬅️ المنتج السابق
+                        </button>
+                    }
+                    
+                    <span class="text-muted">
+                        <i class="fas fa-keyboard"></i> 
+                        استخدم <kbd>Alt + ←</kbd> للسابق | <kbd>Alt + →</kbd> للتالي
+                    </span>
+                    
+                    @if (ViewBag.NextProductId != null)
+                    {
+                        <a asp-action="Edit" asp-route-id="@ViewBag.NextProductId" 
+                           class="btn btn-outline-primary" 
+                           id="nextProductBtn"
+                           title="المنتج التالي (Alt + →)">
+                            المنتج التالي ➡️
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-secondary" disabled>
+                            المنتج التالي ➡️
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.querySelector('input[name="Quantity"]');
+    const priceInput = document.querySelector('input[name="Price"]');
+    const totalValueInput = document.getElementById('totalValue');
+    
+    function calculateTotalValue() {
+        const quantity = parseInt(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const totalValue = quantity * price;
+        totalValueInput.value = totalValue.toFixed(2);
+    }
+    
+    // إضافة مستمعي الأحداث
+    quantityInput.addEventListener('input', calculateTotalValue);
+    priceInput.addEventListener('input', calculateTotalValue);
+    
+    // حساب عند تحميل الصفحة
+    calculateTotalValue();
+    
+    // إضافة تلميحات تفاعلية
+    quantityInput.addEventListener('focus', function() {
+        this.placeholder = 'مثال: 50 قطعة';
+    });
+    
+    priceInput.addEventListener('focus', function() {
+        this.placeholder = 'مثال: 150.00 جنيه';
+    });
+    
+    // إضافة تحقق من صحة البيانات
+    quantityInput.addEventListener('blur', function() {
+        const value = parseInt(this.value);
+        if (value < 0) {
+            this.value = 0;
+            calculateTotalValue();
+        }
+        // السماح بـ 0 كقيمة صحيحة
+        if (isNaN(value)) {
+            this.value = 0;
+            calculateTotalValue();
+        }
+    });
+    
+    priceInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (value < 0) {
+            this.value = 0;
+            calculateTotalValue();
+        }
+    });
+    
+    // إضافة تحقق من سعر الجملة (اختياري)
+    const cartonPriceInput = document.querySelector('input[name="CartonPrice"]');
+    if (cartonPriceInput) {
+        cartonPriceInput.addEventListener('blur', function() {
+            const value = parseFloat(this.value);
+            if (this.value !== '' && value < 0) {
+                this.value = '';
+            }
+        });
+    }
+
+    // التحكم في الألوان والمقاسات المتوفرة
+    const hasMultipleColorsCheckbox = document.getElementById('hasMultipleColors');
+    const hasMultipleSizesCheckbox = document.getElementById('hasMultipleSizes');
+    const availableColorsSection = document.getElementById('availableColorsSection');
+    const availableSizesSection = document.getElementById('availableSizesSection');
+
+    // دالة لإظهار/إخفاء قسم الألوان المتوفرة
+    function toggleAvailableColors() {
+        if (hasMultipleColorsCheckbox.checked) {
+            availableColorsSection.style.display = 'block';
+        } else {
+            availableColorsSection.style.display = 'none';
+            // مسح القيمة عند إلغاء التحديد
+            document.getElementById('AvailableColors').value = '';
+        }
+    }
+
+    // دالة لإظهار/إخفاء قسم المقاسات المتوفرة
+    function toggleAvailableSizes() {
+        if (hasMultipleSizesCheckbox.checked) {
+            availableSizesSection.style.display = 'block';
+        } else {
+            availableSizesSection.style.display = 'none';
+            // مسح القيمة عند إلغاء التحديد
+            document.getElementById('AvailableSizes').value = '';
+        }
+    }
+
+    // إضافة مستمعي الأحداث
+    hasMultipleColorsCheckbox.addEventListener('change', toggleAvailableColors);
+    hasMultipleSizesCheckbox.addEventListener('change', toggleAvailableSizes);
+
+    // تشغيل الدوال عند تحميل الصفحة
+    toggleAvailableColors();
+    toggleAvailableSizes();
+    
+    // إضافة اختصارات لوحة المفاتيح للتنقل بين المنتجات
+    document.addEventListener('keydown', function(event) {
+        // Alt + السهم الأيسر = المنتج السابق
+        if (event.altKey && event.key === 'ArrowLeft') {
+            event.preventDefault();
+            const prevBtn = document.getElementById('prevProductBtn');
+            if (prevBtn) {
+                prevBtn.click();
+            }
+        }
+        
+        // Alt + السهم الأيمن = المنتج التالي
+        if (event.altKey && event.key === 'ArrowRight') {
+            event.preventDefault();
+            const nextBtn = document.getElementById('nextProductBtn');
+            if (nextBtn) {
+                nextBtn.click();
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    /* تحسينات بصرية لأزرار التنقل */
+    .btn-outline-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .badge.bg-info {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        animation: pulse 2s infinite;
+    }
+    
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+    
+    kbd {
+        background-color: #f7f7f7;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+        color: #333;
+        display: inline-block;
+        font-family: monospace;
+        font-size: 0.85em;
+        padding: 2px 6px;
+        margin: 0 2px;
+    }
+    
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    /* تأثير عند التنقل */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* تحسين أزرار التنقل السفلية */
+    hr.my-4 {
+        border-top: 2px dashed #dee2e6;
+        margin: 2rem 0;
+    }
+    
+    .btn-outline-primary {
+        border-width: 2px;
+        font-weight: 500;
+    }
+    
+    .btn-outline-primary:disabled,
+    .btn-outline-secondary:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

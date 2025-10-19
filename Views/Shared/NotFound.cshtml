@@ -1,0 +1,126 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@{
+    ViewData["Title"] = "الصفحة غير موجودة";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-8 col-lg-6">
+            <div class="text-center">
+                <div class="not-found-page">
+                    <div class="not-found-icon">
+                        <div class="icon-container">
+                            <i class="fas fa-search fa-5x text-warning"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="not-found-message">
+                        <h1 class="display-1 text-warning mb-4">404</h1>
+                        <h2 class="h3 mb-4">🔍 الصفحة غير موجودة</h2>
+                        
+                        <div class="alert alert-info">
+                            <h5 class="alert-heading">📝 معلومات إضافية:</h5>
+                            <p class="mb-0">
+                                عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.
+                                يرجى التحقق من الرابط أو العودة للصفحة الرئيسية.
+                            </p>
+                        </div>
+                        
+                        <div class="page-info mt-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">🔍 تفاصيل البحث:</h5>
+                                    <ul class="list-unstyled">
+                                        <li>📅 التاريخ: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</li>
+                                        <li>🌐 الرابط المطلوب: @Context.Request.Path</li>
+                                        <li>🔗 الرابط الكامل: @Context.Request.GetDisplayUrl()</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="not-found-actions mt-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-4 mb-3">
+                                <a href="javascript:history.back()" class="btn btn-primary btn-lg w-100">
+                                    ← العودة للصفحة السابقة
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-success btn-lg w-100">
+                                    🏠 الصفحة الرئيسية
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="javascript:location.reload()" class="btn btn-warning btn-lg w-100">
+                                    🔄 تحديث الصفحة
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="not-found-help mt-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">💡 نصائح للمساعدة:</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✅ تحقق من صحة الرابط</li>
+                                            <li>✅ تأكد من كتابة الرابط بشكل صحيح</li>
+                                            <li>✅ جرب البحث في الموقع</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li>✅ امسح ذاكرة التخزين المؤقت</li>
+                                            <li>✅ جرب متصفح مختلف</li>
+                                            <li>✅ تواصل مع المسؤول</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.not-found-page {
+    padding: 2rem;
+}
+
+.not-found-icon {
+    margin-bottom: 2rem;
+}
+
+.icon-container {
+    display: inline-block;
+    padding: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.not-found-message {
+    margin: 2rem 0;
+}
+
+.not-found-actions {
+    margin-top: 3rem;
+}
+
+.not-found-help {
+    margin-top: 3rem;
+}
+
+media (max-width: 768px) {
+    .not-found-actions .btn {
+        margin-bottom: 1rem;
+    }
+}
+</style> 

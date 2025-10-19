@@ -1,0 +1,92 @@
+@model PesticideShop.Models.AdminRegisterViewModel
+
+@{
+    ViewData["Title"] = "إنشاء حساب مشرف";
+}
+
+<div class="fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅ تم بنجاح:</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ خطأ:</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center mb-0">👑 إنشاء حساب مشرف جديد</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6>⚠️ تنبيه أمني:</h6>
+                        <p class="mb-0">هذه الصفحة متاحة للمشرفين المسجلين دخولهم فقط. يمكنك إنشاء حسابات مشرفين جديدة من هنا.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6>📋 تعليمات إنشاء الحساب:</h6>
+                        <ul class="mb-0">
+                            <li>قم بإنشاء حساب مشرف جديد للوصول إلى النظام</li>
+                            <li>يمكنك استخدام أي بريد إلكتروني (حقيقي أو غير حقيقي)</li>
+                            <li>اسم المستخدم يمكن أن يكون أي شيء تفضله</li>
+                            <li>كلمة المرور يجب أن تكون 6 أحرف على الأقل</li>
+                        </ul>
+                    </div>
+                    
+
+
+                    <form asp-action="Register" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label">اسم المستخدم *</label>
+                            <input asp-for="Username" class="form-control" placeholder="ادخل اسم المستخدم" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">البريد الإلكتروني *</label>
+                            <input asp-for="Email" class="form-control" placeholder="ادخل البريد الإلكتروني" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">كلمة المرور *</label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="ادخل كلمة المرور" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">تأكيد كلمة المرور *</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="أعد إدخال كلمة المرور" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                👑 إنشاء حساب مشرف
+                            </button>
+                            <a asp-action="Users" class="btn btn-secondary">
+                                ← العودة لإدارة المستخدمين
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

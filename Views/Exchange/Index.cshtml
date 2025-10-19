@@ -1,0 +1,533 @@
+@model List<PesticideShop.Models.ExchangeTracking>
+
+@{
+    ViewData["Title"] = "سجل الاستبدالات";
+    var totalExchanges = Model.Count;
+    var thisMonthExchanges = Model.Count(e => e.ExchangeDate.Month == DateTime.Now.Month && e.ExchangeDate.Year == DateTime.Now.Year);
+    var totalPriceDifferencePositive = Model.Where(e => e.PriceDifference > 0).Sum(e => e.PriceDifference);
+    var totalPriceDifferenceNegative = Math.Abs(Model.Where(e => e.PriceDifference < 0).Sum(e => e.PriceDifference));
+}
+
+<div class="container-fluid">
+    @Html.AntiForgeryToken()
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                               
+                                سجل الاستبدالات
+                            </h2>
+                            <p class="mb-0 opacity-75">عرض وإدارة جميع عمليات استبدال المنتجات</p>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger me-2" onclick="deleteAllExchanges()" title="مسح جميع الاستبدالات">
+                                🗑️ مسح جميع الاستبدالات
+                            </button>
+                            <a href="@Url.Action("MultiCreate")" class="btn btn-warning me-2" title="استبدال متعدد للمنتجات">
+                                🔄 استبدال متعدد
+                            </a>
+                            <a href="@Url.Action("Create")" class="btn btn-light me-2">
+                                ➕ استبدال جديد
+                            </a>
+                            <a href="@Url.Action("Index", "Invoices")" class="btn btn-outline-light">
+                                📄 الفواتير
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">إجمالي الاستبدالات</h5>
+                            <h3 class="mb-0">@totalExchanges</h3>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">هذا الشهر</h5>
+                            <h3 class="mb-0">@thisMonthExchanges</h3>
+                        </div>
+                        <div class="align-self-center">
+                           
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">فروق مستحقة</h5>
+                            <h3 class="mb-0">@totalPriceDifferencePositive.ToString("N0")</h3>
+                            <small>ج.م</small>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">مستردة للعملاء</h5>
+                            <h3 class="mb-0">@totalPriceDifferenceNegative.ToString("N0")</h3>
+                            <small>ج.م</small>
+                        </div>
+                        <div class="align-self-center">
+                                    
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="searchInput">البحث:</label>
+                                <input type="text" id="searchInput" class="form-control" 
+                                       placeholder="رقم الفاتورة، المنتج، أو السبب...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="dateFilter">تصفية بالتاريخ:</label>
+                                <select id="dateFilter" class="form-select">
+                                    <option value="">جميع التواريخ</option>
+                                    <option value="today">اليوم</option>
+                                    <option value="week">هذا الأسبوع</option>
+                                    <option value="month">هذا الشهر</option>
+                                    <option value="year">هذا العام</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="priceFilter">فرق السعر:</label>
+                                <select id="priceFilter" class="form-select">
+                                    <option value="">جميع الفروقات</option>
+                                    <option value="positive">فروق موجبة (مستحقة)</option>
+                                    <option value="negative">فروق سالبة (مستردة)</option>
+                                    <option value="zero">بدون فرق</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchanges Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="exchangesTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>تاريخ الاستبدال</th>
+                                        <th>الفاتورة الأصلية</th>
+                                        <th>فاتورة الاستبدال</th>
+                                        <th>المنتج القديم</th>
+                                        <th>المنتج الجديد</th>
+                                        <th>الكمية</th>
+                                        <th>فرق السعر</th>
+                                        <th>السبب</th>
+                                        <th>أنشئ بواسطة</th>
+                                        <th>العمليات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var exchange in Model)
+                                    {
+                                        <tr class="exchange-row" 
+                                            data-date="@exchange.ExchangeDate.ToString("yyyy-MM-dd")"
+                                            data-price="@(exchange.PriceDifference > 0 ? "positive" : exchange.PriceDifference < 0 ? "negative" : "zero")"
+                                            data-search="@exchange.OriginalInvoiceNumber @exchange.ExchangeInvoiceNumber @exchange.OldProduct?.Name @exchange.NewProduct?.Name @exchange.ExchangeReason @exchange.CreatedBy">
+                                            <td>
+                                                <div>
+                                                    <strong>@exchange.ExchangeDate.ToString("dd/MM/yyyy")</strong>
+                                                    <br><small class="text-muted">@exchange.ExchangeDate.ToString("HH:mm")</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Details", "Invoice", new { invoiceNumber = exchange.OriginalInvoiceNumber })" 
+                                                   class="text-primary text-decoration-none">
+                                                    @exchange.OriginalInvoiceNumber
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Details", "Invoice", new { invoiceNumber = exchange.ExchangeInvoiceNumber })" 
+                                                   class="text-success text-decoration-none">
+                                                    @exchange.ExchangeInvoiceNumber
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@exchange.OldProduct?.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(@exchange.OldProduct?.QRCode))
+                                                    {
+                                                        <br><small class="text-muted">كود: @exchange.OldProduct.QRCode</small>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@exchange.NewProduct?.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(@exchange.NewProduct?.QRCode))
+                                                    {
+                                                        <br><small class="text-muted">كود: @exchange.NewProduct.QRCode</small>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@exchange.ExchangedQuantity</span>
+                                            </td>
+                                            <td>
+                                                @if (exchange.PriceDifference > 0)
+                                                {
+                                                    <span class="text-danger fw-bold">
+                                                        +@exchange.PriceDifference.ToString("N2") ج.م
+                                                    </span>
+                                                    <br><small class="text-muted">مستحق</small>
+                                                }
+                                                else if (exchange.PriceDifference < 0)
+                                                {
+                                                    <span class="text-success fw-bold">
+                                                        @exchange.PriceDifference.ToString("N2") ج.م
+                                                    </span>
+                                                    <br><small class="text-muted">مسترد</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        0.00 ج.م
+                                                    </span>
+                                                    <br><small class="text-muted">لا يوجد فرق</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(exchange.ExchangeReason))
+                                                {
+                                                    <span class="badge bg-warning text-dark">@exchange.ExchangeReason</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">غير محدد</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@exchange.CreatedBy</strong>
+                                                    <br><small class="text-muted">@exchange.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group-vertical" role="group">
+                                                    <a href="@Url.Action("Details", new { id = exchange.Id })" 
+                                                       class="btn btn-sm btn-outline-primary mb-1" title="التفاصيل">
+                                                        👁️ التفاصيل
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-info mb-1" 
+                                                            onclick="printExchange(@exchange.Id)" title="طباعة">
+                                                        🖨️ طباعة
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteExchange(@exchange.Id, '@exchange.OriginalInvoiceNumber', '@exchange.ExchangeInvoiceNumber')" title="حذف الاستبدال">
+                                                        🗑️ حذف
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد عمليات استبدال</h5>
+                            <p class="text-muted">لم يتم تسجيل أي عمليات استبدال حتى الآن</p>
+                            <a href="@Url.Action("Create")" class="btn btn-primary">
+                                ➕ إضافة استبدال جديد
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #138496) !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(23,162,184,.075);
+}
+
+.exchange-row {
+    transition: all 0.2s ease;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,.15) !important;
+}
+
+.btn-group-vertical .btn {
+    border-radius: 0.25rem !important;
+    margin-bottom: 2px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.fw-bold {
+    font-weight: 600 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const dateFilter = document.getElementById('dateFilter');
+    const priceFilter = document.getElementById('priceFilter');
+    
+    function filterTable() {
+        const searchValue = searchInput.value.toLowerCase();
+        const dateValue = dateFilter.value;
+        const priceValue = priceFilter.value;
+        
+        const rows = document.querySelectorAll('.exchange-row');
+        const today = new Date();
+        
+        rows.forEach(row => {
+            const rowDate = new Date(row.dataset.date);
+            const searchText = row.dataset.search.toLowerCase();
+            const priceType = row.dataset.price;
+            
+            // Search filter
+            const searchMatch = !searchValue || searchText.includes(searchValue);
+            
+            // Date filter
+            let dateMatch = true;
+            if (dateValue === 'today') {
+                dateMatch = rowDate.toDateString() === today.toDateString();
+            } else if (dateValue === 'week') {
+                const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                dateMatch = rowDate >= weekAgo;
+            } else if (dateValue === 'month') {
+                dateMatch = rowDate.getMonth() === today.getMonth() && 
+                           rowDate.getFullYear() === today.getFullYear();
+            } else if (dateValue === 'year') {
+                dateMatch = rowDate.getFullYear() === today.getFullYear();
+            }
+            
+            // Price filter
+            const priceMatch = !priceValue || priceType === priceValue;
+            
+            if (searchMatch && dateMatch && priceMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterTable);
+    dateFilter.addEventListener('change', filterTable);
+    priceFilter.addEventListener('change', filterTable);
+});
+
+function printExchange(exchangeId) {
+    // Implement print functionality
+    window.open(`/Exchange/Print/${exchangeId}`, '_blank');
+}
+
+// مسح جميع الاستبدالات
+function deleteAllExchanges() {
+    const totalExchanges = document.querySelectorAll('.exchange-row').length;
+    
+    if (totalExchanges === 0) {
+        showNotification('📋 لا توجد استبدالات للحذف', 'info');
+        return;
+    }
+    
+    if (confirm(`⚠️ تحذير خطير!\n\nهل أنت متأكد من حذف جميع الاستبدالات (${totalExchanges} استبدال)؟\n\n🚨 هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى حذف جميع البيانات المرتبطة بالاستبدالات!`)) {
+        // إظهار مؤشر التحميل
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '🔄 جاري حذف جميع الاستبدالات...';
+        button.disabled = true;
+        
+        // إرسال طلب حذف جميع الاستبدالات
+        fetch('/Exchange/DeleteAll', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('فشل في حذف الاستبدالات');
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // إخفاء جميع الصفوف من الجدول
+                const rows = document.querySelectorAll('.exchange-row');
+                rows.forEach((row, index) => {
+                    setTimeout(() => {
+                        row.style.animation = 'fadeOut 0.5s ease-out';
+                        setTimeout(() => row.remove(), 500);
+                    }, index * 100);
+                });
+                
+                setTimeout(() => {
+                    showNotification(`✅ ${data.message}`, 'success');
+                    // إعادة تحميل الصفحة بعد ثانيتين
+                    setTimeout(() => location.reload(), 2000);
+                }, rows.length * 100 + 500);
+            } else {
+                throw new Error(data.message || 'فشل في حذف الاستبدالات');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ فشل في حذف الاستبدالات', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// مسح استبدال واحد
+function deleteExchange(exchangeId, originalInvoice, exchangeInvoice) {
+    if (confirm(`⚠️ تحذير!\n\nهل أنت متأكد من حذف هذا الاستبدال؟\n\n📄 الفاتورة الأصلية: ${originalInvoice}\n📄 فاتورة الاستبدال: ${exchangeInvoice}\n\n🚨 هذا الإجراء لا يمكن التراجع عنه!`)) {
+        // إظهار مؤشر التحميل
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '🔄 جاري الحذف...';
+        button.disabled = true;
+        
+        // إرسال طلب حذف الاستبدال
+        fetch(`/Exchange/Delete/${exchangeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('فشل في حذف الاستبدال');
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // إخفاء الصف من الجدول
+                const row = button.closest('.exchange-row');
+                if (row) {
+                    row.style.animation = 'fadeOut 0.5s ease-out';
+                    setTimeout(() => {
+                        row.remove();
+                        showNotification(`✅ ${data.message}`, 'success');
+                        
+                        // إعادة تحميل الصفحة إذا لم تعد هناك استبدالات
+                        if (document.querySelectorAll('.exchange-row').length === 0) {
+                            setTimeout(() => location.reload(), 1000);
+                        }
+                    }, 500);
+                }
+            } else {
+                throw new Error(data.message || 'فشل في حذف الاستبدال');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ فشل في حذف الاستبدال', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// إظهار الإشعارات
+function showNotification(message, type) {
+    // إنشاء عنصر الإشعار
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // إضافة الإشعار للصفحة
+    document.body.appendChild(notification);
+    
+    // إزالة الإشعار تلقائياً بعد 5 ثوان
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>

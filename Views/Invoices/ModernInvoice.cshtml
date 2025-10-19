@@ -1,0 +1,752 @@
+@model dynamic
+
+@{
+    ViewData["Title"] = "فاتورة إلكترونية احترافية";
+    Layout = null;
+    var remainingBalance = ViewData["RemainingBalance"] as decimal? ?? 0;
+    var transactions = Model.Transactions as IEnumerable<dynamic>;
+    var totalPurchases = transactions?.Cast<dynamic>().Sum(t => (decimal)t.TotalPrice - (decimal)t.Discount) ?? 0;
+    var totalPaid = transactions?.Cast<dynamic>().Sum(t => (decimal)t.AmountPaid) ?? 0;
+    var totalDiscount = transactions?.Cast<dynamic>().Sum(t => (decimal)t.Discount) ?? 0;
+    var subtotal = transactions?.Cast<dynamic>().Sum(t => (decimal)t.TotalPrice) ?? 0;
+    var shippingCost = ViewData["ShippingCost"] as decimal? ?? 0;
+    var finalTotal = totalPurchases + shippingCost;
+    
+    var entityName = Model.Name;
+    var phoneNumber = Model.PhoneNumber;
+    var additionalPhone = Model.AdditionalPhone;
+    var email = Model.Email;
+    var governorate = Model.Governorate;
+    var district = Model.District;
+    var detailedAddress = Model.DetailedAddress;
+    
+    var invoiceNumber = ViewData["InvoiceNumber"] as string ?? $"INV-{DateTime.Now:yyyyMMdd}-{Model.Id:D4}";
+    var orderNumber = ViewData["OrderNumber"] as string ?? $"ORD-{DateTime.Now:yyyyMMdd}-{Model.Id:D4}";
+    var policyNumber = ViewData["PolicyNumber"] as string;
+    var socialMediaName = ViewData["SocialMediaName"] as string;
+    var orderOrigin = ViewData["OrderOrigin"] as string ?? "متجر فعلي";
+    var invoiceType = ViewData["InvoiceType"] as string ?? "فاتورة بيع";
+    var cashierName = ViewData["CashierName"] as string;
+}
+
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@invoiceType - @entityName</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header with gradient */
+        .invoice-header {
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .invoice-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-opacity='0.1'%3E%3Cpolygon fill='%23ffffff' points='50 0 60 40 100 50 60 60 50 100 40 60 0 50 40 40'/%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.1;
+        }
+
+        .company-section {
+            position: relative;
+            z-index: 2;
+        }
+
+        .company-logo {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .company-name {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .company-tagline {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Invoice Info Section */
+        .invoice-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 40px 30px;
+            background: #f8f9fa;
+            border-bottom: 4px solid #2e7d32;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .info-card h3 {
+            color: #2e7d32;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+        /* Customer Details */
+        .customer-section {
+            padding: 40px 30px;
+            background: white;
+        }
+
+        .section-title {
+            color: #2e7d32;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid #2e7d32;
+            padding-bottom: 10px;
+        }
+
+        .customer-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .detail-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-icon {
+            color: #2e7d32;
+            width: 20px;
+            margin-left: 10px;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Transactions Table */
+        .transactions-section {
+            padding: 40px 30px;
+            background: white;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .transactions-table th {
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .transactions-table td {
+            padding: 15px 12px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        .transactions-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transactions-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Summary Section */
+        .invoice-summary {
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .payment-status {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .summary-calculations {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid #2e7d32;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 1rem;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2e7d32;
+            background: #f0f8f0;
+            padding: 15px;
+            margin: 10px -25px -25px -25px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-partial {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-unpaid {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .footer-section p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Print Styles */
+        @@media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .invoice-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .info-card:hover,
+            .transactions-table tbody tr:hover {
+                transform: none;
+                background: transparent;
+            }
+        }
+
+        /* Mobile Responsive */
+        @@media (max-width: 768px) {
+            .invoice-info {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .customer-details {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .transactions-table {
+                font-size: 0.8rem;
+            }
+            
+            .transactions-table th,
+            .transactions-table td {
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-section">
+                <div class="company-logo"></div>
+                <div class="company-name"></div>
+                <div class="company-tagline">أ</div>
+            </div>
+        </div>
+
+        <!-- Invoice Info -->
+        <div class="invoice-info">
+            <div class="info-card">
+                <h3><i class="fas fa-file-invoice"></i> بيانات الفاتورة</h3>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-file-invoice"></i> رقم الفاتورة:</span>
+                    <span class="info-value">@invoiceNumber</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-shopping-bag"></i> رقم الطلب:</span>
+                    <span class="info-value">@orderNumber</span>
+                </div>
+                @if (!string.IsNullOrEmpty(policyNumber))
+                {
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-file-contract"></i> رقم البوليصة:</span>
+                        <span class="info-value">@policyNumber</span>
+                    </div>
+                }
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-tag"></i> نوع الفاتورة:</span>
+                    <span class="info-value">@invoiceType</span>
+                </div>
+                <!-- عرض اسم الكاشير في جميع أنواع الفواتير -->
+                @{
+                    var showCashierName = ViewData["ShowCashierName"] as bool? ?? false;
+                    
+                    // تحديد نوع الفاتورة
+                    var isSale = invoiceType.Contains("بيع");
+                    var isReturn = invoiceType.Contains("إرجاع");
+                    var isExchange = invoiceType.Contains("استبدال");
+                    
+                    // عرض اسم الكاشير بناءً على نوع الفاتورة
+                    var shouldShowCashier = isSale || isReturn || isExchange;
+                    
+                    // حل بديل: إذا لم نجد اسم الكاشير، استخدم اسم المستخدم الحالي
+                    if (string.IsNullOrEmpty(cashierName))
+                    {
+                        cashierName = User.Identity?.Name ?? "نظام";
+                    }
+                }
+                
+               
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-calendar"></i> التواريخ</h3>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-calendar-day"></i> تاريخ الإصدار:</span>
+                    <span class="info-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-clock"></i> وقت الإصدار:</span>
+                    <span class="info-value">@DateTime.Now.ToString("HH:mm")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-store"></i> مصدر الطلب:</span>
+                    <span class="info-value">@orderOrigin</span>
+                </div>
+                @if (!string.IsNullOrEmpty(socialMediaName))
+                {
+                    <div class="info-item">
+                        <span class="info-label">اسم الحساب:</span>
+                        <span class="info-value">@socialMediaName</span>
+                    </div>
+                }
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-chart-line"></i> الملخص المالي</h3>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-calculator"></i> المجموع الفرعي:</span>
+                    <span class="info-value">@subtotal.ToString("F2") ج.م</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-percentage"></i> إجمالي الخصم:</span>
+                    <span class="info-value">@totalDiscount.ToString("F2") ج.م</span>
+                </div>
+                @if (shippingCost > 0)
+                {
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-shipping-fast"></i> سعر الشحن:</span>
+                        <span class="info-value">@shippingCost.ToString("F2") ج.م</span>
+                    </div>
+                }
+                <div class="info-item">
+                    <span class="info-label"><i class="fas fa-money-bill-wave"></i> المبلغ النهائي:</span>
+                    <span class="info-value">@finalTotal.ToString("F2") ج.م</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div class="customer-section">
+            <h2 class="section-title">
+                <i class="fas fa-user"></i>
+                بيانات العميل
+            </h2>
+            
+            <div class="customer-details">
+                <div class="detail-group">
+                    <h4 style="color: #2e7d32; margin-bottom: 15px; font-weight: 700;"><i class="fas fa-info-circle"></i> المعلومات الأساسية</h4>
+                    <div class="detail-item">
+                        <i class="fas fa-user detail-icon"></i>
+                        <span class="detail-label">الاسم:</span>
+                        <span class="detail-value">@entityName</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-phone detail-icon"></i>
+                        <span class="detail-label">الهاتف الأساسي:</span>
+                        <span class="detail-value">@phoneNumber</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(additionalPhone))
+                    {
+                        <div class="detail-item">
+                            <i class="fas fa-mobile-alt detail-icon"></i>
+                            <span class="detail-label">هاتف إضافي:</span>
+                            <span class="detail-value">@additionalPhone</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(email))
+                    {
+                        <div class="detail-item">
+                            <i class="fas fa-envelope detail-icon"></i>
+                            <span class="detail-label">البريد الإلكتروني:</span>
+                            <span class="detail-value">@email</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="detail-group">
+                    <h4 style="color: #2e7d32; margin-bottom: 15px; font-weight: 700;"><i class="fas fa-map-marker-alt"></i> معلومات العنوان</h4>
+                    @if (!string.IsNullOrEmpty(governorate))
+                    {
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt detail-icon"></i>
+                            <span class="detail-label">المحافظة:</span>
+                            <span class="detail-value">@governorate</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(district))
+                    {
+                        <div class="detail-item">
+                            <i class="fas fa-building detail-icon"></i>
+                            <span class="detail-label">المدينة/المنطقة:</span>
+                            <span class="detail-value">@district</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(detailedAddress))
+                    {
+                        <div class="detail-item">
+                            <i class="fas fa-home detail-icon"></i>
+                            <span class="detail-label">العنوان التفصيلي:</span>
+                            <span class="detail-value">@detailedAddress</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions -->
+        @if (transactions != null && transactions.Any())
+        {
+            <div class="transactions-section">
+                <h2 class="section-title">
+                    <i class="fas fa-shopping-cart"></i>
+                    تفاصيل المعاملات
+                </h2>
+                
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>سعر الوحدة</th>
+                            <th>المجموع</th>
+                            <th>الخصم</th>
+                            <th>صافي المبلغ</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var transaction in transactions)
+                        {
+                            var netAmount = (decimal)transaction.TotalPrice - (decimal)transaction.Discount;
+                            var remaining = netAmount - (decimal)transaction.AmountPaid;
+                            <tr>
+                                <td>@((DateTime)transaction.Date).ToString("dd/MM/yyyy")</td>
+                                <td>@transaction.Product.Name</td>
+                                <td>@transaction.Quantity</td>
+                                <td>@((decimal)transaction.Price).ToString("F2") ج.م</td>
+                                <td>@((decimal)transaction.TotalPrice).ToString("F2") ج.م</td>
+                                <td>@((decimal)transaction.Discount).ToString("F2") ج.م</td>
+                                <td style="font-weight: 700; color: #2e7d32;">@netAmount.ToString("F2") ج.م</td>
+                                <td style="color: #28a745;">@((decimal)transaction.AmountPaid).ToString("F2") ج.م</td>
+                                <td style="color: @(remaining > 0 ? "#dc3545" : "#28a745");">@remaining.ToString("F2") ج.م</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Summary -->
+        <div class="invoice-summary">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                ملخص الفاتورة
+            </h2>
+            
+            <div class="summary-grid">
+                <div class="payment-status">
+                    <h3 style="color: #2e7d32; margin-bottom: 20px; font-weight: 700;">
+                        <i class="fas fa-credit-card"></i>
+                        حالة الدفع
+                    </h3>
+                    
+                    @{
+                        string statusClass = remainingBalance <= 0 ? "status-paid" : (totalPaid > 0 ? "status-partial" : "status-unpaid");
+                        string statusText = remainingBalance <= 0 ? "مدفوع بالكامل" : (totalPaid > 0 ? "مدفوع جزئياً" : "غير مدفوع");
+                        string statusIcon = remainingBalance <= 0 ? "<i class='fas fa-check-circle text-success'></i>" : (totalPaid > 0 ? "<i class='fas fa-exclamation-triangle text-warning'></i>" : "<i class='fas fa-times-circle text-danger'></i>");
+                    }
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">@statusIcon</div>
+                        <div class="status-badge @statusClass">@statusText</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-money-bill"></i> إجمالي المدفوع:</span>
+                        <span style="color: #28a745; font-weight: 700;">@totalPaid.ToString("F2") ج.م</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-exclamation-circle"></i> المتبقي:</span>
+                        <span style="color: @(remainingBalance > 0 ? "#dc3545" : "#28a745"); font-weight: 700;">@remainingBalance.ToString("F2") ج.م</span>
+                    </div>
+                </div>
+
+                <div class="summary-calculations">
+                    <h3 style="color: #2e7d32; margin-bottom: 20px; font-weight: 700;">
+                        <i class="fas fa-chart-pie"></i>
+                        الحسابات النهائية
+                    </h3>
+                    
+                    <div class="summary-row">
+                        <span><i class="fas fa-calculator"></i> المجموع الفرعي:</span>
+                        <span>@subtotal.ToString("F2") ج.م</span>
+                    </div>
+                    <div class="summary-row">
+                        <span><i class="fas fa-percentage"></i> إجمالي الخصم:</span>
+                        <span style="color: #dc3545;">- @totalDiscount.ToString("F2") ج.م</span>
+                    </div>
+                    @if (shippingCost > 0)
+                    {
+                        <div class="summary-row">
+                            <span><i class="fas fa-shipping-fast"></i> سعر الشحن:</span>
+                            <span style="color: #ffc107;">+ @shippingCost.ToString("F2") ج.م</span>
+                        </div>
+                    }
+                    <div class="summary-row">
+                        <span><i class="fas fa-money-bill-wave"></i> المبلغ النهائي:</span>
+                        <span>@finalTotal.ToString("F2") ج.م</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-phone"></i> التواصل</h4>
+                    <p><i class="fas fa-phone"></i> هاتف: 01234567890</p>
+                    <p><i class="fas fa-fax"></i> فاكس: 01234567891</p>
+                    <p><i class="fab fa-whatsapp"></i> واتساب: 01234567892</p>
+                </div>
+                
+                
+            </div>
+            <div class="footer-bottom">
+                <p><i class="fas fa-heart"></i> شكراً لتعاملكم معنا • <i class="fas fa-clock"></i> تم إنشاء هذه الفاتورة في @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+               
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto print functionality
+        window.onload = function() {
+            // Auto focus for better printing experience
+            window.focus();
+            
+            // Check if this is opened in a new window (for printing)
+            if (window.opener) {
+                // Optional: auto print
+                // window.print();
+            }
+        };
+        
+        // Print function
+        function printInvoice() {
+            window.print();
+        }
+        
+        // Keyboard shortcut for printing (Ctrl+P)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                printInvoice();
+            }
+        });
+    </script>
+</body>
+</html>
